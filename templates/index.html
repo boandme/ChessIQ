@@ -3,14 +3,20 @@
     <body>
         
         
-        <link rel="stylesheet" href="main.css">
+        <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+        <script src  ="{{ url_for('static', filename='main.js') }}"></script>
 
-        <h1>Chess Board</h1>
+        <h1>Position Guessr V0.1</h1>
         <div id = 'board'>
-        {{ svg_board | safe }}
+            {{ svg_board | safe }}
         
         </div>
         <p1 id = 'evaluation'> {{ eval }}</p1>
+        <div id = "choiceButtons">
+            <button id = "whiteWinning" > White is winning</button>
+            <button id = "blackWinning" > Black is winning</button>
+            <button id = "equal" > Close to Equal </button>
+        </div>
 </body>
     
 </html>
