@@ -34,7 +34,7 @@ def index():
     svg_data = chess.svg.board(board=board)
     
     
-    return render_template('index.html', svg_board = svg_data, eval = eval)
+    return render_template('index.html', svg_board = svg_data, eval = eval.score())
     
 if __name__ == "__main__":
     app.run(debug=True, port=8080)

@@ -1,3 +1,128 @@
+/* Result styling */
+#result {
+    margin-top: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #e0ffe6 0%, #a8ff78 100%);
+    border-radius: 18px;
+    box-shadow: 0 4px 24px 0 rgba(34, 197, 94, 0.13);
+    padding: 28px 36px;
+    min-width: 220px;
+    min-height: 60px;
+    border: 2.5px solid #34d399;
+    transition: box-shadow 0.2s, border 0.2s;
+}
+#result:hover {
+    box-shadow: 0 8px 36px 0 rgba(34, 197, 94, 0.18);
+    border: 2.5px solid #10b981;
+}
+#resultText {
+    color: #14532d;
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    text-shadow: 0 2px 8px #a8ff78cc;
+    transition: color 0.2s;
+}
+
+/* Image button group styling */
+
+/* Layout: board and buttons side by side */
+.main-content {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    max-width: 1200px;
+    margin: 0 auto;
+    gap: 48px;
+}
+
+.board-container {
+    flex: 0 1 auto;
+}
+
+#choiceButtons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    background: rgba(52, 211, 153, 0.10);
+    border-radius: 24px;
+    box-shadow: 0 4px 32px 0 rgba(34, 197, 94, 0.10);
+    padding: 32px 24px;
+    min-width: 180px;
+    min-height: 420px;
+    position: relative;
+}
+
+.image-btn {
+    background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%);
+    border: 3px solid #34d399;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px 0 rgba(34, 197, 94, 0.10);
+    padding: 0;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s, box-shadow 0.15s, border 0.15s;
+    cursor: pointer;
+    overflow: hidden;
+    margin: 0;
+}
+.image-btn:hover, .image-btn:focus {
+    transform: translateY(-6px) scale(1.07);
+    box-shadow: 0 8px 32px 0 rgba(34, 197, 94, 0.18);
+    border: 3px solid #10b981;
+    background: linear-gradient(135deg, #78ffd6 0%, #a8ff78 100%);
+}
+.image-btn img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    display: block;
+    margin: auto;
+    pointer-events: none;
+}
+
+@media (max-width: 900px) {
+    .main-content {
+        flex-direction: column;
+        gap: 24px;
+    }
+    .image-button-group {
+        flex-direction: row;
+        min-width: unset;
+        min-height: unset;
+        padding: 16px 8px;
+        gap: 16px;
+    }
+}
+
+
+.image-btn:hover, .image-btn:focus {
+    transform: translateY(-6px) scale(1.05);
+    box-shadow: 0 8px 32px 0 rgba(34, 197, 94, 0.18);
+    border: 3px solid #10b981;
+}
+.image-btn img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    display: block;
+    margin: auto;
+    pointer-events: none;
+}
+
 body {
     background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%);
     min-height: 100vh;
@@ -23,29 +148,32 @@ h1, p, .p1 {
 }
 
 svg.board {
-    display: auto;
+    display: block;
     margin: 0 auto;
     box-shadow: 0 8px 32px 0 rgba(34, 197, 94, 0.2);
     border-radius: 16px;
     background: #e0ffe6;
     border: 4px solid #34d399;
+    width: 480px;
+    height: 480px;
     max-width: 90vw;
-    height: auto;
+    max-height: 90vh;
 }
 
 #board {
-    width: 80vw;
-    height: 80vh;
+    width: 90w;
+    height: 90vh;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 svg {
-    width: 80%;
-    height: 80%;
-    max-width: 90vmin; /* keeps it square & fitting */
-    max-height: 90vmin;
+    width: 800px;
+    height: 800px;
+    max-width: 90vw;
+    max-height: 90vh;
+    max-height: 100vmin;
     display: block;
     margin: auto;
 }
@@ -58,22 +186,3 @@ svg {
     box-shadow: 0 2px 8px 0 rgba(34, 197, 94, 0.08);
 }
 
-/* Buttons, links, etc. */
-/*
-button, .btn {
-    background: #34d399;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 24px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background 0.2s;
-    margin: 8px;
-}
-    
-button:hover, .btn:hover {
-    background: #10b981;
-}
-
-*/

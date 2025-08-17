@@ -4,18 +4,28 @@
         
         
         <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
-        <script src  ="{{ url_for('static', filename='main.js') }}"></script>
+        <script>
+            var evaluation = '{{ eval }}';
+        </script>
+        <script src="{{ url_for('static', filename='main.js') }}"></script>
 
-        <h1>Position Guessr V0.1</h1>
-        <div id = 'board'>
-            {{ svg_board | safe }}
+        <h1>PositionGuessr V0.1</h1>
+        <div class = 'main-content'>
+            
+            <div id = 'board'>
+                {{ svg_board | safe }}
         
+            </div>
+            <div id = "choiceButtons">
+                <img class = 'image-btn' src="{{ url_for('static', filename='wking.png') }}" id = "whiteWinning" onclick = 'sendAnswer("white")'> 
+                <img class = 'image-btn' src="{{ url_for('static', filename='bking.webp') }}"id = "blackWinning" onclick = 'sendAnswer("black")'>
+                <img class = 'image-btn' src="{{ url_for('static', filename='equal.jpg') }}" id = "equal" onclick = 'sendAnswer("equal")'>
+            
         </div>
-        <p1 id = 'evaluation'> {{ eval }}</p1>
-        <div id = "choiceButtons">
-            <button id = "whiteWinning" > White is winning</button>
-            <button id = "blackWinning" > Black is winning</button>
-            <button id = "equal" > Close to Equal </button>
+
+        <div id = 'result'>
+            <p id = "resultText"></p>
+        </div>
         </div>
 </body>
     
