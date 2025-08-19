@@ -7,13 +7,13 @@
         <script>
             var evaluation = '{{ eval }}';
         </script>
-        <script src="{{ url_for('static', filename='main.js') }}"></script>
+        
 
         <h1>PositionGuessr V0.1</h1>
         <div class = 'main-content'>
             
             <div id = 'board'>
-                {{ svg_board | safe }}
+                {{ filtered_data[5]['SVG'] | safe }}
         
             </div>
             <div id = "choiceButtons">
@@ -27,6 +27,7 @@
             <p id = "resultText"></p>
         </div>
         </div>
+        <script type = 'module' src="{{ url_for('static', filename='main.js') }}"></script>
 </body>
     
 </html>
