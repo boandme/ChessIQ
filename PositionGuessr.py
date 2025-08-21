@@ -1,4 +1,4 @@
-
+"""
 ## Welcome to PositionGuessr, a chess position guessing game, where you guess whether the position is winning for white, losing, or equal
 ## This application will be a successful project and will sell to lichess, chess.com, or any other chess platform, making millions. 
 
@@ -38,8 +38,15 @@ def getEval(position):
     #analyse the position using Stockfish
     result = engine.analyse(board, chess.engine.Limit(depth=20))
     score = result["score"].pov(chess.WHITE)
-    
+
+    ## Complex conditional that handles mate error logic, and returns score
+    if score.is_mate():
+        score = 100000 if score.mate() > 0 else -100000
+    else:
+        score = score.score()
     return score, board
+
+
 ## This function loads positions from dataset and returns the SVG text, eval, and board object. 
 def loadPositions():
     for row in range(len(data)):
@@ -47,19 +54,20 @@ def loadPositions():
         svg_data = chess.svg.board(board=board)
         filtered_data.append({
             'SVG':svg_data,
-            'Eval':eval.score()
+            'Eval':eval
         })
     print("Filtration DONE!!!!")
+    print(len(filtered_data))
+    print(filtered_data)
+   
     
-    ## Quit the engine to maximize performance
-    engine.quit()
     return filtered_data 
     
 ## This line of code is used to set the route for the Flask application, telling it to associating / path with the index function
 @app.route("/")
 def index():
     filtered_data = loadPositions()
-    print(filtered_data[5]['Eval'])
+    
     
     
     
@@ -67,3 +75,5 @@ def index():
     
 if __name__ == "__main__":
     app.run(debug=True, port=8080)
+
+"""

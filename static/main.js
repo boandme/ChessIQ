@@ -22,16 +22,13 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.1.0/firebase
     measurementId: "G-M63L8MVR6Z"
   };
 
-var positions = [
-    {"FEN": 'r1r3k1/5ppp/nR6/3P4/8/P4N2/P4PPP/R5K1 b - - 0 29', 'Evaluation': 284}
-]
+
+console.log(positions)
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 var db = getDatabase(app)
-
-
 
 
 

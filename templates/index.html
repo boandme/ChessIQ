@@ -5,7 +5,8 @@
         
         <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
         <script>
-            var evaluation = '{{ eval }}';
+            var evaluation = '{{ filtered_data[5]["Eval"] }}';
+            var positions = {{ filtered_data | tojson }};
         </script>
         
 
@@ -16,6 +17,7 @@
                 {{ filtered_data[5]['SVG'] | safe }}
         
             </div>
+            <div id = "right-panel">
             <div id = "choiceButtons">
                 <img class = 'image-btn' src="{{ url_for('static', filename='wking.png') }}" id = "whiteWinning" onclick = 'sendAnswer("white")'> 
                 <img class = 'image-btn' src="{{ url_for('static', filename='bking.webp') }}"id = "blackWinning" onclick = 'sendAnswer("black")'>
@@ -23,8 +25,9 @@
             
         </div>
 
-        <div id = 'result'>
-            <p id = "resultText"></p>
+            <div id = 'result'>
+                <p id = "resultText"></p>
+            </div>
         </div>
         </div>
         <script type = 'module' src="{{ url_for('static', filename='main.js') }}"></script>
