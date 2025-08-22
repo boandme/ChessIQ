@@ -1,6 +1,9 @@
 var result;
 var correct_result;
 var answered = false;
+var evaluation;
+var positions = [];
+var current_position = 0;
 // Firebase Configuration Code : 
 // Import the functions you need from the SDKs you need
 import { getDatabase, ref, set, onValue, get, update } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
@@ -23,7 +26,6 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.1.0/firebase
   };
 
 
-console.log(positions)
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -31,13 +33,29 @@ const analytics = getAnalytics(app);
 var db = getDatabase(app)
 
 
+get(ref(db, `positions`)).then((snapshot) => {
+    if (snapshot.exists()) {
+        positions = snapshot.val();
+        // Startup code for the first position
+        renderSVG(positions[0].SVG)
+        correct_result = findResult(positions[0].Eval)
+        console.log(correct_result)
+        
+    } 
+}).catch((error) => {
+    console.error(error);
+});
+
+
+
 
 
 window.onload = function() {
-    correct_result = findResult();
-    console.log(correct_result);
+    
     
 }; 
+
+
 
 // THis function is called when the user clicks their guess. It checks if the user is correct or not, and displays the result.
 function sendAnswer(guess) {
@@ -58,7 +76,7 @@ function sendAnswer(guess) {
 window.sendAnswer = sendAnswer;
     
 // This function finds the desired result based on the evaluation score. This result is then compared to the user's guess.
-function findResult(){
+function findResult(evaluation){
     
 
     
@@ -75,6 +93,23 @@ function findResult(){
     
 };
 
+function nextPosition() {
+    print(current_position)
+    if (current_position >= positions.length -1){
+        current_position = 0;
+    }
+    else {
+        current_position ++;
+    }
+    renderSVG(positions[current_position].SVG)
+    correct_result = findResult(positions[current_position].Eval)
+    
+}
+
 
 
               
+function renderSVG(svg){
+    // This function renders the SVG string into the HTML
+    document.getElementById('board').innerHTML = svg;
+}
