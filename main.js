@@ -4,6 +4,7 @@ var answered = false;
 var evaluation;
 var positions = [];
 var current_position = 0;
+// api token for lichess: lip_UkEhwCNzopeUbv4Mznxz
 // Firebase Configuration Code : 
 // Import the functions you need from the SDKs you need
 import { getDatabase, ref, set, onValue, get, update } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
@@ -40,12 +41,12 @@ get(ref(db, `positions`)).then((snapshot) => {
         renderSVG(positions[0].SVG)
         correct_result = findResult(positions[0].Eval)
         console.log(correct_result)
+        console.log("hi")
         
     } 
 }).catch((error) => {
     console.error(error);
 });
-
 
 
 
@@ -56,6 +57,21 @@ window.onload = function() {
 }; 
 
 
+window.nextPosition = function() {
+    console.log(current_position)
+    if (current_position >= positions.length -1){
+        current_position = 0;
+    }
+    else {
+        current_position ++;
+    }
+    renderSVG(positions[current_position].SVG)
+    correct_result = findResult(positions[current_position].Eval)
+    answered = false;
+    document.getElementById("result").innerHTML = "";
+    console.log(correct_result)
+    
+};
 
 // THis function is called when the user clicks their guess. It checks if the user is correct or not, and displays the result.
 function sendAnswer(guess) {
@@ -93,18 +109,6 @@ function findResult(evaluation){
     
 };
 
-function nextPosition() {
-    print(current_position)
-    if (current_position >= positions.length -1){
-        current_position = 0;
-    }
-    else {
-        current_position ++;
-    }
-    renderSVG(positions[current_position].SVG)
-    correct_result = findResult(positions[current_position].Eval)
-    
-}
 
 
 

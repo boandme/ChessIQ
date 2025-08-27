@@ -7,8 +7,11 @@
         <script>
             /*
             var evaluation = '{{ filtered_data[5]["Eval"] }}';
-            var positions = {{ filtered_data | tojson }};
+            
+            window.positions = {{ filtered_data | tojson }};
             */
+
+            
         </script>
         
 
@@ -25,16 +28,18 @@
                 <img class = 'image-btn' src="bking.webp"id = "blackWinning" onclick = 'sendAnswer("black")'>
                 <img class = 'image-btn' src="equal.jpg" id = "equal" onclick = 'sendAnswer("equal")'>
             
-        </div>
+            </div>
 
             <div id = 'result'>
                 <p id = "resultText"></p>
             </div>
-            <div id = "nextButton>">
-                <button id = "next" onclick = 'nextPosition()'> Next Position</button>
-            </div>
+               <button id = "nextButton" onclick = "nextPosition()"> Next Position</button>
+            
         </div>
+
+        
         </div>
+
         <script type = "module" src="main.js"></script>
 </body>
     
