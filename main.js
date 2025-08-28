@@ -42,6 +42,7 @@ get(ref(db, `positions`)).then((snapshot) => {
         correct_result = findResult(positions[0].Eval)
         console.log(correct_result)
         console.log("hi")
+        document.getElementById("turn").innerHTML = positions[0].Turn
         
     } 
 }).catch((error) => {
@@ -67,6 +68,7 @@ window.nextPosition = function() {
     }
     renderSVG(positions[current_position].SVG)
     correct_result = findResult(positions[current_position].Eval)
+    document.getElementById("turn").innerHTML = positions[current_position].Turn
     answered = false;
     document.getElementById("result").innerHTML = "";
     console.log(correct_result)
@@ -84,7 +86,7 @@ function sendAnswer(guess) {
         answered = true;
     }
     else {
-        document.getElementById("result").innerHTML = "Incorrect! The correct answer is " + correct_result + ".";
+        document.getElementById("result").innerHTML = "Incorrect! The current position is: <br>"+ correct_result;
         document.getElementById("result").style.color = "red";
         answered = true;
     }
@@ -97,12 +99,12 @@ function findResult(evaluation){
 
     
     if ((Math.abs(parseFloat(evaluation))/100) <= 1) {
-        var result = "equal";
+        var result = "Equal";
     }
     else if (Math.sign(parseFloat(evaluation)) === 1) {
-        var result = "white";
+        var result = "White Winning";
     } else if (Math.sign(parseFloat(evaluation)) === -1) {
-        var result = "black";
+        var result = "Black Winning";
     }
 
     return result;
