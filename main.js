@@ -120,12 +120,13 @@ function renderSVG(svg){
     document.getElementById('board').innerHTML = svg;
 }
 
+// this function closes the modal
 function closeModal(){
     document.getElementById("modal").style.display = "none";
 }
 window.closeModal = closeModal;
 
-
+// this function opens the modal
 function openModal(){
     document.getElementById("modal").style.display = "flex";
 }
