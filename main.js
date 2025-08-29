@@ -119,3 +119,14 @@ function renderSVG(svg){
     // This function renders the SVG string into the HTML
     document.getElementById('board').innerHTML = svg;
 }
+
+function closeModal(){
+    document.getElementById("modal").style.display = "none";
+}
+window.closeModal = closeModal;
+
+
+function openModal(){
+    document.getElementById("modal").style.display = "flex";
+}
+window.openModal = openModal;

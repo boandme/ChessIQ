@@ -15,7 +15,7 @@
         </script>
         
 
-        <h1>PositionGuessr V0.1</h1>
+        <h1>PositionGuessr V0.35</h1>
         <div class = 'main-content'>
             <div id = 'left-panel'>
                 
@@ -37,11 +37,26 @@
                 <p id = "resultText"></p>
             </div>
                <button id = "nextButton" onclick = "nextPosition()"> Next Position</button>
-            
+        
+        <div id="modal">
+            <div class="modal-content">
+                
+                <h2>Welcome to PositionGuessr! </h2>
+                    <p> This game is meant to train your positional knowledge in chess and help with self-analyzing a position. This is a very useful skill to train for any chess player, regardless of skill! </p>
+                    <p2> How To Play: </p2>
+                    <p> You will be given a position and have to self-analyze it to find out which side is winning.  
+                        <br> <br> -> If you believe White is winning, click the White King
+                        <br> <br> -> If you believe that Black is winning, click the Black King 
+                 <br> <br> -> If you believe that the position is close to equal, click the Equal symbol</p>
+                    <img class = 'close-btn' src = 'icon.png' onclick = 'closeModal()'>
+            </div>
+            </div>
         </div>
+
 
         
         </div>
+        <img id = 'help-btn' src = 'help.png' onclick = 'openModal()'>
 
         <script type = "module" src="main.js"></script>
 </body>
