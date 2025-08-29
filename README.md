@@ -22,3 +22,8 @@ You will be given a position and have to self-analyze it to find out which side 
 -> If you believe that Black is winning, click the Black King
 
 -> If you believe that the position is close to equal, click the Equal symbol
+
+
+
+Credits:
+Symbols: UXWing
