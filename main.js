@@ -40,8 +40,7 @@ get(ref(db, `positions`)).then((snapshot) => {
         // Startup code for the first position
         renderSVG(positions[0].SVG)
         correct_result = findResult(positions[0].Eval)
-        console.log(correct_result)
-        console.log("hi")
+        
         document.getElementById("turn").innerHTML = positions[0].Turn
         
     } 
@@ -59,7 +58,7 @@ window.onload = function() {
 
 
 window.nextPosition = function() {
-    console.log(current_position)
+    
     if (current_position >= positions.length -1){
         current_position = 0;
     }
