@@ -44,5 +44,9 @@ You will be given a position and have to self-analyze it to find out which side 
 
 
 Credits:
+
 Symbols: UXWing
+
+Idea: Boandme
+
 Some of the code: EntyXD
