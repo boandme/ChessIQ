@@ -49,4 +49,3 @@ Symbols: UXWing
 
 Idea: Boandme
 
-Some of the code: EntyXD
