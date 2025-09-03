@@ -152,8 +152,8 @@ h1 {
         }
         
         .image-btn img {
-            width: 70%;
-            height: 70%;
+            width: 100px;
+            height: 100px;
             object-fit: contain;
         }
         
@@ -168,10 +168,11 @@ h1 {
             display: flex;
             justify-content: center;
             align-items: center;
+            font-size: 1.5rem;
         }
         
         #resultText {
-            font-size: 1.5rem;
+            font-size: 1.5em;
             font-weight: 600;
             color: var(--primary-green);
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
@@ -321,6 +322,51 @@ h1 {
                 #help-btn:hover {
                     background: var(--light-green);
                     }
-                
 
-                
+               
+                                        /* Container keeps h1 and buttons close */
+                    .header-container {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;   /* centers both title and buttons */
+                    margin-bottom: 1.5rem; /* space below header before page content */
+                    }
+
+                    h1 {
+                    font-size: 3rem;
+                    margin-bottom: 0.3rem; /* default gap between title and buttons */
+                    }
+
+                    .top-nav {
+                    display: flex;
+                    gap: 0.5rem;
+                    }
+
+                    /* Home page special tweak */
+                    .home-header h1 {
+                    margin-bottom: 0.5rem; /* slightly more breathing room than credits/info */
+                    }
+
+                    .home-header .top-nav {
+                    margin-bottom: 1.5rem; /* pushes the board further down */
+                    }
+
+                    .top-nav button {
+                    padding: 0.4rem 0.8rem;
+                    font-size: 1rem;
+                    border: none;
+                    background-color: #4CAF50;
+                    color: white;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    transition: background 0.2s ease;
+                    height: 50px;
+                    width: 150px;
+                    }
+
+                    .top-nav button:hover {
+                    background-color: #45a049;
+                    }
+                                                                            
+
+                                    

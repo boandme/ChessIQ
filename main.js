@@ -130,3 +130,14 @@ function openModal(){
     document.getElementById("modal").style.display = "flex";
 }
 window.openModal = openModal;
+
+
+
+// Managing pages - switching etc
+function openNav() {
+  document.getElementById("sidebar").style.width = "200px";
+}
+
+function closeNav() {
+  document.getElementById("sidebar").style.width = "0";
+}
