@@ -26,11 +26,14 @@ v0.5(Difficulty Update)[2025] - Aims to add an Easy, Medium, and Hard mode of po
 ..
 v0.75(flopy AI release)[2025] - Potentially add a fully AI powered chess bot to play against - no calculaions, only trained on thousands of lichess games. 
 
+v0.85(Accounts + Score update)[2026] - Add user accounts and score to keep track of progress. 
+
 v1.0(Full Release)[2026] - Full app release with features
 
 
 
 
+-------------------------------------------------------------------------------------------
 
 How To Play:
 You will be given a position and have to self-analyze it to find out which side is winning.
