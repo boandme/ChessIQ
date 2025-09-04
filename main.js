@@ -70,7 +70,7 @@ window.nextPosition = function() {
     document.getElementById("turn").innerHTML = positions[current_position].Turn
     answered = false;
     document.getElementById("result").innerHTML = "";
-    console.log(correct_result)
+    
     
 };
 

@@ -259,6 +259,7 @@ h1 {
                 }
 
                 .modal-content {
+                    position: relative;
                     background: var(--card-bg);
                     padding: 20px;
                     border-radius: 12px;
@@ -279,8 +280,11 @@ h1 {
 
                 .close-btn {
                     position: absolute;
-                    top: 250px;
+                    /*top: 250px;
                     right: 720px;
+                    */
+                    top: 12px;
+                    right:12px;
                     width: 45px;
                     height: 45px;
                     background: var(--bright-green);
@@ -294,6 +298,7 @@ h1 {
                     justify-content: center;
                     align-items: center;
                     box-shadow: var(--shadow);
+                    z-index: 1500
                     }
 
                 .close-btn:hover {
