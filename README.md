@@ -1,4 +1,4 @@
-ChessIQ is a positional training tool for intermediate and above chess players that tests your ability to visualize and evaluate a positions. Players are given a position and have to self analyze it, either by simple material, space, or other positional concepts. Its like tactical puzzles, but it trains your positional play that can be very useful in game! Although the game is in the beta stage right now, there will be many more updates coming soon, leading up to v1.0. 
+ChessIQ is a positional training tool for intermediate and above chess players that tests your ability to visualize and evaluate a positions. Players are given a position and have to self analyze it, either by simple material, space, or other positional concepts. Its like tactical puzzles, but it trains your positional play that can be very useful in game! You must use strategic concepts such as space, initiative, piece placement, and more in this tool for maximum improvement. Although the game is in the beta stage right now, there will be many more updates coming soon, leading up to v1.0. 
 
 --> ChessIQ's main product is the positionGuessing tool, but many more products such as AI computers to play against are coming soon!
 
@@ -18,6 +18,8 @@ v0.3(First Working Version of ChessIQ!)🥇 - Used python's berserk library to i
 database. Additionally, added a 'to move' marker to make the game more playable for training
 
 v0.35(Accessibility Update)❓ - Added a help menu and a startup menu that appears on load and helps the user understand how to play this game
+
+v0.4(First Publish) - Added credits/info pages, and upgraded the UI/UX design for the whole app. 
 
 v0.45(Larger dataset)[2025] - Increase the dataset by 10x, making the positions much more diverse.
 
