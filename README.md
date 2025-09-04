@@ -54,3 +54,12 @@ Symbols: UXWing
 
 Idea: Boandme
 
+Tester: EntyXD
+
+
+
+
+Future Ideas
+- Position dictionary randomizer at beginner for fresh positions
+- Score system(points or ratings)
+
