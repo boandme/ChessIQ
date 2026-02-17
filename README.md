@@ -1,65 +1,135 @@
-ChessIQ is a positional training tool for intermediate and above chess players that tests your ability to visualize and evaluate a positions. Players are given a position and have to self analyze it, either by simple material, space, or other positional concepts. Its like tactical puzzles, but it trains your positional play that can be very useful in game! You must use strategic concepts such as space, initiative, piece placement, and more in this tool for maximum improvement. Although the game is in the beta stage right now, there will be many more updates coming soon, leading up to v1.0. 
+# ♟️ ChessIQ
 
---> ChessIQ's main product is the positionGuessing tool, but many more products such as AI computers to play against are coming soon!
+ChessIQ is a positional training tool designed for intermediate and advanced chess players who want to improve their ability to visualize, evaluate, and understand chess positions beyond tactics.
 
+Instead of finding a forced move like in traditional tactical puzzles, ChessIQ challenges players to judge the position itself using strategic concepts such as material balance, space, initiative, king safety, and piece activity.
 
+Think of ChessIQ as tactical puzzles for positional thinking.
 
+**Status:** 🚧 Currently in beta, with active development leading up to v1.0.
 
-This game was inspired by tactical puzzles, and the idea to create a way to effectively practice positional thinking.
+---
 
-Version History + Future Updates:
-v0.1(Initial HTML update)📱 - Added SVG positions for sample data, and displayed evaluation using python pre-processing
+## 🧠 Core Concept
 
-v0.2(database update)💻 - Connected positions and evaluation to a firebase database, eliminating the need for python to run constantly, only once for training. JS, CSS, and HTML updated to import from the database and display positions/eval dynamically. 
+- Analyze a given chess position
+- Evaluate the position without engine assistance
+- Decide which side stands better using positional understanding
+- Receive feedback based on engine evaluations from real games
 
-v0.25(gamification)🎮 - Added the 'guessing' aspect of the game with the sample data based on stockfish evaluations , allowing for a mini version of the game's functionality
+---
 
-v0.3(First Working Version of ChessIQ!)🥇 - Used python's berserk library to import lichess game data and use that instead of the sample data for the app. Exported this to the firebase database and prepared html, css, and js to function solely from the 
-database. Additionally, added a 'to move' marker to make the game more playable for training
+## 🚀 Main Features
 
-v0.35(Accessibility Update)❓ - Added a help menu and a startup menu that appears on load and helps the user understand how to play this game
+### 🎯 Position Guessing Tool (Core Product)
 
-v0.4(First Publish) - Added credits/info pages, and upgraded the UI/UX design for the whole app. 
+- Real-game positions sourced from Lichess
+- Evaluate whether White is better, Black is better, or the position is equal
+- Designed to improve evaluation accuracy rather than calculation depth
 
-v0.45(Larger dataset)[2025] - Increase the dataset by 10x, making the positions much more diverse.
+### 🔮 Upcoming Features
 
-v0.5(Difficulty Update)[2025] - Aims to add an Easy, Medium, and Hard mode of positional analyzing for all levels of chess play. Will be done thru the backend
+- AI opponents trained on real games
+- Difficulty-based positional challenges
+- Player accounts and long-term progress tracking
 
-..
-v0.75(flopy AI release)[2025] - Potentially add a fully AI powered chess bot to play against - no calculaions, only trained on thousands of lichess games. 
+---
 
-v0.85(Accounts + Score update)[2026] - Add user accounts and score to keep track of progress. 
+## 🕹️ How to Play
 
-v1.0(Full Release)[2026] - Full app release with features
+1. You will be shown a chess position
+2. Analyze the position using positional concepts
+3. Submit your evaluation:
+   - ♔ Click the White King if White is winning
+   - ♚ Click the Black King if Black is winning
+   - ⚖️ Click the Equal symbol if the position is roughly equal
 
+---
 
+## 🗂️ Version History and Roadmap
 
+### ✅ Released Versions
 
--------------------------------------------------------------------------------------------
+#### v0.1 – Initial HTML Update 📱
 
-How To Play:
-You will be given a position and have to self-analyze it to find out which side is winning.
+- Added SVG chess positions
+- Python-based evaluation preprocessing
 
--> If you believe White is winning, click the White King
+#### v0.2 – Database Update 💻
 
--> If you believe that Black is winning, click the Black King
+- Connected evaluations and positions to Firebase
+- Removed the need for continuous Python execution
+- Frontend dynamically loads data using JavaScript, CSS, and HTML
 
--> If you believe that the position is close to equal, click the Equal symbol
+#### v0.25 – Gamification Update 🎮
 
+- Introduced the guessing mechanic
+- Implemented Stockfish-based evaluation thresholds
 
+#### v0.3 – First Fully Working Version 🥇
 
-Credits:
+- Integrated real Lichess game data using Python’s berserk library
+- Positions exported to Firebase
+- Added a side-to-move indicator for realistic training
 
-Symbols: UXWing
+#### v0.35 – Accessibility Update ❓
 
-Idea: Boandme
+- Added a help menu and startup guide
+- Improved onboarding and usability
 
-Tester: EntyXD
+#### v0.4 – First Public Release 🌍
 
+- Published the application
+- Upgraded UI and UX across the entire app
+- Added credits and information pages
 
+---
 
+### 🔜 Planned Updates
 
-Future Ideas
-- Position dictionary randomizer at beginner for fresh positions
-- Score system(points or ratings)
+#### v0.45 – Larger Dataset 📈 (2025)
 
+- Expand the position database by 10x
+- Increase positional diversity and coverage
+
+#### v0.5 – Difficulty Modes 🧩 (2025)
+
+- Introduce Easy, Medium, and Hard modes
+- Backend-based filtering by positional complexity
+
+#### v0.75 – Flopy AI Release 🤖 (2025)
+
+- Experimental AI chess bot trained on thousands of Lichess games
+- No brute-force calculation, purely learned positional play
+
+#### v0.85 – Accounts and Scoring 👤 (2026)
+
+- User accounts and authentication
+- Score tracking and long-term progress analytics
+
+#### v1.0 – Full Release 🎉 (2026)
+
+- Official launch
+- Complete feature set with polished performance and UX
+
+---
+
+## 💡 Future Ideas
+
+- 📚 Positional theme tagging (isolated pawns, bishop pair, space advantage)
+- 🎓 Beginner mode with post-guess explanations
+- 🔁 Daily challenge positions
+- 📊 Accuracy-based rating system
+- 🧠 Optional engine explanation after each guess
+- 🌙 Dark mode and board theme customization
+- 🧪 A/B testing for training effectiveness
+- 🏆 Global or friends-only leaderboards
+- 📱 Mobile-first UI optimizations
+
+---
+
+## 🙏 Credits
+
+- Idea and Development: Boandme
+- Testing: EntyXD
+- Icons and Symbols: UXWing
