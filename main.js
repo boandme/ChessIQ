@@ -70,6 +70,7 @@ window.nextPosition = function() {
     document.getElementById("turn").innerHTML = positions[current_position].Turn
     answered = false;
     document.getElementById("result").innerHTML = "";
+    document.getElementById("evaluation-display").innerHTML = "";
     
     
 };
@@ -89,8 +90,12 @@ function sendAnswer(guess) {
         document.getElementById("result").style.color = "red";
         answered = true;
     }
+    // Display the exact evaluation
+    const evaluationRaw = parseFloat(positions[current_position].Eval) / 100;
+    const displayEval = evaluationRaw > 0 ? `+${evaluationRaw}` : `${evaluationRaw}`;
+    document.getElementById("evaluation-display").innerHTML = `<strong>Evaluation: ${displayEval}</strong>`;
 };
-window.sendAnswer = sendAnswer;
+ window.sendAnswer = sendAnswer;
     
 // This function finds the desired result based on the evaluation score. This result is then compared to the user's guess.
 function findResult(evaluation){
@@ -131,6 +136,27 @@ function openModal(){
 }
 window.openModal = openModal;
 
+
+
+// Sidebar functions
+window.openSidebar = function() {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('sidebar-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+};
+
+window.closeSidebar = function() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('open');
+    document.body.style.overflow = 'auto';
+};
+
+// Close sidebar on Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeSidebar();
+    }
+});
 
 
 // Managing pages - switching etc

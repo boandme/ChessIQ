@@ -83,21 +83,26 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 - Upgraded UI and UX across the entire app
 - Added credits and information pages
 
+#### v0.43 - UI fixes, Evaluation display 
+ - Added a display of the exact evaluation after the user makes their guess, allowing for more reflection and learning opportunities of positional thinking
+ - Upgraded UI across the whole app, including credits, info, and home pages all syncing in similar styles
+ - Added a sidebar menu for future other products under ChessIQ
+
 ---
 
 ### 🔜 Planned Updates
 
-#### v0.45 – Larger Dataset 📈 (2025)
+#### v0.45 – Larger Dataset 📈 (2026)
 
 - Expand the position database by 10x
 - Increase positional diversity and coverage
 
-#### v0.5 – Difficulty Modes 🧩 (2025)
+#### v0.5 – Difficulty Modes 🧩 (2026)
 
 - Introduce Easy, Medium, and Hard modes
 - Backend-based filtering by positional complexity
 
-#### v0.75 – Flopy AI Release 🤖 (2025)
+#### v0.75 – Flopy AI Release 🤖 (2026)
 
 - Experimental AI chess bot trained on thousands of Lichess games
 - No brute-force calculation, purely learned positional play

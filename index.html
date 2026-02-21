@@ -19,17 +19,37 @@
             
         </script>
 
+        <button id="hamburger-menu" onclick="openSidebar()" aria-label="Menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
+        <aside id="sidebar" class="sidebar">
+            <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close">&times;</button>
+            <nav class="sidebar-nav">
+                <h3>Products</h3>
+                <ul>
+                    <li><a href="index.html" onclick="closeSidebar()">PositionGuesser</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
         
         <header>
             <div class="header-container home-header">
-                <h1>ChessIQ v0.4</h1>
+                <h1>ChessIQ v0.43</h1>
                 <nav class="top-nav">
-                <button onclick="location.href='index.html'">Home</button>
-                <button onclick="location.href='credits.html'">Credits</button>
-                <button onclick="location.href='info.html'">Information</button>
+                <button onclick="location.href='index.html'"><span class="nav-icon">⌂</span> Home</button>
+                <button onclick="location.href='credits.html'"><span class="nav-icon">⭐</span> Credits</button>
+                <button onclick="location.href='info.html'"><span class="nav-icon">ℹ️</span> Information</button>
                 </nav>
             </div>
             </header>
+        <div class="game-instruction">
+            <p>Who has the advantage?</p>
+        </div>
         <div class = 'main-content'>
             <div id = 'left-panel'>
                 
@@ -50,19 +70,26 @@
             <div id = 'result'>
                 <p id = "resultText"></p>
             </div>
+            <div id = 'evaluation-display'></div>
                <button id = "nextButton" onclick = "nextPosition()"> Next Position</button>
         
         <div id="modal">
             <div class="modal-content">
                 <button class="modal-close-btn" onclick="closeModal()" aria-label="Close">&times;</button>
                 
-                <h2>Welcome to ChessIQ! </h2>
-                    <p> This game is meant to train your positional knowledge in chess and help with self-analyzing a position. This is a very useful skill to train for any chess player, regardless of skill! </p>
-                    <p2> How To Play: </p2>
-                    <p> You will be given a position and have to self-analyze it to find out which side is winning.  
-                        <br> <br> -> If you believe White is winning, click the White King
-                        <br> <br> -> If you believe that Black is winning, click the Black King 
-                 <br> <br> -> If you believe that the position is close to equal, click the Equal symbol</p>
+                <h2>Welcome to ChessIQ!</h2>
+                <p class="modal-intro">Train your positional knowledge in chess and master the art of self-analysis. This skill is invaluable for chess players of all levels!</p>
+                
+                <div class="modal-section">
+                    <h3>How To Play</h3>
+                    <p class="modal-instruction-intro">You will be given a position. Analyze it and determine which side has the advantage:</p>
+                    <ul class="modal-list">
+                        <li><strong>White Winning:</strong> Click the White King</li>
+                        <li><strong>Black Winning:</strong> Click the Black King</li>
+                        <li><strong>Equal Position:</strong> Click the Equal symbol</li>
+                    </ul>
+                </div>
+                
                 <button class="got-it-btn" onclick="closeModal()">Got It!</button>
             </div>
             </div>
