@@ -39,11 +39,13 @@
     animation: shine 3s infinite;
 }
 
-h1 {
-    position: absolute;
-    top: 24px;
+/* header titles should flow naturally so they don't cover the nav bar */
+header h1,
+.header-container h1 {
+    position: relative; /* static positioning lets nav sit below the title */
+    top: 0;
     left: 0;
-    width: 100vw;
+    width: 100%;
     text-align: center;
     margin: 0;
     z-index: 100;
@@ -261,16 +263,19 @@ h1 {
                 .modal-content {
                     position: relative;
                     background: var(--card-bg);
-                    padding: 20px;
+                    padding: 30px;
                     border-radius: 12px;
                     width: 500px;
                     box-shadow: var(--shadow);
                     text-align: center;
+                    display: flex;
+                    flex-direction: column;
                 }
 
                 .modal-content h2 {
                     color: var(--primary-green);
                     margin-bottom: 10px;
+                    margin-top: 0;
                 }
 
                 .modal-content p {
@@ -278,31 +283,65 @@ h1 {
                     margin-bottom: 20px;
                 }
 
-                .close-btn {
+                .modal-close-btn {
                     position: absolute;
-                    /*top: 250px;
-                    right: 720px;
-                    */
                     top: 12px;
-                    right:12px;
-                    width: 45px;
-                    height: 45px;
+                    right: 12px;
+                    width: 40px;
+                    height: 40px;
                     background: var(--bright-green);
                     border: none;
                     border-radius: 50%;
                     color: white;
-                    font-size: 20px;
+                    font-size: 28px;
                     font-weight: bold;
                     cursor: pointer;
                     display: flex;
                     justify-content: center;
                     align-items: center;
-                    box-shadow: var(--shadow);
-                    z-index: 1500
-                    }
+                    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+                    z-index: 1500;
+                    transition: all 0.3s ease;
+                    padding: 0;
+                    line-height: 1;
+                }
 
-                .close-btn:hover {
+                .modal-close-btn:hover {
                     background: var(--light-green);
+                    transform: scale(1.1);
+                    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+                }
+
+                .modal-close-btn:active {
+                    transform: scale(0.95);
+                }
+
+                .got-it-btn {
+                    background: linear-gradient(135deg, var(--bright-green) 0%, var(--primary-green) 100%);
+                    color: white;
+                    font-size: 1rem;
+                    font-weight: 600;
+                    padding: 12px 30px;
+                    border: none;
+                    border-radius: 50px;
+                    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    margin-top: 20px;
+                    align-self: center;
+                }
+
+                .got-it-btn:hover {
+                    transform: translateY(-3px);
+                    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+                    background: linear-gradient(135deg, var(--primary-green) 0%, var(--bright-green) 100%);
+                }
+
+                .got-it-btn:active {
+                    transform: translateY(1px);
+                    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
                 }
 
                 #help-btn {
@@ -371,6 +410,33 @@ h1 {
 
                     .top-nav button:hover {
                     background-color: #45a049;
+                    }
+
+                    /* general content container used on info/credits pages */
+                    .content {
+                        max-width: 800px;
+                        background: var(--card-bg);
+                        padding: 30px;
+                        border-radius: 20px;
+                        box-shadow: var(--shadow);
+                        border: 3px solid var(--bright-green);
+                        margin: 0 auto 2rem;
+                        color: var(--primary-green);
+                    }
+
+                    .content h1,
+                    .content h2 {
+                        color: var(--primary-green);
+                    }
+
+                    .content a {
+                        color: var(--primary-green);
+                        text-decoration: underline;
+                    }
+
+                    .content a:hover {
+                        text-decoration: none; /* remove underline on hover to keep it from jumping */
+                        opacity: 0.8;
                     }
                                                                             
 

@@ -1,10 +1,14 @@
 <!DOCTYPE html>
-<html>
-    <title>ChessIQ </title>
-    <body>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ChessIQ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
         
         
-        <link rel="stylesheet" href="main.css">
         <script>
             /*
             var evaluation = '{{ filtered_data[5]["Eval"] }}';
@@ -18,7 +22,7 @@
         
         <header>
             <div class="header-container home-header">
-                <h1>ChessIQ v0.35</h1>
+                <h1>ChessIQ v0.4</h1>
                 <nav class="top-nav">
                 <button onclick="location.href='index.html'">Home</button>
                 <button onclick="location.href='credits.html'">Credits</button>
@@ -50,6 +54,7 @@
         
         <div id="modal">
             <div class="modal-content">
+                <button class="modal-close-btn" onclick="closeModal()" aria-label="Close">&times;</button>
                 
                 <h2>Welcome to ChessIQ! </h2>
                     <p> This game is meant to train your positional knowledge in chess and help with self-analyzing a position. This is a very useful skill to train for any chess player, regardless of skill! </p>
@@ -58,7 +63,7 @@
                         <br> <br> -> If you believe White is winning, click the White King
                         <br> <br> -> If you believe that Black is winning, click the Black King 
                  <br> <br> -> If you believe that the position is close to equal, click the Equal symbol</p>
-                    <img class = 'close-btn' src = 'icon.png' onclick = 'closeModal()'>
+                <button class="got-it-btn" onclick="closeModal()">Got It!</button>
             </div>
             </div>
         </div>
