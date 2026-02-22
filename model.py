@@ -16,21 +16,6 @@ import random
 
 
 """
-with open("positions.csv", mode="r", newline="", encoding="utf-8") as f:
-    # Create a DictReader object
-    # DictReader automatically maps each row into a dictionary
-    # using the first line of the CSV (the header) as keys
-    reader = csv.DictReader(f)
-
-    # Convert the reader into a list of dictionaries
-    data = []
-    for row in reader:
-        data.append(row)
-
-filtered_data = []
-
-"""
-
 
 
 games = []
@@ -45,10 +30,13 @@ selected_fens =[]
 
 
 ## Set 2 of games: Kurald_Galain, BlueHorseJump5
-games3 = client.games.export_by_player('Kurald_Galain', max = 50, as_pgn=True)
-games4 = client.games.export_by_player('BlueHorseJump5', max = 100, as_pgn=True)
+##games3 = client.games.export_by_player('Kurald_Galain', max = 50, as_pgn=True)
+##games4 = client.games.export_by_player('BlueHorseJump5', max = 100, as_pgn=True)
 
-games = list(games3) + list(games4)
+## Set 3 of games: space_foobar, chessmem
+games5 = client.games.export_by_player('space_foobar', max = 100, as_pgn=True)
+games6 = client.games.export_by_player('chessmem', max = 50, as_pgn=True)
+games = list(games5) + list(games6)
 
 filtered_data = []
 
@@ -211,4 +199,4 @@ if __name__ == "__main__":
 
 
 
-
+"""

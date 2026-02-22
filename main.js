@@ -40,10 +40,11 @@ if (window.positions && window.positions.length) {
     // Version 1: Clear existing positions in the database before pushing new ones
 
     // Version 2:Append the supplied array into the `positions` list in the DB
+    
     const positionsRef = ref(db, `positions`);
-    window.positions.forEach(pos => {
-        push(positionsRef, pos).catch(err => console.error("Firebase push failed", err));
-    });
+    //window.positions.forEach(pos => {
+    //    push(positionsRef, pos).catch(err => console.error("Firebase push failed", err));
+    //});
 }
 
 get(ref(db, `positions`)).then((snapshot) => {
