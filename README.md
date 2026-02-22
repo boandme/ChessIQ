@@ -21,10 +21,11 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 
 ## 🚀 Main Features
 
-### 🎯 Position Guessing Tool (Core Product)
+### 🎯 PositionPuzzler (Core Product)
 
 - Real-game positions sourced from Lichess
 - Evaluate whether White is better, Black is better, or the position is equal
+- Hone your positional skills just as you do tactical skills with regular puzzles
 - Designed to improve evaluation accuracy rather than calculation depth
 
 ### 🔮 Upcoming Features
@@ -32,6 +33,8 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 - AI opponents trained on real games
 - Difficulty-based positional challenges
 - Player accounts and long-term progress tracking
+- Positional Rating System/ Points for Puzzles based on difficulty
+- Precomputed explanations for each position, leading to further learning opportunities
 
 ---
 
@@ -88,36 +91,51 @@ Think of ChessIQ as tactical puzzles for positional thinking.
  - Upgraded UI across the whole app, including credits, info, and home pages all syncing in similar styles
  - Added a sidebar menu for future other products under ChessIQ
 
----
 
 ### 🔜 Planned Updates
 
 #### v0.45 – Larger Dataset 📈 (2026)
 
-- Expand the position database by 10x
+- Expand the position database by almost 10x, from 100 to over 900. 
 - Increase positional diversity and coverage
 
-#### v0.5 – Difficulty Modes 🧩 (2026)
+#### v0.5 – Difficulty Modes Update 🧩 (2026)
 
 - Introduce Easy, Medium, and Hard modes
 - Backend-based filtering by positional complexity
 
-#### v0.75 – Flopy AI Release 🤖 (2026)
+### v0.6 - Primitive Point System 🥇
+- Localstorage-based primitive elo system
+- Simple username-password
 
-- Experimental AI chess bot trained on thousands of Lichess games
-- No brute-force calculation, purely learned positional play
+## v0.75 - Time-based and point system upgrades 🏆
+ - More synced multiplayer point systems reliant on what difficulty puzzles, as well as time
+ - Formula-based puzzle calculations
 
-#### v0.85 – Accounts and Scoring 👤 (2026)
+#### v0.85 – Accounts and Leaderboards 👤 (2026)
 
 - User accounts and authentication
 - Score tracking and long-term progress analytics
+- Global leaderboards of PR(Positional Rating) already instated above in earlier updates
+- Google integrations for logins
 
 #### v1.0 – Full Release 🎉 (2026)
 
 - Official launch
 - Complete feature set with polished performance and UX
+- Updated PR(Positional Rating Calculations)
 
----
+#### v1.2 - Friends & Personalization Update(2026) 👱
+ - Ability to add friends
+ - Leaderboards within friends
+ - Personalization such as dark/light mode, super beginner mode
+ - Daily rewards, streaks, etc
+
+#### v1.2 - AI-based Explanations & Reflections(2026-7) 🤖
+- Pre-cached explanations for each stored position in the database
+- Good for long-term learning and reflection,  leading to better opportunities for the user to hone positional skill. 
+
+### IN THE NEAR FUTURE: COMING TO MOBILE DEVICES!!! --> Both Android & Apple
 
 ## 💡 Future Ideas
 
