@@ -87,7 +87,6 @@ Think of ChessIQ as tactical puzzles for positional thinking.
  - Added a display of the exact evaluation after the user makes their guess, allowing for more reflection and learning opportunities of positional thinking
  - Upgraded UI across the whole app, including credits, info, and home pages all syncing in similar styles
  - Added a sidebar menu for future other products under ChessIQ
-
 ---
 
 ### 🔜 Planned Updates
@@ -100,7 +99,7 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 #### v0.5 – Difficulty Modes 🧩 (2026)
 
 - Introduce Easy, Medium, and Hard modes
-- Backend-based filtering by positional complexity
+- Backend filtering by positional complexity
 
 #### v0.75 – Flopy AI Release 🤖 (2026)
 
@@ -116,6 +115,8 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 
 - Official launch
 - Complete feature set with polished performance and UX
+- Lichess & Devpost Release
+- Further publication
 
 ---
 

@@ -7,7 +7,7 @@ var current_position = 0;
 // api token for lichess: lip_UkEhwCNzopeUbv4Mznxz
 // Firebase Configuration Code : 
 // Import the functions you need from the SDKs you need
-import { getDatabase, ref, set, onValue, get, update } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+import { getDatabase, ref, push, onValue, get, update } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-analytics.js";
   // TODO: Add SDKs for Firebase products that you want to use
@@ -33,6 +33,18 @@ const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 var db = getDatabase(app)
 
+
+// if the template provided data (Flask route) we want to push it into Firebase
+if (window.positions && window.positions.length) {
+
+    // Version 1: Clear existing positions in the database before pushing new ones
+
+    // Version 2:Append the supplied array into the `positions` list in the DB
+    const positionsRef = ref(db, `positions`);
+    window.positions.forEach(pos => {
+        push(positionsRef, pos).catch(err => console.error("Firebase push failed", err));
+    });
+}
 
 get(ref(db, `positions`)).then((snapshot) => {
     if (snapshot.exists()) {
