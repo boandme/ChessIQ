@@ -19,7 +19,7 @@ import random
 
 
 games = []
-session = berserk.TokenSession("lip_BSfTqQWvUx1kSXEmuNW0")
+
 client = berserk.Client(session = session)
 fens = []
 selected_fens =[]
