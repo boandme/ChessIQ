@@ -76,8 +76,18 @@ get(ref(db, `positions`)).then((snapshot) => {
 
 
 window.onload = function() {
-    // show help modal when the page first loads
-    openModal();
+    // show help modal either on the very first page load of this browser session,
+    // or when arriving via the Home button (welcome=1 flag).
+    const params = new URLSearchParams(window.location.search);
+    const firstVisit = !sessionStorage.getItem('helpSeen');
+
+    if (params.get('welcome') === '1') {
+        openModal();
+        history.replaceState(null, '', window.location.pathname);
+    } else if (firstVisit) {
+        openModal();
+        sessionStorage.setItem('helpSeen', '1');
+    }
 }; 
 
 
