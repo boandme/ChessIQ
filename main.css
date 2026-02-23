@@ -299,6 +299,46 @@ header h1,
             gap: 20px;
             width: 100%;
         }
+
+        /* difficulty selector row */
+        #difficultyButtons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            /* width now controlled by parent row */
+        }
+
+        #actionRow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .difficulty-btn {
+            background: linear-gradient(135deg, #e0ffe6 0%, #a8ff78 100%);
+            border: 2px solid var(--bright-green);
+            border-radius: 25px;
+            padding: 8px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--primary-green);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .difficulty-btn:hover {
+            background: linear-gradient(135deg, var(--bright-green) 0%, var(--primary-green) 100%);
+            color: white;
+        }
+
+        .difficulty-btn.active {
+            background: var(--primary-green);
+            color: white;
+            border-color: var(--primary-green);
+        }
+
         
         .image-btn {
             width: 100px;

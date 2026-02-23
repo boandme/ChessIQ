@@ -2,8 +2,18 @@ var result;
 var correct_result;
 var answered = false;
 var evaluation;
+
+// all positions loaded from firebase (unfiltered)
 var positions = [];
-var current_position = 0;
+// buckets by difficulty
+var positionsByDiff = { Easy: [], Medium: [], Hard: [] };
+
+// the set of positions we're currently cycling through
+var filteredPositions = [];
+
+var current_position = 0; // index into filteredPositions
+var selectedDifficulty = "Medium"; // default on load
+
 // api token for lichess: lip_UkEhwCNzopeUbv4Mznxz
 // Firebase Configuration Code : 
 // Import the functions you need from the SDKs you need
@@ -49,14 +59,15 @@ if (window.positions && window.positions.length) {
 
 get(ref(db, `positions`)).then((snapshot) => {
     if (snapshot.exists()) {
-        positions = snapshot.val();
-        // Startup code for the first position
-        renderSVG(positions[0].SVG)
-        correct_result = findResult(positions[0].Eval)
-        
-        document.getElementById("turn").innerHTML = positions[0].Turn
-        
-    } 
+        // convert object-of-objects to array and bucket by difficulty
+        positions = Object.values(snapshot.val());
+        positionsByDiff.Easy = positions.filter(p => p.Difficulty === "Easy");
+        positionsByDiff.Medium = positions.filter(p => p.Difficulty === "Medium");
+        positionsByDiff.Hard = positions.filter(p => p.Difficulty === "Hard");
+
+        // select initial difficulty and render first item
+        setDifficulty(selectedDifficulty);
+    }
 }).catch((error) => {
     console.error(error);
 });
@@ -65,27 +76,25 @@ get(ref(db, `positions`)).then((snapshot) => {
 
 
 window.onload = function() {
-    
-    
+    // show help modal when the page first loads
+    openModal();
 }; 
 
 
 window.nextPosition = function() {
-    
-    if (current_position >= positions.length -1){
+    if (current_position >= filteredPositions.length - 1) {
         current_position = 0;
+    } else {
+        current_position++;
     }
-    else {
-        current_position ++;
-    }
-    renderSVG(positions[current_position].SVG)
-    correct_result = findResult(positions[current_position].Eval)
-    document.getElementById("turn").innerHTML = positions[current_position].Turn
+    const pos = filteredPositions[current_position];
+    renderSVG(pos.SVG);
+    console.log("Current difficulty: " + pos.Difficulty);
+    correct_result = findResult(pos.Eval);
+    document.getElementById("turn").innerHTML = pos.Turn;
     answered = false;
     document.getElementById("result").innerHTML = "";
     document.getElementById("evaluation-display").innerHTML = "";
-    
-    
 };
 
 // THis function is called when the user clicks their guess. It checks if the user is correct or not, and displays the result.
@@ -104,7 +113,7 @@ function sendAnswer(guess) {
         answered = true;
     }
     // Display the exact evaluation
-    const evaluationRaw = parseFloat(positions[current_position].Eval) / 100;
+    const evaluationRaw = parseFloat(filteredPositions[current_position].Eval) / 100;
     const displayEval = evaluationRaw > 0 ? `+${evaluationRaw}` : `${evaluationRaw}`;
     document.getElementById("evaluation-display").innerHTML = `<strong>Evaluation: ${displayEval}</strong>`;
 };
@@ -127,6 +136,35 @@ function findResult(evaluation){
     return result;
     
 };
+
+
+// set the current active difficulty and update position list accordingly
+function setDifficulty(level) {
+    selectedDifficulty = level;
+    filteredPositions = positionsByDiff[level] || [];
+    current_position = 0;
+
+    document.querySelectorAll('.difficulty-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.diff === level);
+    });
+
+    if (filteredPositions.length) {
+        const pos = filteredPositions[0];
+        renderSVG(pos.SVG);
+        correct_result = findResult(pos.Eval);
+        document.getElementById('turn').innerHTML = pos.Turn;
+    } else {
+        document.getElementById('board').innerHTML = '<p>No positions available</p>';
+        document.getElementById('turn').innerHTML = '';
+    }
+}
+
+// attach click handlers once DOM is ready
+window.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('#difficultyButtons .difficulty-btn').forEach(btn => {
+        btn.addEventListener('click', () => setDifficulty(btn.dataset.diff));
+    });
+});
 
 
 
