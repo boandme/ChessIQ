@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChessIQ Information</title>
+  <link rel="stylesheet" href="main.css">
+</head>
+<body>
+  <button id="hamburger-menu" onclick="openSidebar()" aria-label="Menu">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+
+  <aside id="sidebar" class="sidebar">
+    <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close">&times;</button>
+    <nav class="sidebar-nav">
+      <h3>Products</h3>
+      <ul>
+        <li><a href="index.html" onclick="closeSidebar()">PositionGuesser</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <header class="global-header">
+    <h1 class="logo-title">ChessIQ v0.5</h1>
+    <nav class="secondary-nav">
+      <a href="index.html">Home</a>
+      <a href="credits.html">Credits</a>
+      <a href="info.html" class="active">Information</a>
+    </nav>
+  </header>
+
+  <main class="content">
+    <h1>Information</h1>
+    <section>
+      <h2>Notice</h2>
+    <p>ChessIQ is still in the beta/development phase.</p>
+  </section>
+
+  <section>
+    <h2>General Information</h2>
+    <p>
+      ChessIQ is a positional training tool for intermediate and above chess players that tests your ability to visualize and evaluate positions.
+    </p>
+    <p>
+      Players are given a position and must analyze it, either by simple material, space, or other positional concepts. It’s like tactical puzzles, but it trains your positional play to be very useful in real games!
+    </p>
+    <p>
+      Although ChessIQ is in the beta stage right now, many more updates are coming soon, leading up to v1.0.
+    </p>
+    <p>
+      ChessIQ’s main product is the <strong>Position Guessing Tool</strong>, but additional features such as AI opponents to play against are also coming soon.
+    </p>
+  </section>
+
+  <section>
+    <h2>Inspiration</h2>
+    <p>
+      This game was inspired by tactical puzzles, with the idea of creating a way to effectively practice positional thinking.
+    </p>
+  </section>
+  <section>
+    <h2> Further Information</h2>
+    <p>
+      Lichess Article: <a href = "https://lichess.org/@/Vyom_Joshi/blog/train-smarter-introducing-chessiq-the-positional-puzzle-trainer/8dQAwHRw" target = "_blank">Train Smarter: Introducing ChessIQ</a> 
+    </p>
+  </section>
+</div>
+
+<div id="modal">
+  <div class="modal-content">
+    <button class="modal-close-btn" onclick="closeModal()" aria-label="Close">&times;</button>
+    
+    <h2>Welcome to ChessIQ!</h2>
+    <p class="modal-intro">Train your positional knowledge in chess and master the art of self-analysis. This skill is invaluable for chess players of all levels!</p><br>
+    
+    <div class="modal-section">
+      <h3>How To Play</h3>
+      <p class="modal-instruction-intro">You will be given a position. Analyze it and determine which side has the advantage:</p>
+      <ul class="modal-list">
+        <li><strong>White Winning:</strong> Click the White King</li>
+        <li><strong>Black Winning:</strong> Click the Black King</li>
+        <li><strong>Equal Position:</strong> Click the Equal symbol</li>
+      </ul>
+    </div>
+    
+    <button class="got-it-btn" onclick="closeModal()">Got It!</button>
+  </div>
+  </div>
+</div>
+
+<img id = 'help-btn' src = 'help.png' onclick = 'openModal()'>
+
+<script type = "module" src="main.js"></script>
+</body>
+</html>
