@@ -3,6 +3,42 @@ var correct_result;
 var answered = false;
 var evaluation;
 
+// ── Positional Rating (PR) ──────────────────────────────────────────────────
+// Starting rating for new players
+const PR_START = 200;
+
+// Load from localStorage, or initialise at 200
+var playerPR = parseFloat(localStorage.getItem('chessiq_pr'));
+if (isNaN(playerPR)) playerPR = PR_START;
+
+// Base point values keyed by difficulty
+const PR_BASE = {
+    Easy:   { correct: 14,  wrong: -22 },
+    Medium: { correct: 19,  wrong: -19 },
+    Hard:   { correct: 30,  wrong: -12 },
+};
+
+/**
+ * Calculate and apply a PR change after a puzzle attempt.
+ * @param {string}  difficulty - "Easy" | "Medium" | "Hard"
+ * @param {boolean} correct    - whether the player guessed correctly
+ */
+function updatePR(difficulty, correct) {
+    const base = PR_BASE[difficulty];
+    if (!base) return; // unknown difficulty, skip
+
+    const baseValue    = correct ? base.correct : base.wrong;
+    const ratingFactor = 1 - (playerPR / 1400);
+    const delta        = Math.round(baseValue * ratingFactor);
+
+    playerPR = Math.max(0, playerPR + delta);
+    localStorage.setItem('chessiq_pr', playerPR);
+
+    const sign = delta >= 0 ? '+' : '';
+    console.log(`PR update | difficulty: ${difficulty} | correct: ${correct} | delta: ${sign}${delta} | new PR: ${playerPR}`);
+}
+// ────────────────────────────────────────────────────────────────────────────
+
 // all positions loaded from firebase (unfiltered)
 var positions = [];
 // buckets by difficulty
@@ -131,6 +167,8 @@ function sendAnswer(guess) {
     const evaluationRaw = parseFloat(filteredPositions[current_position].Eval) / 100;
     const displayEval = evaluationRaw > 0 ? `+${evaluationRaw}` : `${evaluationRaw}`;
     document.getElementById("evaluation-display").innerHTML = `<strong>Evaluation: ${displayEval}</strong>`;
+    // Update Positional Rating
+    updatePR(selectedDifficulty, guess === correct_result);
 };
  window.sendAnswer = sendAnswer;
     
@@ -233,6 +271,3 @@ function openNav() {
 function closeNav() {
   document.getElementById("sidebar").style.width = "0";
 }
-
-
-
