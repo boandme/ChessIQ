@@ -97,7 +97,44 @@ function updatePR(difficulty, correct) {
         `streakMult: x${streakMult.toFixed(2)} (${streakLabel}) | ` +
         `puzzle #${totalPuzzles} | new PR: ${playerPR}`
     );
+
+    // Update the on-screen PR card
+    renderPR(delta);
 }
+
+// ── Render the PR display card ───────────────────────────────────────────────
+function renderPR(delta) {
+    const valEl      = document.getElementById('pr-value');
+    const subEl      = document.getElementById('pr-puzzles');
+    const deltaEl    = document.getElementById('pr-delta');
+    if (!valEl) return; // not on the game page
+
+    valEl.textContent = playerPR;
+    subEl.textContent = `${totalPuzzles} puzzle${totalPuzzles !== 1 ? 's' : ''} played`;
+
+    if (delta !== undefined) {
+        const sign = delta >= 0 ? '+' : '';
+        deltaEl.textContent  = `${sign}${delta}`;
+        deltaEl.className    = `pr-delta ${delta >= 0 ? 'gain' : 'loss'}`;
+
+        // force reflow so CSS transition fires fresh each time
+        void deltaEl.offsetWidth;
+        deltaEl.classList.add('show');
+
+        clearTimeout(renderPR._fadeTimer);
+        renderPR._fadeTimer = setTimeout(() => {
+            deltaEl.classList.add('fade');
+            setTimeout(() => {
+                deltaEl.className = 'pr-delta';
+            }, 600);
+        }, 1400);
+
+        // brief scale-bump on the number
+        valEl.classList.add('bump');
+        setTimeout(() => valEl.classList.remove('bump'), 200);
+    }
+}
+window.renderPR = renderPR;
 // ────────────────────────────────────────────────────────────────────────────
 
 // all positions loaded from firebase (unfiltered)
@@ -178,6 +215,9 @@ get(ref(db, `positions`)).then((snapshot) => {
 
 
 window.onload = function() {
+    // Populate PR card immediately from localStorage
+    renderPR();
+
     // show help modal either on the very first page load of this browser session,
     // or when arriving via the Home button (welcome=1 flag).
     const params = new URLSearchParams(window.location.search);
