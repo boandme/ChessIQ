@@ -5,7 +5,7 @@
     position: fixed;
     top: 20px;
     left: 20px;
-    z-index: 999;
+    z-index: 1002;
     background: var(--bright-green);
     border: none;
     width: 50px;
@@ -44,7 +44,7 @@
     height: 100vh;
     background: linear-gradient(135deg, var(--primary-green) 0%, #0d3d1f 100%);
     box-shadow: 3px 0 15px rgba(0, 0, 0, 0.2);
-    z-index: 998;
+    z-index: 1005;
     transform: translateX(-100%);
     transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     overflow-y: auto;
@@ -137,7 +137,7 @@
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0);
-    z-index: 997;
+    z-index: 1004;
     transition: background 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     pointer-events: none;
 }
@@ -548,7 +548,7 @@
                 justify-content: center;
                 align-items: flex-start;
                 padding-top: 60px;
-                z-index: 1000;
+                z-index: 1005;
                 }
 
                 .modal-content {
@@ -708,7 +708,7 @@
                     justify-content: center;
                     align-items: center;
                     box-shadow: var(--shadow);
-                    z-index: 999; /* sit above other content */
+                    z-index: 1002; /* sit above header */
                     }
 
                 #help-btn:hover {

@@ -4,19 +4,64 @@ var answered = false;
 var evaluation;
 
 // ── Positional Rating (PR) ──────────────────────────────────────────────────
-// Starting rating for new players
 const PR_START = 200;
 
-// Load from localStorage, or initialise at 200
+// ── Persistent state from localStorage ──
 var playerPR = parseFloat(localStorage.getItem('chessiq_pr'));
 if (isNaN(playerPR)) playerPR = PR_START;
 
-// Base point values keyed by difficulty
+// Total puzzles ever answered — drives the confidence window
+var totalPuzzles = parseInt(localStorage.getItem('chessiq_total_puzzles')) || 0;
+
+// Streak tracking:
+//   positive = current correct streak length
+//   negative = current wrong streak length
+//   0        = no streak
+var currentStreak = parseInt(localStorage.getItem('chessiq_streak')) || 0;
+
+// ── Base point values ──
 const PR_BASE = {
     Easy:   { correct: 14,  wrong: -22 },
     Medium: { correct: 19,  wrong: -19 },
     Hard:   { correct: 30,  wrong: -12 },
 };
+
+// ── Confidence window ──
+// Swings are amplified for new players and settle toward 1.0 after ~40 puzzles.
+// Formula: multiplier = 1 + 1.5 * e^(-totalPuzzles / 15)
+// At puzzle 0  : ~2.50x  (brand new, big swings)
+// At puzzle 15 : ~1.55x
+// At puzzle 30 : ~1.18x
+// At puzzle 50 : ~1.02x  (effectively settled)
+function confidenceMultiplier() {
+    return 1 + 1.5 * Math.exp(-totalPuzzles / 15);
+}
+
+// ── Streak multiplier ──
+// Each step in a streak adds 10%, capped at 50% bonus (streak of 5+).
+// Correct streak boosts gains only; wrong streak boosts losses only.
+// Streak resets to 1 (or -1) the moment it changes direction.
+function streakMultiplier(correct) {
+    if (correct && currentStreak > 0) {
+        const steps = Math.min(currentStreak, 5);
+        return 1 + steps * 0.10;
+    }
+    if (!correct && currentStreak < 0) {
+        const steps = Math.min(Math.abs(currentStreak), 5);
+        return 1 + steps * 0.10;
+    }
+    return 1.0; // streak just broken or no streak yet
+}
+
+// ── Update streak state ──
+function updateStreak(correct) {
+    if (correct) {
+        currentStreak = currentStreak > 0 ? currentStreak + 1 : 1;
+    } else {
+        currentStreak = currentStreak < 0 ? currentStreak - 1 : -1;
+    }
+    localStorage.setItem('chessiq_streak', currentStreak);
+}
 
 /**
  * Calculate and apply a PR change after a puzzle attempt.
@@ -25,17 +70,33 @@ const PR_BASE = {
  */
 function updatePR(difficulty, correct) {
     const base = PR_BASE[difficulty];
-    if (!base) return; // unknown difficulty, skip
+    if (!base) return;
 
     const baseValue    = correct ? base.correct : base.wrong;
     const ratingFactor = 1 - (playerPR / 1400);
-    const delta        = Math.round(baseValue * ratingFactor);
+    const confMult     = confidenceMultiplier();
+    const streakMult   = streakMultiplier(correct);
+
+    const delta = Math.round(baseValue * ratingFactor * confMult * streakMult);
+
+    // advance streak AFTER reading multiplier for this puzzle
+    updateStreak(correct);
+    totalPuzzles++;
+    localStorage.setItem('chessiq_total_puzzles', totalPuzzles);
 
     playerPR = Math.max(0, playerPR + delta);
     localStorage.setItem('chessiq_pr', playerPR);
 
     const sign = delta >= 0 ? '+' : '';
-    console.log(`PR update | difficulty: ${difficulty} | correct: ${correct} | delta: ${sign}${delta} | new PR: ${playerPR}`);
+    const streakLabel = currentStreak > 1  ? `x${currentStreak} correct streak`
+                      : currentStreak < -1 ? `x${Math.abs(currentStreak)} wrong streak`
+                      : 'no streak';
+    console.log(
+        `PR update | difficulty: ${difficulty} | correct: ${correct} | ` +
+        `delta: ${sign}${delta} | confMult: x${confMult.toFixed(2)} | ` +
+        `streakMult: x${streakMult.toFixed(2)} (${streakLabel}) | ` +
+        `puzzle #${totalPuzzles} | new PR: ${playerPR}`
+    );
 }
 // ────────────────────────────────────────────────────────────────────────────
 
