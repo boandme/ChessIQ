@@ -1,5 +1,3 @@
-
-
 /* Hamburger Menu */
 #hamburger-menu {
     position: fixed;
@@ -838,3 +836,94 @@
                                                                             
 
                                     
+/* ── PR Display Card ─────────────────────────────────────────────────────── */
+#pr-display {
+    position: relative;
+    width: 100%;
+    background: linear-gradient(145deg, #0f3d20 0%, #1a5c30 60%, #22c55e22 100%);
+    border: 2px solid var(--bright-green);
+    border-radius: 18px;
+    padding: 18px 22px 14px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    margin-bottom: 14px;
+    overflow: visible;
+}
+
+.pr-label {
+    font-family: 'Space Grotesk', "Segoe UI", sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--bright-green);
+    opacity: 0.85;
+}
+
+.pr-value {
+    font-family: 'Space Grotesk', "Segoe UI", sans-serif;
+    font-size: 3rem;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1;
+    letter-spacing: -1px;
+    text-shadow: 0 0 20px rgba(34,197,94,0.5), 0 2px 6px rgba(0,0,0,0.3);
+    transition: transform 0.15s ease;
+}
+
+.pr-value.bump {
+    transform: scale(1.12);
+}
+
+.pr-sub {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+
+/* Delta badge — floats just outside the top-right of the card */
+.pr-delta {
+    position: absolute;
+    top: -14px;
+    right: 14px;
+    font-family: 'Space Grotesk', "Segoe UI", sans-serif;
+    font-size: 1.05rem;
+    font-weight: 800;
+    padding: 4px 12px;
+    border-radius: 50px;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(0px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.pr-delta.gain {
+    background: #16a34a;
+    color: #ffffff;
+    border: 2px solid #4ade80;
+}
+
+.pr-delta.loss {
+    background: #dc2626;
+    color: #ffffff;
+    border: 2px solid #f87171;
+}
+
+.pr-delta.show {
+    opacity: 1;
+    transform: translateY(-10px);
+}
+
+.pr-delta.fade {
+    opacity: 0;
+    transform: translateY(-26px);
+    transition: opacity 0.55s ease, transform 0.55s ease;
+}
+/* ─────────────────────────────────────────────────────────────────────────── */
