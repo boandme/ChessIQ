@@ -91,48 +91,42 @@ Think of ChessIQ as tactical puzzles for positional thinking.
  - Upgraded UI across the whole app, including credits, info, and home pages all syncing in similar styles
  - Added a sidebar menu for future other products under ChessIQ
 <<<<<<< HEAD
----
-=======
 
->>>>>>> dc2f7705b4ff3570a24ee0ef34f1b1d5156b1126
 
-### 🔜 Planned Updates
-
-#### v0.45 – Larger Dataset 📈 (2026)
-
+#### v0.45 – Larger Dataset 📈
 - Expand the position database by almost 10x, from 100 to over 900. 
 - Increase positional diversity and coverage
 
-#### v0.5 – Difficulty Modes Update 🧩 (2026)
-
+#### v0.5 – Difficulty Modes Update 🧩
 - Introduce Easy, Medium, and Hard modes
 - Backend filtering by positional complexity using an [algorithm]
 
+### 🔜 Planned Updates
+
 ### v0.6 - Primitive Point System 🥇
 - Localstorage-based primitive elo system
-- Simple username-password
+- Complex mechanics and equations for computing elo based on streaks, confidence intervals, etc
 
-## v0.75 - Time-based and point system upgrades 🏆
- - More synced multiplayer point systems reliant on what difficulty puzzles, as well as time
- - Formula-based puzzle calculations
-
-#### v0.85 – Accounts and Leaderboards 👤 (2026)
+#### v0.8 – Accounts and Leaderboards 👤 (2026)
 
 - User accounts and authentication
 - Score tracking and long-term progress analytics
 - Global leaderboards of PR(Positional Rating) already instated above in earlier updates
 - Google integrations for logins
 
+
+## v0.75 - Time-based and point system upgrades 🏆[DELAYED to v0.9]
+ - More synced multiplayer point systems reliant on what difficulty puzzles, as well as time
+ - Formula-based puzzle calculations
 #### v1.0 – Full Release 🎉 (2026)
 
 - Official launch
 - Complete feature set with polished performance and UX
-<<<<<<< HEAD
+
 - Lichess & Devpost Release
 - Further publication
 =======
 - Updated PR(Positional Rating Calculations)
->>>>>>> dc2f7705b4ff3570a24ee0ef34f1b1d5156b1126
 
 #### v1.2 - Friends & Personalization Update(2026) 👱
  - Ability to add friends
@@ -140,7 +134,7 @@ Think of ChessIQ as tactical puzzles for positional thinking.
  - Personalization such as dark/light mode, super beginner mode
  - Daily rewards, streaks, etc
 
-#### v1.2 - AI-based Explanations & Reflections(2026-7) 🤖
+#### v1.2 - AI-based Explanations & Reflections(2026-27) 🤖
 - Pre-cached explanations for each stored position in the database
 - Good for long-term learning and reflection,  leading to better opportunities for the user to hone positional skill. 
 
