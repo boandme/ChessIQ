@@ -191,9 +191,16 @@ if (window.positions && window.positions.length) {
     //});
 }
 
-// Show loading state immediately
-document.getElementById('board').innerHTML = '<p style="padding: 40px; text-align: center; color: #14532d; font-size: 1.2rem;">Loading positions...</p>';
-document.getElementById('turn').innerHTML = 'Loading...';
+const boardEl = document.getElementById('board');
+const turnEl = document.getElementById('turn');
+
+// Show loading state immediately on pages that include the game board
+if (boardEl) {
+    boardEl.innerHTML = '<p style="padding: 40px; text-align: center; color: #14532d; font-size: 1.2rem;">Loading positions...</p>';
+}
+if (turnEl) {
+    turnEl.innerHTML = 'Loading...';
+}
 
 get(ref(db, `positions`)).then((snapshot) => {
     if (snapshot.exists()) {
@@ -203,12 +210,16 @@ get(ref(db, `positions`)).then((snapshot) => {
         positionsByDiff.Medium = positions.filter(p => p.Difficulty === "Medium");
         positionsByDiff.Hard = positions.filter(p => p.Difficulty === "Hard");
 
-        // select initial difficulty and render first item
-        setDifficulty(selectedDifficulty);
+        // select initial difficulty and render first item only if the game page is present
+        if (boardEl) {
+            setDifficulty(selectedDifficulty);
+        }
     }
 }).catch((error) => {
     console.error(error);
-    document.getElementById('board').innerHTML = '<p style="color: red;">Error loading positions</p>';
+    if (boardEl) {
+        boardEl.innerHTML = '<p style="color: red;">Error loading positions</p>';
+    }
 });
 
 
@@ -302,14 +313,23 @@ function setDifficulty(level) {
         btn.classList.toggle('active', btn.dataset.diff === level);
     });
 
+    const boardEl = document.getElementById('board');
+    const turnEl = document.getElementById('turn');
+
     if (filteredPositions.length) {
         const pos = filteredPositions[0];
         renderSVG(pos.SVG);
         correct_result = findResult(pos.Eval);
-        document.getElementById('turn').innerHTML = pos.Turn;
+        if (turnEl) {
+            turnEl.innerHTML = pos.Turn;
+        }
     } else {
-        document.getElementById('board').innerHTML = '<p>No positions available</p>';
-        document.getElementById('turn').innerHTML = '';
+        if (boardEl) {
+            boardEl.innerHTML = '<p>No positions available</p>';
+        }
+        if (turnEl) {
+            turnEl.innerHTML = '';
+        }
     }
 }
 
@@ -326,18 +346,24 @@ window.addEventListener('DOMContentLoaded', () => {
               
 function renderSVG(svg){
     // This function renders the SVG string into the HTML
-    document.getElementById('board').innerHTML = svg;
+    const boardEl = document.getElementById('board');
+    if (!boardEl) return;
+    boardEl.innerHTML = svg;
 }
 
 // this function closes the modal
 function closeModal(){
-    document.getElementById("modal").style.display = "none";
+    const modalEl = document.getElementById("modal");
+    if (!modalEl) return;
+    modalEl.style.display = "none";
 }
 window.closeModal = closeModal;
 
 // this function opens the modal
 function openModal(){
-    document.getElementById("modal").style.display = "flex";
+    const modalEl = document.getElementById("modal");
+    if (!modalEl) return;
+    modalEl.style.display = "flex";
 }
 window.openModal = openModal;
 
@@ -345,14 +371,20 @@ window.openModal = openModal;
 
 // Sidebar functions
 window.openSidebar = function() {
-    document.getElementById('sidebar').classList.add('open');
-    document.getElementById('sidebar-overlay').classList.add('open');
+    const sidebarEl = document.getElementById('sidebar');
+    const overlayEl = document.getElementById('sidebar-overlay');
+    if (!sidebarEl || !overlayEl) return;
+    sidebarEl.classList.add('open');
+    overlayEl.classList.add('open');
     document.body.style.overflow = 'hidden';
 };
 
 window.closeSidebar = function() {
-    document.getElementById('sidebar').classList.remove('open');
-    document.getElementById('sidebar-overlay').classList.remove('open');
+    const sidebarEl = document.getElementById('sidebar');
+    const overlayEl = document.getElementById('sidebar-overlay');
+    if (!sidebarEl || !overlayEl) return;
+    sidebarEl.classList.remove('open');
+    overlayEl.classList.remove('open');
     document.body.style.overflow = 'auto';
 };
 
