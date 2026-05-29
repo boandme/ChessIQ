@@ -5,7 +5,7 @@ var evaluation;
 
 // ── Positional Rating (PR) ──────────────────────────────────────────────────
 const PR_MAX = 3200;
-const PR_START = 640;
+const PR_START = 500;
 
 // ── Persistent state from localStorage ──
 var playerPR = parseFloat(localStorage.getItem('chessiq_pr'));
