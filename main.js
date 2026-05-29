@@ -4,7 +4,8 @@ var answered = false;
 var evaluation;
 
 // ── Positional Rating (PR) ──────────────────────────────────────────────────
-const PR_START = 200;
+const PR_MAX = 3200;
+const PR_START = 640;
 
 // ── Persistent state from localStorage ──
 var playerPR = parseFloat(localStorage.getItem('chessiq_pr'));
@@ -21,9 +22,9 @@ var currentStreak = parseInt(localStorage.getItem('chessiq_streak')) || 0;
 
 // ── Base point values ──
 const PR_BASE = {
-    Easy:   { correct: 14,  wrong: -22 },
-    Medium: { correct: 19,  wrong: -19 },
-    Hard:   { correct: 30,  wrong: -12 },
+    Easy:   { correct: 45,  wrong: -70 },
+    Medium: { correct: 61,  wrong: -61 },
+    Hard:   { correct: 96,  wrong: -38 },
 };
 
 // ── Confidence window ──
@@ -73,7 +74,7 @@ function updatePR(difficulty, correct) {
     if (!base) return;
 
     const baseValue    = correct ? base.correct : base.wrong;
-    const ratingFactor = 1 - (playerPR / 1400);
+    const ratingFactor = 1 - (playerPR / 4480);
     const confMult     = confidenceMultiplier();
     const streakMult   = streakMultiplier(correct);
 
@@ -84,7 +85,7 @@ function updatePR(difficulty, correct) {
     totalPuzzles++;
     localStorage.setItem('chessiq_total_puzzles', totalPuzzles);
 
-    playerPR = Math.max(0, playerPR + delta);
+    playerPR = Math.min(PR_MAX, Math.max(0, playerPR + delta));
     localStorage.setItem('chessiq_pr', playerPR);
 
     const sign = delta >= 0 ? '+' : '';
@@ -142,11 +143,17 @@ var positions = [];
 // buckets by difficulty
 var positionsByDiff = { Easy: [], Medium: [], Hard: [] };
 
-// the set of positions we're currently cycling through
-var filteredPositions = [];
+var current_position = 0; // index into the active difficulty pool
 
-var current_position = 0; // index into filteredPositions
-var selectedDifficulty = "Medium"; // default on load
+// Difficulty is derived from playerPR — no user selection
+// 0–1065  → Easy
+// 1066–2131 → Medium
+// 2132+    → Hard
+function getDifficultyFromPR() {
+    if (playerPR < 1066)  return "Easy";
+    if (playerPR < 2132)  return "Medium";
+    return "Hard";
+}
 
 // api token for lichess: lip_UkEhwCNzopeUbv4Mznxz
 // Firebase Configuration Code : 
@@ -210,9 +217,9 @@ get(ref(db, `positions`)).then((snapshot) => {
         positionsByDiff.Medium = positions.filter(p => p.Difficulty === "Medium");
         positionsByDiff.Hard = positions.filter(p => p.Difficulty === "Hard");
 
-        // select initial difficulty and render first item only if the game page is present
+        // select initial puzzle based on current PR
         if (boardEl) {
-            setDifficulty(selectedDifficulty);
+            loadPuzzleForPR();
         }
     }
 }).catch((error) => {
@@ -245,19 +252,26 @@ window.onload = function() {
 
 
 window.nextPosition = function() {
-    if (current_position >= filteredPositions.length - 1) {
-        current_position = 0;
-    } else {
-        current_position++;
+    const difficulty = getDifficultyFromPR();
+    const pool = positionsByDiff[difficulty] || [];
+
+    if (pool.length === 0) {
+        document.getElementById('board').innerHTML = '<p>No positions available</p>';
+        document.getElementById('turn').innerHTML = '';
+        return;
     }
-    const pos = filteredPositions[current_position];
+
+    current_position = Math.floor(Math.random() * pool.length);
+
+    const pos = pool[current_position];
     renderSVG(pos.SVG);
-    console.log("Current difficulty: " + pos.Difficulty);
     correct_result = findResult(pos.Eval);
     document.getElementById("turn").innerHTML = pos.Turn;
     answered = false;
     document.getElementById("result").innerHTML = "";
     document.getElementById("evaluation-display").innerHTML = "";
+
+    console.log(`Puzzle loaded | PR: ${playerPR} | difficulty: ${difficulty} | index: ${current_position}`);
 };
 
 // THis function is called when the user clicks their guess. It checks if the user is correct or not, and displays the result.
@@ -275,12 +289,16 @@ function sendAnswer(guess) {
         document.getElementById("result").style.color = "red";
         answered = true;
     }
+
     // Display the exact evaluation
-    const evaluationRaw = parseFloat(filteredPositions[current_position].Eval) / 100;
+    const difficulty = getDifficultyFromPR();
+    const pool = positionsByDiff[difficulty] || [];
+    const evaluationRaw = parseFloat(pool[current_position].Eval) / 100;
     const displayEval = evaluationRaw > 0 ? `+${evaluationRaw}` : `${evaluationRaw}`;
     document.getElementById("evaluation-display").innerHTML = `<strong>Evaluation: ${displayEval}</strong>`;
-    // Update Positional Rating
-    updatePR(selectedDifficulty, guess === correct_result);
+
+    // Update Positional Rating using the difficulty that was active when puzzle was shown
+    updatePR(difficulty, guess === correct_result);
 };
  window.sendAnswer = sendAnswer;
     
@@ -303,42 +321,26 @@ function findResult(evaluation){
 };
 
 
-// set the current active difficulty and update position list accordingly
-function setDifficulty(level) {
-    selectedDifficulty = level;
-    filteredPositions = positionsByDiff[level] || [];
-    current_position = 0;
+// Load the first puzzle from the pool matching the player's current PR tier
+function loadPuzzleForPR() {
+    const difficulty = getDifficultyFromPR();
+    const pool = positionsByDiff[difficulty] || [];
 
-    document.querySelectorAll('.difficulty-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.diff === level);
-    });
-
-    const boardEl = document.getElementById('board');
-    const turnEl = document.getElementById('turn');
-
-    if (filteredPositions.length) {
-        const pos = filteredPositions[0];
+    if (pool.length) {
+        current_position = Math.floor(Math.random() * pool.length);
+        const pos = pool[current_position];
         renderSVG(pos.SVG);
         correct_result = findResult(pos.Eval);
-        if (turnEl) {
-            turnEl.innerHTML = pos.Turn;
-        }
+        const turnEl = document.getElementById('turn');
+        if (turnEl) turnEl.innerHTML = pos.Turn;
+        console.log(`Puzzle loaded | PR: ${playerPR} | difficulty: ${difficulty} | index: ${current_position}`);
     } else {
-        if (boardEl) {
-            boardEl.innerHTML = '<p>No positions available</p>';
-        }
-        if (turnEl) {
-            turnEl.innerHTML = '';
-        }
+        const boardEl = document.getElementById('board');
+        const turnEl  = document.getElementById('turn');
+        if (boardEl) boardEl.innerHTML = '<p>No positions available</p>';
+        if (turnEl)  turnEl.innerHTML  = '';
     }
 }
-
-// attach click handlers once DOM is ready
-window.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('#difficultyButtons .difficulty-btn').forEach(btn => {
-        btn.addEventListener('click', () => setDifficulty(btn.dataset.diff));
-    });
-});
 
 
 
