@@ -98,9 +98,57 @@
             </div>
         </div>
 
+        <!-- ── Settings Modal ─────────────────────────────────── -->
+        <div id="settings-modal" onclick="if(event.target===this) closeSettings()">
+            <div class="modal-content">
+                <button class="modal-close-btn" onclick="closeSettings()" aria-label="Close">&times;</button>
+
+                <h2>⚙️ Settings</h2>
+                <p class="modal-intro">Manage your ChessIQ experience.</p>
+
+                <!-- Rating Reset -->
+                <div class="modal-section">
+                    <h3>Positional Rating</h3>
+                    <p class="modal-instruction-intro">Your current PR: <strong id="settings-pr-display">—</strong></p>
+                    <p class="modal-instruction-intro" style="font-size:0.88rem; opacity:0.75;">Resetting will return your PR to the starting value (500) and clear your puzzle count and streak.</p>
+                    <div id="reset-confirm-area">
+                        <button class="settings-action-btn danger" onclick="showResetConfirm()">Reset Rating</button>
+                    </div>
+                    <div id="reset-confirm-prompt" style="display:none;">
+                        <p class="modal-instruction-intro" style="color:#dc2626; font-weight:700; margin-bottom:10px;">Are you sure? This cannot be undone.</p>
+                        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                            <button class="settings-action-btn danger" onclick="confirmResetPR()">Yes, Reset</button>
+                            <button class="settings-action-btn" onclick="cancelResetConfirm()">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Display preferences -->
+                <div class="modal-section">
+                    <h3>Display</h3>
+                    <ul class="modal-list">
+                        <li><strong>Board Theme:</strong> Classic Green <span style="opacity:0.5; font-size:0.82rem;">(more coming soon)</span></li>
+                        <li><strong>Piece Style:</strong> Standard <span style="opacity:0.5; font-size:0.82rem;">(more coming soon)</span></li>
+                    </ul>
+                </div>
+
+                <!-- About -->
+                <div class="modal-section">
+                    <h3>About</h3>
+                    <ul class="modal-list">
+                        <li><strong>Version:</strong> ChessIQ v0.5</li>
+                        <li><strong>Status:</strong> Beta — active development</li>
+                    </ul>
+                </div>
+
+                <button class="got-it-btn" onclick="closeSettings()">Close</button>
+            </div>
+        </div>
+
 
         
         </div>
+        <img id="settings-btn" src="gears-icon.svg" onclick="openSettings()" aria-label="Settings">
         <img id = 'help-btn' src = "help.png" onclick = 'openModal()'>
 
         <script type = "module" src="main.js"></script>
