@@ -371,7 +371,66 @@ window.openModal = openModal;
 
 
 
-// Sidebar functions
+// ── Settings Modal ────────────────────────────────────────────────────────────
+window.openSettings = function() {
+    const modal = document.getElementById('settings-modal');
+    if (!modal) return;
+    // Sync the live PR display inside the modal
+    const prDisplay = document.getElementById('settings-pr-display');
+    if (prDisplay) prDisplay.textContent = playerPR;
+    // Make sure confirm prompt is hidden each time modal opens
+    cancelResetConfirm();
+    modal.style.display = 'flex';
+};
+
+window.closeSettings = function() {
+    const modal = document.getElementById('settings-modal');
+    if (!modal) return;
+    modal.style.display = 'none';
+};
+
+// Show the inline confirmation prompt
+window.showResetConfirm = function() {
+    document.getElementById('reset-confirm-area').style.display  = 'none';
+    document.getElementById('reset-confirm-prompt').style.display = 'block';
+};
+
+// User clicked Cancel — restore normal state
+window.cancelResetConfirm = function() {
+    const area   = document.getElementById('reset-confirm-area');
+    const prompt = document.getElementById('reset-confirm-prompt');
+    if (area)   area.style.display   = 'block';
+    if (prompt) prompt.style.display = 'none';
+};
+
+// User confirmed — wipe all PR localStorage keys and reset in-memory state
+window.confirmResetPR = function() {
+    playerPR      = PR_START;
+    totalPuzzles  = 0;
+    currentStreak = 0;
+
+    localStorage.setItem('chessiq_pr',            playerPR);
+    localStorage.setItem('chessiq_total_puzzles', totalPuzzles);
+    localStorage.setItem('chessiq_streak',        currentStreak);
+
+    // Update the PR card on the main page
+    renderPR();
+
+    // Update the live display inside the modal and flash it
+    const prDisplay = document.getElementById('settings-pr-display');
+    if (prDisplay) {
+        prDisplay.textContent = playerPR;
+        prDisplay.classList.remove('reset-flash');
+        void prDisplay.offsetWidth; // reflow to re-trigger animation
+        prDisplay.classList.add('reset-flash');
+    }
+
+    // Restore button, close confirm prompt
+    cancelResetConfirm();
+
+    console.log(`PR reset | new PR: ${playerPR} | puzzles: ${totalPuzzles} | streak: ${currentStreak}`);
+};
+// ─────────────────────────────────────────────────────────────────────────────
 window.openSidebar = function() {
     const sidebarEl = document.getElementById('sidebar');
     const overlayEl = document.getElementById('sidebar-overlay');
@@ -390,10 +449,11 @@ window.closeSidebar = function() {
     document.body.style.overflow = 'auto';
 };
 
-// Close sidebar on Escape key
+// Close sidebar and settings on Escape key
 document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
         closeSidebar();
+        closeSettings();
     }
 });
 
