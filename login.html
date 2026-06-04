@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChessIQ — Sign In</title>
+    <link rel="stylesheet" href="main.css">
+    <style>
+        /* ── Auth page overrides ─────────────────────────────────────────── */
+        body {
+            justify-content: center;
+            align-items: center;
+            padding-top: 20px;
+            min-height: 100vh;
+        }
+
+        .auth-card {
+            background: rgba(255,255,255,0.95);
+            border: 3px solid var(--bright-green);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            padding: 40px 44px 36px;
+            width: 100%;
+            max-width: 440px;
+            position: relative;
+        }
+
+        .auth-logo {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .auth-logo h1 {
+            font-family: 'Space Grotesk', "Segoe UI", sans-serif;
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: var(--primary-green);
+            margin: 0 0 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .auth-logo p {
+            font-size: 0.88rem;
+            color: #6b7280;
+            margin: 0;
+        }
+
+        /* Tab switcher */
+        .auth-tabs {
+            display: flex;
+            border-radius: 50px;
+            background: #f3f4f6;
+            padding: 4px;
+            margin-bottom: 28px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 50px;
+            background: transparent;
+            font-size: 0.95rem;
+            font-weight: 700;
+            font-family: 'Space Grotesk', "Segoe UI", sans-serif;
+            color: #9ca3af;
+            cursor: pointer;
+            transition: all 0.22s ease;
+        }
+
+        .auth-tab.active {
+            background: var(--primary-green);
+            color: white;
+            box-shadow: 0 4px 12px rgba(20,83,45,0.25);
+        }
+
+        /* Form */
+        .auth-form { display: flex; flex-direction: column; gap: 16px; }
+        .auth-form.hidden { display: none; }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field-group label {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--primary-green);
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        .field-group input {
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: "Segoe UI", sans-serif;
+            color: #111;
+            background: #fafafa;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            outline: none;
+        }
+
+        .field-group input:focus {
+            border-color: var(--bright-green);
+            box-shadow: 0 0 0 3px rgba(34,197,94,0.18);
+            background: #fff;
+        }
+
+        .field-group input.error {
+            border-color: #dc2626;
+            box-shadow: 0 0 0 3px rgba(220,38,38,0.12);
+        }
+
+        /* Error / success messages */
+        .auth-msg {
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 10px 14px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .auth-msg.error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1.5px solid #fca5a5;
+            display: block;
+        }
+
+        .auth-msg.success {
+            background: #f0fdf4;
+            color: #16a34a;
+            border: 1.5px solid #86efac;
+            display: block;
+        }
+
+        /* Submit button */
+        .auth-submit {
+            padding: 14px;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(135deg, var(--bright-green) 0%, var(--primary-green) 100%);
+            color: white;
+            font-size: 1rem;
+            font-weight: 800;
+            font-family: 'Space Grotesk', "Segoe UI", sans-serif;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.22s ease;
+            box-shadow: 0 6px 20px rgba(34,197,94,0.35);
+            margin-top: 4px;
+        }
+
+        .auth-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(34,197,94,0.45);
+        }
+
+        .auth-submit:active {
+            transform: translateY(1px);
+        }
+
+        .auth-submit:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Password rules hint */
+        .pwd-hint {
+            font-size: 0.78rem;
+            color: #9ca3af;
+            margin-top: 2px;
+        }
+
+        /* Loading spinner inside button */
+        .auth-submit.loading::after {
+            content: '';
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.5);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .auth-divider {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #9ca3af;
+            margin: 4px 0 0;
+        }
+
+        .auth-card-footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.82rem;
+            color: #6b7280;
+        }
+
+        @media (max-width: 480px) {
+            .auth-card { padding: 28px 20px 24px; }
+            .auth-logo h1 { font-size: 1.9rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="auth-card">
+        <div class="auth-logo">
+            <h1>♟ ChessIQ</h1>
+            <p>Train your positional instinct</p>
+        </div>
+
+        <!-- Tab switcher -->
+        <div class="auth-tabs">
+            <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
+            <button class="auth-tab"        id="tab-signup" onclick="switchTab('signup')">Create Account</button>
+        </div>
+
+        <!-- Shared message area -->
+        <div class="auth-msg" id="auth-msg"></div>
+
+        <!-- ── Login form ── -->
+        <form class="auth-form" id="form-login" onsubmit="handleLogin(event)">
+            <div class="field-group">
+                <label for="login-email">Email</label>
+                <input type="email" id="login-email" placeholder="you@email.com" autocomplete="email" required>
+            </div>
+            <div class="field-group">
+                <label for="login-pwd">Password</label>
+                <input type="password" id="login-pwd" placeholder="••••••••" autocomplete="current-password" required>
+            </div>
+            <button type="submit" class="auth-submit" id="btn-login">Sign In</button>
+        </form>
+
+        <!-- ── Signup form ── -->
+        <form class="auth-form hidden" id="form-signup" onsubmit="handleSignup(event)">
+            <div class="field-group">
+                <label for="signup-username">Username</label>
+                <input type="text" id="signup-username" placeholder="ChessMaster99" maxlength="20" required>
+            </div>
+            <div class="field-group">
+                <label for="signup-email">Email</label>
+                <input type="email" id="signup-email" placeholder="you@email.com" autocomplete="email" required>
+            </div>
+            <div class="field-group">
+                <label for="signup-pwd">Password</label>
+                <input type="password" id="signup-pwd" placeholder="••••••••" autocomplete="new-password" minlength="6" required>
+                <span class="pwd-hint">Minimum 6 characters</span>
+            </div>
+            <div class="field-group">
+                <label for="signup-pwd2">Confirm Password</label>
+                <input type="password" id="signup-pwd2" placeholder="••••••••" autocomplete="new-password" required>
+            </div>
+            <button type="submit" class="auth-submit" id="btn-signup">Create Account</button>
+        </form>
+
+        <div class="auth-card-footer">
+            ChessIQ v0.5 &nbsp;·&nbsp; Beta
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp }                      from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+        import { getDatabase, ref, set, get }         from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+        import { getAuth, createUserWithEmailAndPassword,
+                 signInWithEmailAndPassword, onAuthStateChanged,
+                 updateProfile }                      from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey:            "AIzaSyDtGbU8BN06Y_GNDmhV1FJFRhTvD603DN0",
+            authDomain:        "positionguessr.firebaseapp.com",
+            databaseURL:       "https://positionguessr-default-rtdb.firebaseio.com",
+            projectId:         "positionguessr",
+            storageBucket:     "positionguessr.firebasestorage.app",
+            messagingSenderId: "954415790631",
+            appId:             "1:954415790631:web:0a5381589df51fc3abec02",
+            measurementId:     "G-M63L8MVR6Z"
+        };
+
+        const app  = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db   = getDatabase(app);
+
+        const PR_START = 500;
+
+        // ── If already signed in, skip straight to the game ──────────────────
+        onAuthStateChanged(auth, (user) => {
+            if (user) window.location.href = 'index.html';
+        });
+
+        // ── Tab switching ─────────────────────────────────────────────────────
+        window.switchTab = function(tab) {
+            const isLogin = tab === 'login';
+            document.getElementById('tab-login').classList.toggle('active', isLogin);
+            document.getElementById('tab-signup').classList.toggle('active', !isLogin);
+            document.getElementById('form-login').classList.toggle('hidden', !isLogin);
+            document.getElementById('form-signup').classList.toggle('hidden', isLogin);
+            showMsg('', '');
+        };
+
+        // ── Message helper ────────────────────────────────────────────────────
+        function showMsg(text, type) {
+            const el = document.getElementById('auth-msg');
+            el.textContent = text;
+            el.className   = text ? `auth-msg ${type}` : 'auth-msg';
+        }
+
+        function setLoading(btnId, loading) {
+            const btn = document.getElementById(btnId);
+            btn.disabled = loading;
+            btn.classList.toggle('loading', loading);
+            btn.textContent = loading
+                ? (btnId === 'btn-login' ? 'Signing in' : 'Creating account')
+                : (btnId === 'btn-login' ? 'Sign In'    : 'Create Account');
+        }
+
+        // ── Friendly Firebase error messages ─────────────────────────────────
+        function friendlyError(code) {
+            const map = {
+                'auth/user-not-found':       'No account found with that email.',
+                'auth/wrong-password':       'Incorrect password.',
+                'auth/invalid-email':        'Please enter a valid email address.',
+                'auth/email-already-in-use': 'An account with that email already exists.',
+                'auth/weak-password':        'Password must be at least 6 characters.',
+                'auth/too-many-requests':    'Too many attempts. Please try again later.',
+                'auth/invalid-credential':   'Incorrect email or password.',
+            };
+            return map[code] || 'Something went wrong. Please try again.';
+        }
+
+        // ── Login ─────────────────────────────────────────────────────────────
+        window.handleLogin = async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value.trim();
+            const pwd   = document.getElementById('login-pwd').value;
+            showMsg('', '');
+            setLoading('btn-login', true);
+
+            try {
+                await signInWithEmailAndPassword(auth, email, pwd);
+                // onAuthStateChanged will redirect
+            } catch (err) {
+                showMsg(friendlyError(err.code), 'error');
+                setLoading('btn-login', false);
+            }
+        };
+
+        // ── Signup ────────────────────────────────────────────────────────────
+        window.handleSignup = async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('signup-username').value.trim();
+            const email    = document.getElementById('signup-email').value.trim();
+            const pwd      = document.getElementById('signup-pwd').value;
+            const pwd2     = document.getElementById('signup-pwd2').value;
+
+            // Client-side validation
+            if (username.length < 2) {
+                return showMsg('Username must be at least 2 characters.', 'error');
+            }
+            if (!/^[a-zA-Z0-9_\-]+$/.test(username)) {
+                return showMsg('Username may only contain letters, numbers, _ and -.', 'error');
+            }
+            if (pwd !== pwd2) {
+                document.getElementById('signup-pwd2').classList.add('error');
+                return showMsg('Passwords do not match.', 'error');
+            }
+            document.getElementById('signup-pwd2').classList.remove('error');
+
+            showMsg('', '');
+            setLoading('btn-signup', true);
+
+            try {
+                // Check username uniqueness in DB
+                const usernameSnap = await get(ref(db, `usernames/${username.toLowerCase()}`));
+                if (usernameSnap.exists()) {
+                    setLoading('btn-signup', false);
+                    return showMsg('That username is already taken.', 'error');
+                }
+
+                // Create Firebase Auth user
+                const cred = await createUserWithEmailAndPassword(auth, email, pwd);
+                const uid  = cred.user.uid;
+
+                // Set display name
+                await updateProfile(cred.user, { displayName: username });
+
+                // Write user profile + initial stats to Realtime DB
+                await set(ref(db, `users/${uid}`), {
+                    username:     username,
+                    email:        email,
+                    pr:           PR_START,
+                    totalPuzzles: 0,
+                    streak:       0,
+                    createdAt:    Date.now(),
+                });
+
+                // Reserve the username
+                await set(ref(db, `usernames/${username.toLowerCase()}`), uid);
+
+                // onAuthStateChanged will redirect to index.html
+            } catch (err) {
+                showMsg(friendlyError(err.code), 'error');
+                setLoading('btn-signup', false);
+            }
+        };
+    </script>
+</body>
+</html>
