@@ -880,15 +880,16 @@
     border-radius: 50%;
     cursor: pointer;
     z-index: 1002;
-    background: var(--primary-green);
-    border: 2px solid rgba(255, 255, 255, 0.25);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
-    transition: background 0.2s ease, transform 0.22s ease;
+    background: var(--bright-green);
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    box-shadow: 0 12px 30px rgba(34, 197, 94, 0.35);
+    transition: background 0.2s ease, transform 0.22s ease, box-shadow 0.22s ease;
 }
 
 #settings-btn:hover {
-    background: var(--bright-green);
-    transform: rotate(28deg) scale(1.08);
+    background: var(--light-green);
+    transform: rotate(28deg) scale(1.1);
+    box-shadow: 0 16px 40px rgba(34, 197, 94, 0.45);
 }
 
 /* ── Settings Modal ───────────────────────────────────────────────────────── */
@@ -1038,4 +1039,59 @@
     opacity: 0;
     transform: translateY(-26px);
     transition: opacity 0.55s ease, transform 0.55s ease;
+}
+/* ── User badge + logout button ──────────────────────────────────────────── */
+#user-badge {
+    position: fixed;
+    top: 20px;
+    right: 158px;          /* sits left of the two icon buttons */
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 1002;
+    background: rgba(255,255,255,0.18);
+    border: 1.5px solid rgba(255,255,255,0.4);
+    border-radius: 50px;
+    padding: 6px 14px 6px 10px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.10);
+}
+
+#header-username {
+    font-family: 'Space Grotesk', "Segoe UI", sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--primary-green);
+    max-width: 130px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#logout-btn {
+    background: var(--primary-green);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 5px 14px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    font-family: 'Space Grotesk', "Segoe UI", sans-serif;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.15s ease;
+    letter-spacing: 0.3px;
+}
+
+#logout-btn:hover {
+    background: #dc2626;
+    transform: scale(1.04);
+}
+
+/* Responsive: collapse username on very small screens */
+@media (max-width: 540px) {
+    #header-username { display: none; }
+    #user-badge {
+        right: 148px;
+        padding: 6px 10px;
+    }
 }
