@@ -101,13 +101,14 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 - Introduce Easy, Medium, and Hard modes
 - Backend filtering by positional complexity using an [algorithm]
 
-### 🔜 Planned Updates
 
 ### v0.6 - Primitive Point System 🥇
 - Localstorage-based primitive elo system
 - Complex mechanics and equations for computing elo based on streaks, confidence intervals, etc
 
-#### v0.8 – Accounts and Leaderboards 👤 (2026)
+### 🔜 Planned Updates
+
+#### v0.8 – Accounts and Leaderboards 👤 (June 2026)
 
 - User accounts and authentication
 - Score tracking and long-term progress analytics
