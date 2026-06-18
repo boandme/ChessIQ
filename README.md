@@ -117,6 +117,8 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 - Google integrations for logins
 
 
+##### v0.85 - 
+
 ## v0.9 - Time-based and point system upgrades 🏆[DELAYED to v0.9]
  - More synced multiplayer point systems reliant on what difficulty puzzles, as well as time
  - Formula-based puzzle calculations
@@ -130,13 +132,19 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 =======
 - Updated PR(Positional Rating Calculations)
 
+
+#### v1.1 - New gamemode: Regular & blitz-paced modes update
+ - On homescreen, ability to switch between regular, rated play
+ - OR a new gamemode: Rush(3 or 5 min), where you try to get the most amt of puzzles correct in the limited time as possible. 
+ - Integrations with global leaderboard - seperate leaderboard for Rush
+
 #### v1.2 - Friends & Personalization Update(2026) 👱
  - Ability to add friends
  - Leaderboards within friends
  - Personalization such as dark/light mode, super beginner mode
  - Daily rewards, streaks, etc
 
-#### v1.2 - AI-based Explanations & Reflections(2026-27) 🤖
+#### v1.3 - AI-based Explanations & Reflections(2026-27) 🤖
 - Pre-cached explanations for each stored position in the database
 - Good for long-term learning and reflection,  leading to better opportunities for the user to hone positional skill. 
 
@@ -144,6 +152,7 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 
 ## 💡 Future Ideas
 
+- Two main modes of the game: Normal rating play, unrated puzzle streak timed(3min, 5min )- see how much you can get 
 - 📚 Positional theme tagging (isolated pawns, bishop pair, space advantage)
 - 🎓 Beginner mode with post-guess explanations
 - 🔁 Daily challenge positions
