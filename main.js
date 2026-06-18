@@ -82,17 +82,20 @@ onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     currentUID  = user.uid;
 
-    // Load player stats from Firebase
+    // Load player stats from Firebase and prefer the stored username
     const snap = await get(ref(db, `users/${currentUID}`));
+    // default username from auth profile or fallback
+    let profileUsername = user.displayName || 'Player';
     if (snap.exists()) {
         const data    = snap.val();
         playerPR      = data.pr           ?? PR_START;
         totalPuzzles  = data.totalPuzzles ?? 0;
         currentStreak = data.streak       ?? 0;
+        if (data.username) profileUsername = data.username;
     } else {
         // Profile missing — write defaults (shouldn't normally happen)
         await set(ref(db, `users/${currentUID}`), {
-            username:     user.displayName || 'Player',
+            username:     profileUsername,
             email:        user.email,
             pr:           PR_START,
             totalPuzzles: 0,
@@ -101,9 +104,11 @@ onAuthStateChanged(auth, async (user) => {
         });
     }
 
-    // Show username in header
+    // Show username in header (prefer DB username)
     const nameEl = document.getElementById('header-username');
-    if (nameEl) nameEl.textContent = user.displayName || 'Player';
+    console.log('Auth user:', user.uid, 'displayName:', user.displayName, 'dbUsernamePresent:', snap.exists());
+    console.log('Using profileUsername:', profileUsername);
+    if (nameEl) nameEl.textContent = profileUsername;
 
     // Update PR card
     renderPR();
