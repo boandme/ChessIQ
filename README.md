@@ -110,13 +110,14 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 
 #### v0.8 – Accounts and Leaderboards 👤 (June 2026)
 
+- first: primitive user accounts + no google acc support
 - User accounts and authentication
 - Score tracking and long-term progress analytics
 - Global leaderboards of PR(Positional Rating) already instated above in earlier updates
 - Google integrations for logins
 
 
-## v0.75 - Time-based and point system upgrades 🏆[DELAYED to v0.9]
+## v0.9 - Time-based and point system upgrades 🏆[DELAYED to v0.9]
  - More synced multiplayer point systems reliant on what difficulty puzzles, as well as time
  - Formula-based puzzle calculations
 #### v1.0 – Full Release 🎉 (2026)
