@@ -11,8 +11,15 @@ const PR_START = 500;
 var playerPR      = PR_START;
 var totalPuzzles  = 0;
 var currentStreak = 0;
-var currentUser   = null; // Firebase Auth user object
+var currentUser   = null;
 var currentUID    = null;
+
+// Stats tracking
+var correctCount  = 0;
+var wrongCount    = 0;
+var bestStreak    = 0;
+var peakPR        = PR_START;
+var prHistory     = [];   // array of { pr, ts } snapshots, capped at 50
 
 // ── PR formula helpers ────────────────────────────────────────────────────────
 const PR_BASE = {
@@ -26,12 +33,8 @@ function confidenceMultiplier() {
 }
 
 function streakMultiplier(correct) {
-    if (correct && currentStreak > 0) {
-        return 1 + Math.min(currentStreak, 5) * 0.10;
-    }
-    if (!correct && currentStreak < 0) {
-        return 1 + Math.min(Math.abs(currentStreak), 5) * 0.10;
-    }
+    if (correct && currentStreak > 0)  return 1 + Math.min(currentStreak, 5) * 0.10;
+    if (!correct && currentStreak < 0) return 1 + Math.min(Math.abs(currentStreak), 5) * 0.10;
     return 1.0;
 }
 
@@ -50,10 +53,10 @@ function getDifficultyFromPR() {
 }
 
 // ── Firebase imports ──────────────────────────────────────────────────────────
-import { initializeApp }                          from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getDatabase, ref, get, set, update }    from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
-import { getAnalytics }                           from "https://www.gstatic.com/firebasejs/12.1.0/firebase-analytics.js";
-import { getAuth, onAuthStateChanged, signOut }  from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import { initializeApp }                         from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import { getDatabase, ref, get, set, update }   from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+import { getAnalytics }                          from "https://www.gstatic.com/firebasejs/12.1.0/firebase-analytics.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey:            "AIzaSyDtGbU8BN06Y_GNDmhV1FJFRhTvD603DN0",
@@ -71,10 +74,9 @@ const analytics = getAnalytics(app);
 const db       = getDatabase(app);
 const auth     = getAuth(app);
 
-// ── Auth gate — must be signed in to use index.html ───────────────────────────
+// ── Auth gate ─────────────────────────────────────────────────────────────────
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
-        // Not signed in — send to login
         window.location.href = 'login.html';
         return;
     }
@@ -82,52 +84,59 @@ onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     currentUID  = user.uid;
 
-    // Load player stats from Firebase and prefer the stored username
     const snap = await get(ref(db, `users/${currentUID}`));
-    // default username from auth profile or fallback
     let profileUsername = user.displayName || 'Player';
+
     if (snap.exists()) {
         const data    = snap.val();
         playerPR      = data.pr           ?? PR_START;
         totalPuzzles  = data.totalPuzzles ?? 0;
         currentStreak = data.streak       ?? 0;
+        correctCount  = data.correctCount ?? 0;
+        wrongCount    = data.wrongCount   ?? 0;
+        bestStreak    = data.bestStreak   ?? 0;
+        peakPR        = data.peakPR       ?? playerPR;
+        prHistory     = Array.isArray(data.prHistory) ? data.prHistory : [];
         if (data.username) profileUsername = data.username;
     } else {
-        // Profile missing — write defaults (shouldn't normally happen)
         await set(ref(db, `users/${currentUID}`), {
             username:     profileUsername,
             email:        user.email,
             pr:           PR_START,
             totalPuzzles: 0,
             streak:       0,
+            correctCount: 0,
+            wrongCount:   0,
+            bestStreak:   0,
+            peakPR:       PR_START,
+            prHistory:    [],
             createdAt:    Date.now(),
         });
     }
 
-    // Show username in header (prefer DB username)
     const nameEl = document.getElementById('header-username');
-    console.log('Auth user:', user.uid, 'displayName:', user.displayName, 'dbUsernamePresent:', snap.exists());
-    console.log('Using profileUsername:', profileUsername);
     if (nameEl) nameEl.textContent = profileUsername;
 
-    // Update PR card
     renderPR();
-
-    // Now load positions
     initPositions();
 });
 
-// ── Save player stats back to Firebase ───────────────────────────────────────
+// ── Save to Firebase ──────────────────────────────────────────────────────────
 async function saveStatsToFirebase() {
     if (!currentUID) return;
     await update(ref(db, `users/${currentUID}`), {
         pr:           playerPR,
         totalPuzzles: totalPuzzles,
         streak:       currentStreak,
+        correctCount: correctCount,
+        wrongCount:   wrongCount,
+        bestStreak:   bestStreak,
+        peakPR:       peakPR,
+        prHistory:    prHistory,
     });
 }
 
-// ── PR update (now saves to Firebase instead of localStorage) ─────────────────
+// ── PR update ─────────────────────────────────────────────────────────────────
 function updatePR(difficulty, correct) {
     const base = PR_BASE[difficulty];
     if (!base) return;
@@ -136,15 +145,20 @@ function updatePR(difficulty, correct) {
     const ratingFactor = 1 - (playerPR / 4480);
     const confMult     = confidenceMultiplier();
     const streakMult   = streakMultiplier(correct);
+    const delta        = Math.round(baseValue * ratingFactor * confMult * streakMult);
 
-    const delta = Math.round(baseValue * ratingFactor * confMult * streakMult);
-
+    if (correct) { correctCount++; } else { wrongCount++; }
     updateStreak(correct);
     totalPuzzles++;
 
     playerPR = Math.min(PR_MAX, Math.max(0, playerPR + delta));
 
-    // Persist to Firebase (fire-and-forget)
+    if (playerPR > peakPR) peakPR = playerPR;
+    if (currentStreak > bestStreak) bestStreak = currentStreak;
+
+    prHistory.push({ pr: playerPR, ts: Date.now() });
+    if (prHistory.length > 50) prHistory = prHistory.slice(prHistory.length - 50);
+
     saveStatsToFirebase();
 
     const sign = delta >= 0 ? '+' : '';
@@ -161,7 +175,7 @@ function updatePR(difficulty, correct) {
     renderPR(delta);
 }
 
-// ── Render the PR display card ────────────────────────────────────────────────
+// ── Render PR display card ────────────────────────────────────────────────────
 function renderPR(delta) {
     const valEl   = document.getElementById('pr-value');
     const subEl   = document.getElementById('pr-puzzles');
@@ -205,7 +219,6 @@ var current_position = 0;
 function initPositions() {
     const boardEl = document.getElementById('board');
     const turnEl  = document.getElementById('turn');
-
     if (boardEl) boardEl.innerHTML = '<p style="padding:40px;text-align:center;color:#14532d;font-size:1.2rem;">Loading positions...</p>';
     if (turnEl)  turnEl.innerHTML  = 'Loading...';
 
@@ -227,7 +240,6 @@ function initPositions() {
 function loadPuzzleForPR() {
     const difficulty = getDifficultyFromPR();
     const pool = positionsByDiff[difficulty] || [];
-
     if (pool.length) {
         current_position = Math.floor(Math.random() * pool.length);
         const pos = pool[current_position];
@@ -235,7 +247,6 @@ function loadPuzzleForPR() {
         correct_result = findResult(pos.Eval);
         const turnEl = document.getElementById('turn');
         if (turnEl) turnEl.innerHTML = pos.Turn;
-        console.log(`Puzzle loaded | PR: ${playerPR} | difficulty: ${difficulty} | index: ${current_position}`);
     } else {
         const boardEl = document.getElementById('board');
         const turnEl  = document.getElementById('turn');
@@ -247,13 +258,11 @@ function loadPuzzleForPR() {
 window.nextPosition = function() {
     const difficulty = getDifficultyFromPR();
     const pool = positionsByDiff[difficulty] || [];
-
     if (!pool.length) {
         document.getElementById('board').innerHTML = '<p>No positions available</p>';
         document.getElementById('turn').innerHTML  = '';
         return;
     }
-
     current_position = Math.floor(Math.random() * pool.length);
     const pos = pool[current_position];
     renderSVG(pos.SVG);
@@ -262,12 +271,10 @@ window.nextPosition = function() {
     answered = false;
     document.getElementById("result").innerHTML = "";
     document.getElementById("evaluation-display").innerHTML = "";
-    console.log(`Puzzle loaded | PR: ${playerPR} | difficulty: ${difficulty} | index: ${current_position}`);
 };
 
 function sendAnswer(guess) {
     if (answered) return;
-
     if (guess === correct_result) {
         document.getElementById("result").innerHTML = "Correct!";
         document.getElementById("result").style.color = "green";
@@ -276,13 +283,11 @@ function sendAnswer(guess) {
         document.getElementById("result").style.color = "red";
     }
     answered = true;
-
     const difficulty    = getDifficultyFromPR();
     const pool          = positionsByDiff[difficulty] || [];
     const evaluationRaw = parseFloat(pool[current_position].Eval) / 100;
     const displayEval   = evaluationRaw > 0 ? `+${evaluationRaw}` : `${evaluationRaw}`;
     document.getElementById("evaluation-display").innerHTML = `<strong>Evaluation: ${displayEval}</strong>`;
-
     updatePR(difficulty, guess === correct_result);
 }
 window.sendAnswer = sendAnswer;
@@ -355,6 +360,11 @@ window.confirmResetPR = async function() {
     playerPR      = PR_START;
     totalPuzzles  = 0;
     currentStreak = 0;
+    correctCount  = 0;
+    wrongCount    = 0;
+    bestStreak    = 0;
+    peakPR        = PR_START;
+    prHistory     = [];
 
     await saveStatsToFirebase();
     renderPR();
@@ -369,6 +379,205 @@ window.confirmResetPR = async function() {
     cancelResetConfirm();
     console.log(`PR reset | new PR: ${playerPR}`);
 };
+
+// ── Stats modal ───────────────────────────────────────────────────────────────
+window.openStats = function() {
+    const modal = document.getElementById('stats-modal');
+    if (!modal) return;
+    populateStatsModal();
+    modal.style.display = 'flex';
+};
+
+window.closeStats = function() {
+    const modal = document.getElementById('stats-modal');
+    if (modal) modal.style.display = 'none';
+};
+
+function populateStatsModal() {
+    // ── KPI cards ──────────────────────────────────────────────────────────────
+    const accuracy = totalPuzzles > 0
+        ? Math.round((correctCount / totalPuzzles) * 100) + '%'
+        : '—';
+
+    const streakDisplay = currentStreak === 0 ? '—'
+        : currentStreak > 0 ? `+${currentStreak} ✓`
+        : `${currentStreak} ✗`;
+
+    setText('stat-pr',       playerPR);
+    setText('stat-puzzles',  totalPuzzles);
+    setText('stat-streak',   streakDisplay);
+    setText('stat-accuracy', accuracy);
+
+    // ── Breakdown grid ─────────────────────────────────────────────────────────
+    setText('stat-difficulty',  getDifficultyFromPR());
+    setText('stat-best-streak', bestStreak > 0 ? `${bestStreak} ✓` : '—');
+    setText('stat-correct',     correctCount);
+    setText('stat-wrong',       wrongCount);
+    setText('stat-peak-pr',     peakPR);
+
+    // PR change over last 10 snapshots
+    let recentDeltaEl = document.getElementById('stat-recent-delta');
+    if (prHistory.length >= 2) {
+        const slice = prHistory.slice(-10);
+        const delta = slice[slice.length - 1].pr - slice[0].pr;
+        const sign  = delta >= 0 ? '+' : '';
+        recentDeltaEl.textContent = `${sign}${delta}`;
+        recentDeltaEl.className = 'stats-detail-value ' + (delta >= 0 ? 'positive' : 'negative');
+    } else {
+        recentDeltaEl.textContent = '—';
+        recentDeltaEl.className = 'stats-detail-value';
+    }
+
+    // ── PR change badge ────────────────────────────────────────────────────────
+    const badge = document.getElementById('stat-pr-change-badge');
+    if (badge && prHistory.length >= 2) {
+        const allDelta = prHistory[prHistory.length - 1].pr - prHistory[0].pr;
+        const sign     = allDelta >= 0 ? '+' : '';
+        badge.textContent = `${sign}${allDelta} overall`;
+        badge.className   = 'stats-pr-change-badge ' + (allDelta >= 0 ? 'gain' : 'loss');
+    } else if (badge) {
+        badge.textContent = '';
+        badge.className   = 'stats-pr-change-badge';
+    }
+
+    // ── Sparkline chart ────────────────────────────────────────────────────────
+    renderSparkline();
+}
+
+function setText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+}
+
+function renderSparkline() {
+    const svg = document.getElementById('stats-sparkline');
+    if (!svg) return;
+
+    // Clear previous content
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+    const W = 480, H = 120, PAD = 16;
+
+    if (prHistory.length < 2) {
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', W / 2);
+        text.setAttribute('y', H / 2 + 5);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('fill', 'rgba(20,83,45,0.4)');
+        text.setAttribute('font-size', '13');
+        text.setAttribute('font-family', 'Space Grotesk, sans-serif');
+        text.textContent = 'Play more puzzles to see your trend';
+        svg.appendChild(text);
+        document.getElementById('chart-label-left').textContent  = '';
+        document.getElementById('chart-label-right').textContent = '';
+        return;
+    }
+
+    const vals   = prHistory.map(p => p.pr);
+    const minVal = Math.min(...vals);
+    const maxVal = Math.max(...vals);
+    const range  = maxVal - minVal || 1;
+
+    const innerW = W - PAD * 2;
+    const innerH = H - PAD * 2;
+
+    // Map data to SVG coords
+    const points = vals.map((v, i) => {
+        const x = PAD + (i / (vals.length - 1)) * innerW;
+        const y = PAD + innerH - ((v - minVal) / range) * innerH;
+        return [x, y];
+    });
+
+    // Gradient definition
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    const grad = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+    grad.setAttribute('id', 'sparkGrad');
+    grad.setAttribute('x1', '0'); grad.setAttribute('y1', '0');
+    grad.setAttribute('x2', '0'); grad.setAttribute('y2', '1');
+    const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+    stop1.setAttribute('offset', '0%');
+    stop1.setAttribute('stop-color', '#22c55e');
+    stop1.setAttribute('stop-opacity', '0.35');
+    const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+    stop2.setAttribute('offset', '100%');
+    stop2.setAttribute('stop-color', '#22c55e');
+    stop2.setAttribute('stop-opacity', '0.02');
+    grad.appendChild(stop1);
+    grad.appendChild(stop2);
+    defs.appendChild(grad);
+    svg.appendChild(defs);
+
+    // Area fill path (closed polygon beneath the line)
+    const areaD = `M${points[0][0]},${H - PAD} `
+        + points.map(p => `L${p[0]},${p[1]}`).join(' ')
+        + ` L${points[points.length - 1][0]},${H - PAD} Z`;
+    const area = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    area.setAttribute('d', areaD);
+    area.setAttribute('fill', 'url(#sparkGrad)');
+    svg.appendChild(area);
+
+    // Y-axis gridlines (min / mid / max)
+    [0, 0.5, 1].forEach(frac => {
+        const y = PAD + innerH - frac * innerH;
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', PAD); line.setAttribute('x2', W - PAD);
+        line.setAttribute('y1', y);   line.setAttribute('y2', y);
+        line.setAttribute('stroke', 'rgba(34,197,94,0.12)');
+        line.setAttribute('stroke-width', '1');
+        svg.appendChild(line);
+
+        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        label.setAttribute('x', PAD - 4);
+        label.setAttribute('y', y + 4);
+        label.setAttribute('text-anchor', 'end');
+        label.setAttribute('fill', 'rgba(20,83,45,0.45)');
+        label.setAttribute('font-size', '9');
+        label.setAttribute('font-family', 'Space Grotesk, sans-serif');
+        label.textContent = Math.round(minVal + frac * range);
+        svg.appendChild(label);
+    });
+
+    // Line
+    const lineD = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0]},${p[1]}`).join(' ');
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    line.setAttribute('d', lineD);
+    line.setAttribute('fill', 'none');
+    line.setAttribute('stroke', '#22c55e');
+    line.setAttribute('stroke-width', '2.5');
+    line.setAttribute('stroke-linejoin', 'round');
+    line.setAttribute('stroke-linecap', 'round');
+    svg.appendChild(line);
+
+    // Dots on each point
+    points.forEach(([x, y]) => {
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', x);
+        circle.setAttribute('cy', y);
+        circle.setAttribute('r', vals.length > 20 ? '0' : '3');
+        circle.setAttribute('fill', '#22c55e');
+        circle.setAttribute('stroke', '#fff');
+        circle.setAttribute('stroke-width', '1.5');
+        svg.appendChild(circle);
+    });
+
+    // First and last endpoint highlight (always visible)
+    [[points[0], vals[0]], [points[points.length - 1], vals[vals.length - 1]]].forEach(([[x, y], v]) => {
+        const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        c.setAttribute('cx', x); c.setAttribute('cy', y); c.setAttribute('r', '5');
+        c.setAttribute('fill', '#22c55e'); c.setAttribute('stroke', '#fff'); c.setAttribute('stroke-width', '2');
+        svg.appendChild(c);
+    });
+
+    // Date range labels
+    const fmt = ts => {
+        const d = new Date(ts);
+        return `${d.getMonth() + 1}/${d.getDate()}`;
+    };
+    const leftLbl  = document.getElementById('chart-label-left');
+    const rightLbl = document.getElementById('chart-label-right');
+    if (leftLbl)  leftLbl.textContent  = fmt(prHistory[0].ts) + ` (${prHistory[0].pr})`;
+    if (rightLbl) rightLbl.textContent = fmt(prHistory[prHistory.length - 1].ts) + ` (${prHistory[prHistory.length - 1].pr})`;
+}
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
 window.openSidebar = function() {
@@ -393,5 +602,6 @@ document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
         closeSidebar();
         window.closeSettings && window.closeSettings();
+        window.closeStats    && window.closeStats();
     }
 });
