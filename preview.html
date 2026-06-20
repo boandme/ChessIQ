@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ChessIQ — Design Preview</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+    <!-- This page is a NO-BACKEND preview of the redesign. Same markup / CSS / 3D
+         layer as index.html, but the game is mocked so no Firebase login is needed. -->
+
+    <canvas id="bg-canvas" aria-hidden="true"></canvas>
+    <div id="bg-vignette" aria-hidden="true"></div>
+    <div id="bg-grid" aria-hidden="true"></div>
+    <div id="page-transition" aria-hidden="true"><span class="pt-bar"></span></div>
+
+    <button id="hamburger-menu" onclick="openSidebar()" aria-label="Menu">
+        <span></span><span></span><span></span>
+    </button>
+
+    <aside id="sidebar" class="sidebar">
+        <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+        <div class="sidebar-brand">CHESS<span>IQ</span></div>
+        <nav class="sidebar-nav">
+            <h3>Products</h3>
+            <ul>
+                <li><a href="#" class="active" onclick="closeSidebar();return false;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
+                    PositionGuesser
+                </a></li>
+            </ul>
+        </nav>
+        <div class="sidebar-foot">v0.75 — BETA</div>
+    </aside>
+    <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <header class="topbar">
+        <div class="topbar-left">
+            <a href="#" class="brand" onclick="return false;" aria-label="ChessIQ home">
+                <span class="brand-mark">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
+                </span>
+                <span class="brand-text">CHESS<span>IQ</span></span>
+                <span class="brand-ver">v0.75</span>
+            </a>
+        </div>
+        <nav class="topnav">
+            <a href="#" class="active" onclick="return false;">Home</a>
+            <a href="#" onclick="return false;">Credits</a>
+            <a href="#" onclick="return false;">Information</a>
+        </nav>
+        <div class="topbar-right">
+            <div id="user-badge">
+                <span class="user-dot"></span>
+                <span id="header-username">—</span>
+                <button id="logout-btn" onclick="logoutUser()">Sign Out</button>
+            </div>
+            <button id="stats-btn" class="icon-btn" onclick="openStats()" aria-label="Statistics" title="Statistics">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+            </button>
+            <button id="settings-btn" class="icon-btn" onclick="openSettings()" aria-label="Settings" title="Settings">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.56V21a2 2 0 0 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.56V3a2 2 0 0 1 4 0v.09a1.7 1.7 0 0 0 1 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9v0a1.7 1.7 0 0 0 1.56 1H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
+            </button>
+            <button id="help-btn" class="icon-btn" onclick="openModal()" aria-label="Help" title="How to play">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.2"/><path d="M9.2 9.2a2.8 2.8 0 0 1 5.4 1c0 1.9-2.8 2.5-2.8 2.5"/><line x1="12" y1="17" x2="12" y2="17.01"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <div class="game-instruction reveal">
+        <span class="gi-bolt"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg></span>
+        <p>Who has the advantage?</p>
+        <span class="gi-tag">BLITZ MODE</span>
+    </div>
+
+    <main class="main-content">
+        <section id="left-panel" class="reveal">
+            <div id="pr-display">
+                <div class="pr-top">
+                    <div class="pr-label">Positional Rating</div>
+                    <div class="pr-spark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 4 8-9"/><path d="M16 7h4v4"/></svg></div>
+                </div>
+                <div class="pr-value" id="pr-value">—</div>
+                <div class="pr-sub" id="pr-puzzles">0 puzzles played</div>
+                <div id="pr-delta" class="pr-delta"></div>
+                <div class="pr-scanline"></div>
+            </div>
+            <div id="board-frame">
+                <span class="corner tl"></span><span class="corner tr"></span>
+                <span class="corner bl"></span><span class="corner br"></span>
+                <div id="board"></div>
+            </div>
+            <h3 id="turn"></h3>
+        </section>
+
+        <section id="right-panel" class="reveal">
+            <div class="panel-heading">Make your call</div>
+            <div id="actionRow">
+                <div id="choiceButtons">
+                    <button class="choice-tile white" id="whiteWinning" onclick='sendAnswer("White Winning")'>
+                        <span class="choice-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M24 5v8M20 9h8"/><path d="M24 13c-7 3-9 8-5 12h10c4-4 2-9-5-12z"/><path d="M17 25h14l-2 13H19z"/><path d="M15 38h18"/></svg></span>
+                        <span class="choice-label">White</span>
+                    </button>
+                    <button class="choice-tile equal" id="equal" onclick='sendAnswer("Equal")'>
+                        <span class="choice-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"><line x1="13" y1="19" x2="35" y2="19"/><line x1="13" y1="29" x2="35" y2="29"/></svg></span>
+                        <span class="choice-label">Equal</span>
+                    </button>
+                    <button class="choice-tile black" id="blackWinning" onclick='sendAnswer("Black Winning")'>
+                        <span class="choice-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M24 5v8M20 9h8"/><path d="M24 13c-7 3-9 8-5 12h10c4-4 2-9-5-12z"/><path d="M17 25h14l-2 13H19z"/><path d="M15 38h18"/></svg></span>
+                        <span class="choice-label">Black</span>
+                    </button>
+                </div>
+            </div>
+            <div id="result"><p id="resultText">Click a piece to make your choice</p></div>
+            <div id="evaluation-display"></div>
+            <button id="nextButton" onclick="nextPosition()">
+                <span>Next Position</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+        </section>
+    </main>
+
+    <!-- Help -->
+    <div id="modal">
+        <div class="modal-content">
+            <button class="modal-close-btn" onclick="closeModal()" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+            <h2>Welcome to ChessIQ</h2>
+            <p class="modal-intro">Train your positional knowledge and master the art of self-analysis — a skill invaluable for chess players of every level.</p>
+            <div class="modal-section">
+                <h3>How To Play</h3>
+                <p class="modal-instruction-intro">You'll be given a position. Read it, then call who holds the advantage:</p>
+                <ul class="modal-list">
+                    <li><strong>White Winning</strong> — choose the White tile</li>
+                    <li><strong>Black Winning</strong> — choose the Black tile</li>
+                    <li><strong>Equal Position</strong> — choose the Equal tile</li>
+                </ul>
+            </div>
+            <button class="got-it-btn" onclick="closeModal()">Got It</button>
+        </div>
+    </div>
+
+    <!-- Settings -->
+    <div id="settings-modal" onclick="if(event.target===this) closeSettings()">
+        <div class="modal-content">
+            <button class="modal-close-btn" onclick="closeSettings()" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+            <h2 class="modal-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.56V21a2 2 0 0 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.56V3a2 2 0 0 1 4 0v.09a1.7 1.7 0 0 0 1 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9v0a1.7 1.7 0 0 0 1.56 1H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>Settings</h2>
+            <p class="modal-intro">Manage your ChessIQ experience.</p>
+            <div class="modal-section">
+                <h3>Positional Rating</h3>
+                <p class="modal-instruction-intro">Your current PR: <strong id="settings-pr-display">—</strong></p>
+                <p class="modal-instruction-intro subtle">Resetting returns your PR to the starting value (500) and clears your puzzle count and streak.</p>
+                <div id="reset-confirm-area"><button class="settings-action-btn danger" onclick="showResetConfirm()">Reset Rating</button></div>
+                <div id="reset-confirm-prompt" style="display:none;">
+                    <p class="modal-instruction-intro danger-text">Are you sure? This cannot be undone.</p>
+                    <div class="confirm-row">
+                        <button class="settings-action-btn danger" onclick="confirmResetPR()">Yes, Reset</button>
+                        <button class="settings-action-btn" onclick="cancelResetConfirm()">Cancel</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-section">
+                <h3>Display</h3>
+                <ul class="modal-list">
+                    <li><strong>Board Theme</strong> — Classic <span class="soon">(more coming soon)</span></li>
+                    <li><strong>Piece Style</strong> — Standard <span class="soon">(more coming soon)</span></li>
+                </ul>
+            </div>
+            <button class="got-it-btn" onclick="closeSettings()">Close</button>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div id="stats-modal" onclick="if(event.target===this) closeStats()">
+        <div class="modal-content stats-modal-content">
+            <button class="modal-close-btn" onclick="closeStats()" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+            <h2 class="modal-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Your Stats</h2>
+            <p class="modal-intro">A snapshot of your positional training progress.</p>
+            <div class="stats-kpi-row">
+                <div class="stats-kpi-card"><div class="stats-kpi-value" id="stat-pr">—</div><div class="stats-kpi-label">Current PR</div></div>
+                <div class="stats-kpi-card"><div class="stats-kpi-value" id="stat-puzzles">—</div><div class="stats-kpi-label">Puzzles Played</div></div>
+                <div class="stats-kpi-card"><div class="stats-kpi-value" id="stat-streak">—</div><div class="stats-kpi-label">Current Streak</div></div>
+                <div class="stats-kpi-card"><div class="stats-kpi-value" id="stat-accuracy">—</div><div class="stats-kpi-label">Accuracy</div></div>
+            </div>
+            <div class="modal-section stats-chart-section">
+                <div class="stats-section-header"><h3>PR Over Time</h3><span class="stats-pr-change-badge" id="stat-pr-change-badge"></span></div>
+                <div id="stats-chart-container">
+                    <svg id="stats-sparkline" viewBox="0 0 480 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"></svg>
+                    <div class="stats-chart-labels"><span id="chart-label-left"></span><span id="chart-label-right"></span></div>
+                </div>
+            </div>
+            <div class="modal-section">
+                <h3>Breakdown</h3>
+                <div class="stats-detail-grid">
+                    <div class="stats-detail-item"><span class="stats-detail-label">Difficulty Tier</span><span class="stats-detail-value" id="stat-difficulty">—</span></div>
+                    <div class="stats-detail-item"><span class="stats-detail-label">Best Streak</span><span class="stats-detail-value" id="stat-best-streak">—</span></div>
+                    <div class="stats-detail-item"><span class="stats-detail-label">Correct Answers</span><span class="stats-detail-value" id="stat-correct">—</span></div>
+                    <div class="stats-detail-item"><span class="stats-detail-label">Wrong Answers</span><span class="stats-detail-value" id="stat-wrong">—</span></div>
+                    <div class="stats-detail-item"><span class="stats-detail-label">PR Change (last 10)</span><span class="stats-detail-value" id="stat-recent-delta">—</span></div>
+                    <div class="stats-detail-item"><span class="stats-detail-label">Peak PR</span><span class="stats-detail-value" id="stat-peak-pr">—</span></div>
+                </div>
+            </div>
+            <button class="got-it-btn" onclick="closeStats()">Close</button>
+        </div>
+    </div>
+
+    <div style="position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:50;font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.12em;color:var(--text-faint);border:1px solid var(--line);background:rgba(10,10,13,.7);padding:6px 14px;">
+        DESIGN PREVIEW · MOCK DATA · NO LOGIN REQUIRED
+    </div>
+
+    <script type="module" src="experience.js"></script>
+    <script>
+    // ── Mock game (no Firebase) ──────────────────────────────────────────────
+    let pr = 1480, puzzles = 37, streak = 4, answered = false, correct = "Equal";
+
+    // Sample positions: [pieceMap, turn, answer, evalCp]
+    const POSITIONS = [
+        ["r.bqkb.r/ppp..ppp/..n..n../...pp.../...PP.../..N..N../PPP..PPP/R.BQKB.R", "White to move", "Equal", 20],
+        ["r...k..r/ppp.qppp/..np.n../..b.p.../..B.P.../..NP.N../PPPQ.PPP/R...K..R", "Black to move", "White Winning", 140],
+        ["..kr...r/ppp..ppp/............/...q......./.......Q./........../PPP..PPP/..KR...R", "White to move", "Black Winning", -180],
+    ];
+    let posIndex = 0;
+
+    const GLYPH = { k:"♚", q:"♛", r:"♜", b:"♝", n:"♞", p:"♟" };
+
+    function boardSVG(map) {
+        const S = 60, N = 8;
+        let sq = "", pc = "";
+        const ranks = map.split("/");
+        for (let r = 0; r < N; r++) {
+            // pad/parse rank string of exactly 8 chars (using '.' for empty)
+            const row = (ranks[r] || "").replace(/[^a-zA-Z.]/g, "").padEnd(8, ".").slice(0, 8);
+            for (let c = 0; c < N; c++) {
+                const dark = (r + c) % 2 === 1;
+                sq += `<rect x="${c*S}" y="${r*S}" width="${S}" height="${S}" fill="${dark ? '#1b1b21' : '#2c2c35'}"/>`;
+                const ch = row[c];
+                if (ch && ch !== ".") {
+                    const isWhite = ch === ch.toUpperCase();
+                    const g = GLYPH[ch.toLowerCase()] || "";
+                    pc += `<text x="${c*S + S/2}" y="${r*S + S/2}" text-anchor="middle" dominant-baseline="central" font-size="44" `
+                        + `fill="${isWhite ? '#f1f1f4' : '#0b0b0d'}" stroke="${isWhite ? '#9a9aa6' : '#ffd400'}" stroke-width="${isWhite ? 0.6 : 1}" `
+                        + `style="font-family:'Segoe UI Symbol','Noto Sans Symbols2',sans-serif;">${g}</text>`;
+                }
+            }
+        }
+        // faint board border + yellow file/rank ticks
+        return `<svg class="board" viewBox="0 0 ${S*N} ${S*N}" xmlns="http://www.w3.org/2000/svg">`
+             + sq + pc
+             + `<rect x="0.5" y="0.5" width="${S*N-1}" height="${S*N-1}" fill="none" stroke="#34343f" stroke-width="1"/></svg>`;
+    }
+
+    function loadPos() {
+        const [map, turn, ans] = POSITIONS[posIndex];
+        correct = ans;
+        document.getElementById("board").innerHTML = boardSVG(map);
+        document.getElementById("turn").textContent = turn;
+    }
+
+    window.sendAnswer = function (guess) {
+        if (answered) return;
+        answered = true;
+        const resultEl = document.getElementById("result");
+        const right = guess === correct;
+        const delta = right ? Math.round(28 + Math.random()*18) : -Math.round(24 + Math.random()*16);
+        if (right) {
+            resultEl.innerHTML = '<p style="color:var(--ok);font-weight:700;">Correct</p>';
+            resultEl.classList.remove("incorrect"); resultEl.classList.add("correct");
+            streak = streak > 0 ? streak + 1 : 1;
+        } else {
+            resultEl.innerHTML = '<p style="color:var(--bad);font-weight:700;">Incorrect — the position is<br><span style="color:var(--text);">' + correct + '</span></p>';
+            resultEl.classList.remove("correct"); resultEl.classList.add("incorrect");
+            streak = streak < 0 ? streak - 1 : -1;
+        }
+        const cp = POSITIONS[posIndex][3] / 100;
+        document.getElementById("evaluation-display").innerHTML = "Evaluation&nbsp;&nbsp;" + (cp > 0 ? "+" + cp : cp);
+        pr = Math.max(0, pr + delta); puzzles++;
+        renderPR(delta);
+    };
+
+    window.nextPosition = function () {
+        posIndex = (posIndex + 1) % POSITIONS.length;
+        answered = false;
+        const resultEl = document.getElementById("result");
+        resultEl.innerHTML = '<p id="resultText">Click a piece to make your choice</p>';
+        resultEl.classList.remove("correct", "incorrect");
+        document.getElementById("evaluation-display").innerHTML = "";
+        loadPos();
+    };
+
+    function renderPR(delta) {
+        const v = document.getElementById("pr-value");
+        v.textContent = pr;
+        document.getElementById("pr-puzzles").textContent = puzzles + " puzzles played";
+        if (delta !== undefined) {
+            const d = document.getElementById("pr-delta");
+            d.textContent = (delta >= 0 ? "+" : "") + delta;
+            d.className = "pr-delta " + (delta >= 0 ? "gain" : "loss");
+            void d.offsetWidth; d.classList.add("show");
+            setTimeout(() => { d.classList.add("fade"); setTimeout(() => d.className = "pr-delta", 600); }, 1400);
+            v.classList.add("bump"); setTimeout(() => v.classList.remove("bump"), 200);
+        }
+    }
+
+    // Modals / sidebar
+    window.openModal=()=>document.getElementById("modal").style.display="flex";
+    window.closeModal=()=>document.getElementById("modal").style.display="none";
+    window.openSettings=()=>{document.getElementById("settings-pr-display").textContent=pr;cancelResetConfirm();document.getElementById("settings-modal").style.display="flex";};
+    window.closeSettings=()=>document.getElementById("settings-modal").style.display="none";
+    window.showResetConfirm=()=>{document.getElementById("reset-confirm-area").style.display="none";document.getElementById("reset-confirm-prompt").style.display="block";};
+    window.cancelResetConfirm=()=>{document.getElementById("reset-confirm-area").style.display="block";document.getElementById("reset-confirm-prompt").style.display="none";};
+    window.confirmResetPR=()=>{pr=500;puzzles=0;streak=0;renderPR();const el=document.getElementById("settings-pr-display");el.textContent=pr;el.classList.remove("reset-flash");void el.offsetWidth;el.classList.add("reset-flash");cancelResetConfirm();};
+    window.openStats=()=>{fillStats();document.getElementById("stats-modal").style.display="flex";};
+    window.closeStats=()=>document.getElementById("stats-modal").style.display="none";
+    window.openSidebar=()=>{document.getElementById("sidebar").classList.add("open");document.getElementById("sidebar-overlay").classList.add("open");};
+    window.closeSidebar=()=>{document.getElementById("sidebar").classList.remove("open");document.getElementById("sidebar-overlay").classList.remove("open");};
+    window.logoutUser=()=>alert("Sign out (mocked in preview)");
+
+    function fillStats() {
+        const acc = Math.round(72 + Math.random()*6) + "%";
+        const set=(id,val)=>{const e=document.getElementById(id);if(e)e.textContent=val;};
+        set("stat-pr",pr); set("stat-puzzles",puzzles);
+        set("stat-streak", streak>0?("+"+streak+" ✓"):streak<0?(streak+" ✗"):"—");
+        set("stat-accuracy",acc);
+        set("stat-difficulty", pr<1066?"Easy":pr<2132?"Medium":"Hard");
+        set("stat-best-streak","9 ✓"); set("stat-correct","27"); set("stat-wrong","10");
+        set("stat-peak-pr","1525");
+        const rd=document.getElementById("stat-recent-delta"); rd.textContent="+86"; rd.className="stats-detail-value positive";
+        const badge=document.getElementById("stat-pr-change-badge"); badge.textContent="+980 overall"; badge.className="stats-pr-change-badge gain";
+        renderSpark();
+    }
+
+    function renderSpark() {
+        const svg=document.getElementById("stats-sparkline");
+        while(svg.firstChild)svg.removeChild(svg.firstChild);
+        const vals=[500,540,610,580,690,760,840,820,910,1005,980,1100,1180,1240,1210,1330,1400,1455,1430,1480];
+        const W=480,H=120,PAD=16,min=Math.min(...vals),max=Math.max(...vals),range=max-min||1;
+        const iW=W-PAD*2,iH=H-PAD*2;
+        const pts=vals.map((v,i)=>[PAD+(i/(vals.length-1))*iW, PAD+iH-((v-min)/range)*iH]);
+        const ns="http://www.w3.org/2000/svg";
+        const defs=document.createElementNS(ns,"defs");
+        const grad=document.createElementNS(ns,"linearGradient");
+        grad.setAttribute("id","sparkGrad");grad.setAttribute("x1","0");grad.setAttribute("y1","0");grad.setAttribute("x2","0");grad.setAttribute("y2","1");
+        const s1=document.createElementNS(ns,"stop");s1.setAttribute("offset","0%");s1.setAttribute("stop-color","#ffd400");s1.setAttribute("stop-opacity","0.35");
+        const s2=document.createElementNS(ns,"stop");s2.setAttribute("offset","100%");s2.setAttribute("stop-color","#ffd400");s2.setAttribute("stop-opacity","0.02");
+        grad.appendChild(s1);grad.appendChild(s2);defs.appendChild(grad);svg.appendChild(defs);
+        const area=document.createElementNS(ns,"path");
+        area.setAttribute("d",`M${pts[0][0]},${H-PAD} `+pts.map(p=>`L${p[0]},${p[1]}`).join(" ")+` L${pts[pts.length-1][0]},${H-PAD} Z`);
+        area.setAttribute("fill","url(#sparkGrad)");svg.appendChild(area);
+        const line=document.createElementNS(ns,"path");
+        line.setAttribute("d",pts.map((p,i)=>`${i?"L":"M"}${p[0]},${p[1]}`).join(" "));
+        line.setAttribute("fill","none");line.setAttribute("stroke","#ffd400");line.setAttribute("stroke-width","2.5");
+        line.setAttribute("stroke-linejoin","round");line.setAttribute("stroke-linecap","round");svg.appendChild(line);
+        [[pts[0]],[pts[pts.length-1]]].forEach(([p])=>{const c=document.createElementNS(ns,"circle");c.setAttribute("cx",p[0]);c.setAttribute("cy",p[1]);c.setAttribute("r","5");c.setAttribute("fill","#ffd400");c.setAttribute("stroke","#08080a");c.setAttribute("stroke-width","2");svg.appendChild(c);});
+        document.getElementById("chart-label-left").textContent="start (500)";
+        document.getElementById("chart-label-right").textContent="now ("+1480+")";
+    }
+
+    document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeSidebar();closeSettings();closeStats();closeModal();}});
+
+    // Init
+    document.getElementById("header-username").textContent="Magnus";
+    renderPR();
+    loadPos();
+    </script>
+</body>
+</html>

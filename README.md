@@ -108,7 +108,15 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 
 ### 🔜 Planned Updates
 
-#### v0.8 – Accounts and Leaderboards 👤 (June 2026)
+
+
+
+#### v0.8 - Full glow up of main play page
+ - matches a vibrant theme - change-up from green theme to yellow/black blend of modern look. 
+
+
+
+#### v0.9 – Accounts and Leaderboards Full release👤 (June 2026)
 
 - first: primitive user accounts + no google acc support
 - User accounts and authentication
@@ -117,14 +125,7 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 - Google integrations for logins
 - Full statistics overview page
 
-
-####v0.9 - Full glow up of main play page
- - matches a vibrant theme, claude code grind
-
-
-##### v0.85 - 
-
-## v0.9 - Time-based and point system upgrades 🏆[DELAYED to v0.9]
+## v0.95 - Time-based and point system upgrades 🏆[DELAYED to v0.9]
  - More synced multiplayer point systems reliant on what difficulty puzzles, as well as time
  - Formula-based puzzle calculations
 #### v1.0 – Full Release 🎉 (2026)

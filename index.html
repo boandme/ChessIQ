@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ChessIQ</title>
+    <title>ChessIQ — Positional Blitz</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="main.css">
 </head>
 <body>
@@ -12,215 +14,313 @@
         // window.positions = {{ filtered_data | tojson }};
     </script>
 
+    <!-- ── 3D ambient scene (three.js) ─────────────────────────────────────── -->
+    <canvas id="bg-canvas" aria-hidden="true"></canvas>
+    <div id="bg-vignette" aria-hidden="true"></div>
+    <div id="bg-grid" aria-hidden="true"></div>
+
+    <!-- ── Page transition wipe ────────────────────────────────────────────── -->
+    <div id="page-transition" aria-hidden="true"><span class="pt-bar"></span></div>
+
+    <!-- ── Mobile hamburger ────────────────────────────────────────────────── -->
     <button id="hamburger-menu" onclick="openSidebar()" aria-label="Menu">
         <span></span><span></span><span></span>
     </button>
 
+    <!-- ── Sidebar ─────────────────────────────────────────────────────────── -->
     <aside id="sidebar" class="sidebar">
-        <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close">&times;</button>
+        <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+        <div class="sidebar-brand">CHESS<span>IQ</span></div>
         <nav class="sidebar-nav">
             <h3>Products</h3>
             <ul>
-                <li><a href="index.html" onclick="closeSidebar()">PositionGuesser</a></li>
+                <li><a href="index.html" class="active" onclick="closeSidebar()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
+                    PositionGuesser
+                </a></li>
             </ul>
         </nav>
+        <div class="sidebar-foot">v0.75 — BETA</div>
     </aside>
 
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
 
-    <header class="global-header">
-        <h1 class="logo-title">ChessIQ v0.75</h1>
-        <nav class="secondary-nav">
+    <!-- ── Top bar ─────────────────────────────────────────────────────────── -->
+    <header class="topbar">
+        <div class="topbar-left">
+            <a href="index.html" class="brand" aria-label="ChessIQ home">
+                <span class="brand-mark">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
+                </span>
+                <span class="brand-text">CHESS<span>IQ</span></span>
+                <span class="brand-ver">v0.75</span>
+            </a>
+        </div>
+
+        <nav class="topnav">
             <a href="index.html" class="active">Home</a>
             <a href="credits.html">Credits</a>
             <a href="info.html">Information</a>
         </nav>
+
+        <div class="topbar-right">
+            <div id="user-badge">
+                <span class="user-dot"></span>
+                <span id="header-username">—</span>
+                <button id="logout-btn" onclick="logoutUser()">Sign Out</button>
+            </div>
+
+            <button id="stats-btn" class="icon-btn" onclick="openStats()" aria-label="Statistics" title="Statistics">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+            </button>
+            <button id="settings-btn" class="icon-btn" onclick="openSettings()" aria-label="Settings" title="Settings">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.56V21a2 2 0 0 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.56V3a2 2 0 0 1 4 0v.09a1.7 1.7 0 0 0 1 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9v0a1.7 1.7 0 0 0 1.56 1H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
+            </button>
+            <button id="help-btn" class="icon-btn" onclick="openModal()" aria-label="Help" title="How to play">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.2"/><path d="M9.2 9.2a2.8 2.8 0 0 1 5.4 1c0 1.9-2.8 2.5-2.8 2.5"/><line x1="12" y1="17" x2="12" y2="17.01"/></svg>
+            </button>
+        </div>
     </header>
 
-    <div class="game-instruction">
+    <!-- ── Instruction banner ──────────────────────────────────────────────── -->
+    <div class="game-instruction reveal">
+        <span class="gi-bolt">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
+        </span>
         <p>Who has the advantage?</p>
+        <span class="gi-tag">BLITZ MODE</span>
     </div>
 
-    <div class="main-content">
-        <div id="left-panel">
+    <!-- ── Main layout ─────────────────────────────────────────────────────── -->
+    <main class="main-content">
+        <section id="left-panel" class="reveal">
             <div id="pr-display">
-                <div class="pr-label">Positional Rating</div>
+                <div class="pr-top">
+                    <div class="pr-label">Positional Rating</div>
+                    <div class="pr-spark">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 4 8-9"/><path d="M16 7h4v4"/></svg>
+                    </div>
+                </div>
                 <div class="pr-value" id="pr-value">—</div>
                 <div class="pr-sub" id="pr-puzzles">0 puzzles played</div>
                 <div id="pr-delta" class="pr-delta"></div>
+                <div class="pr-scanline"></div>
             </div>
-            <div id="board"></div>
-            <h3 id="turn"></h3>
-        </div>
 
-        <div id="right-panel">
+            <div id="board-frame">
+                <span class="corner tl"></span><span class="corner tr"></span>
+                <span class="corner bl"></span><span class="corner br"></span>
+                <div id="board"></div>
+            </div>
+
+            <h3 id="turn"></h3>
+        </section>
+
+        <section id="right-panel" class="reveal">
+            <div class="panel-heading">Make your call</div>
+
             <div id="actionRow">
                 <div id="choiceButtons">
-                    <img class="image-btn" src="wking.png"  id="whiteWinning" onclick='sendAnswer("White Winning")'>
-                    <img class="image-btn" src="bking.png"  id="blackWinning" onclick='sendAnswer("Black Winning")'>
-                    <img class="image-btn" src="equal.png"  id="equal"        onclick='sendAnswer("Equal")'>
+                    <button class="choice-tile white" id="whiteWinning" onclick='sendAnswer("White Winning")'>
+                        <span class="choice-icon">
+                            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M24 5v8M20 9h8"/>
+                                <path d="M24 13c-7 3-9 8-5 12h10c4-4 2-9-5-12z"/>
+                                <path d="M17 25h14l-2 13H19z"/>
+                                <path d="M15 38h18"/>
+                            </svg>
+                        </span>
+                        <span class="choice-label">White</span>
+                    </button>
+
+                    <button class="choice-tile equal" id="equal" onclick='sendAnswer("Equal")'>
+                        <span class="choice-icon">
+                            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round">
+                                <line x1="13" y1="19" x2="35" y2="19"/>
+                                <line x1="13" y1="29" x2="35" y2="29"/>
+                            </svg>
+                        </span>
+                        <span class="choice-label">Equal</span>
+                    </button>
+
+                    <button class="choice-tile black" id="blackWinning" onclick='sendAnswer("Black Winning")'>
+                        <span class="choice-icon">
+                            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M24 5v8M20 9h8"/>
+                                <path d="M24 13c-7 3-9 8-5 12h10c4-4 2-9-5-12z"/>
+                                <path d="M17 25h14l-2 13H19z"/>
+                                <path d="M15 38h18"/>
+                            </svg>
+                        </span>
+                        <span class="choice-label">Black</span>
+                    </button>
                 </div>
             </div>
 
             <div id="result">
-                <p id="resultText">Click a king to make your choice</p>
+                <p id="resultText">Click a piece to make your choice</p>
             </div>
             <div id="evaluation-display"></div>
-            <button id="nextButton" onclick="nextPosition()">Next Position</button>
 
-            <!-- ── Help Modal ───────────────────────────────────────────── -->
-            <div id="modal">
-                <div class="modal-content">
-                    <button class="modal-close-btn" onclick="closeModal()" aria-label="Close">&times;</button>
-                    <h2>Welcome to ChessIQ!</h2>
-                    <p class="modal-intro">Train your positional knowledge in chess and master the art of self-analysis. This skill is invaluable for chess players of all levels!</p>
-                    <div class="modal-section">
-                        <h3>How To Play</h3>
-                        <p class="modal-instruction-intro">You will be given a position. Analyze it and determine which side has the advantage:</p>
-                        <ul class="modal-list">
-                            <li><strong>White Winning:</strong> Click the White King</li>
-                            <li><strong>Black Winning:</strong> Click the Black King</li>
-                            <li><strong>Equal Position:</strong> Click the Equal symbol</li>
-                        </ul>
-                    </div>
-                    <button class="got-it-btn" onclick="closeModal()">Got It!</button>
-                </div>
+            <button id="nextButton" onclick="nextPosition()">
+                <span>Next Position</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+        </section>
+    </main>
+
+    <!-- ── Help Modal ──────────────────────────────────────────────────────── -->
+    <div id="modal">
+        <div class="modal-content">
+            <button class="modal-close-btn" onclick="closeModal()" aria-label="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+            <h2>Welcome to ChessIQ</h2>
+            <p class="modal-intro">Train your positional knowledge and master the art of self-analysis — a skill invaluable for chess players of every level.</p>
+            <div class="modal-section">
+                <h3>How To Play</h3>
+                <p class="modal-instruction-intro">You'll be given a position. Read it, then call who holds the advantage:</p>
+                <ul class="modal-list">
+                    <li><strong>White Winning</strong> — choose the White tile</li>
+                    <li><strong>Black Winning</strong> — choose the Black tile</li>
+                    <li><strong>Equal Position</strong> — choose the Equal tile</li>
+                </ul>
             </div>
-
-            <!-- ── Settings Modal ───────────────────────────────────────── -->
-            <div id="settings-modal" onclick="if(event.target===this) closeSettings()">
-                <div class="modal-content">
-                    <button class="modal-close-btn" onclick="closeSettings()" aria-label="Close">&times;</button>
-                    <h2>⚙️ Settings</h2>
-                    <p class="modal-intro">Manage your ChessIQ experience.</p>
-
-                    <div class="modal-section">
-                        <h3>Positional Rating</h3>
-                        <p class="modal-instruction-intro">Your current PR: <strong id="settings-pr-display">—</strong></p>
-                        <p class="modal-instruction-intro" style="font-size:0.88rem;opacity:0.75;">Resetting will return your PR to the starting value (500) and clear your puzzle count and streak.</p>
-                        <div id="reset-confirm-area">
-                            <button class="settings-action-btn danger" onclick="showResetConfirm()">Reset Rating</button>
-                        </div>
-                        <div id="reset-confirm-prompt" style="display:none;">
-                            <p class="modal-instruction-intro" style="color:#dc2626;font-weight:700;margin-bottom:10px;">Are you sure? This cannot be undone.</p>
-                            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-                                <button class="settings-action-btn danger" onclick="confirmResetPR()">Yes, Reset</button>
-                                <button class="settings-action-btn" onclick="cancelResetConfirm()">Cancel</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="modal-section">
-                        <h3>Display</h3>
-                        <ul class="modal-list">
-                            <li><strong>Board Theme:</strong> Classic Green <span style="opacity:0.5;font-size:0.82rem;">(more coming soon)</span></li>
-                            <li><strong>Piece Style:</strong> Standard <span style="opacity:0.5;font-size:0.82rem;">(more coming soon)</span></li>
-                        </ul>
-                    </div>
-
-                    <div class="modal-section">
-                        <h3>About</h3>
-                        <ul class="modal-list">
-                            <li><strong>Version:</strong> ChessIQ v0.75</li>
-                            <li><strong>Status:</strong> Beta — active development</li>
-                        </ul>
-                    </div>
-
-                    <button class="got-it-btn" onclick="closeSettings()">Close</button>
-                </div>
-            </div>
-
-            <!-- ── Stats Modal ───────────────────────────────────────────── -->
-            <div id="stats-modal" onclick="if(event.target===this) closeStats()">
-                <div class="modal-content stats-modal-content">
-                    <button class="modal-close-btn" onclick="closeStats()" aria-label="Close">&times;</button>
-
-                    <h2>📊 Your Stats</h2>
-                    <p class="modal-intro">A snapshot of your positional training progress.</p>
-
-                    <!-- KPI row -->
-                    <div class="stats-kpi-row">
-                        <div class="stats-kpi-card">
-                            <div class="stats-kpi-value" id="stat-pr">—</div>
-                            <div class="stats-kpi-label">Current PR</div>
-                        </div>
-                        <div class="stats-kpi-card">
-                            <div class="stats-kpi-value" id="stat-puzzles">—</div>
-                            <div class="stats-kpi-label">Puzzles Played</div>
-                        </div>
-                        <div class="stats-kpi-card">
-                            <div class="stats-kpi-value" id="stat-streak">—</div>
-                            <div class="stats-kpi-label">Current Streak</div>
-                        </div>
-                        <div class="stats-kpi-card">
-                            <div class="stats-kpi-value" id="stat-accuracy">—</div>
-                            <div class="stats-kpi-label">Accuracy</div>
-                        </div>
-                    </div>
-
-                    <!-- PR Trend Chart -->
-                    <div class="modal-section stats-chart-section">
-                        <div class="stats-section-header">
-                            <h3>PR Over Time</h3>
-                            <span class="stats-pr-change-badge" id="stat-pr-change-badge"></span>
-                        </div>
-                        <div id="stats-chart-container">
-                            <svg id="stats-sparkline" viewBox="0 0 480 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"></svg>
-                            <div class="stats-chart-labels">
-                                <span id="chart-label-left"></span>
-                                <span id="chart-label-right"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Breakdown grid -->
-                    <div class="modal-section">
-                        <h3>Breakdown</h3>
-                        <div class="stats-detail-grid">
-                            <div class="stats-detail-item">
-                                <span class="stats-detail-label">Difficulty Tier</span>
-                                <span class="stats-detail-value" id="stat-difficulty">—</span>
-                            </div>
-                            <div class="stats-detail-item">
-                                <span class="stats-detail-label">Best Streak</span>
-                                <span class="stats-detail-value" id="stat-best-streak">—</span>
-                            </div>
-                            <div class="stats-detail-item">
-                                <span class="stats-detail-label">Correct Answers</span>
-                                <span class="stats-detail-value" id="stat-correct">—</span>
-                            </div>
-                            <div class="stats-detail-item">
-                                <span class="stats-detail-label">Wrong Answers</span>
-                                <span class="stats-detail-value" id="stat-wrong">—</span>
-                            </div>
-                            <div class="stats-detail-item">
-                                <span class="stats-detail-label">PR Change (last 10)</span>
-                                <span class="stats-detail-value" id="stat-recent-delta">—</span>
-                            </div>
-                            <div class="stats-detail-item">
-                                <span class="stats-detail-label">Peak PR</span>
-                                <span class="stats-detail-value" id="stat-peak-pr">—</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button class="got-it-btn" onclick="closeStats()">Close</button>
-                </div>
-            </div>
-
-        </div><!-- end right-panel -->
-    </div><!-- end main-content -->
-
-    <div id="user-badge">
-        <span id="header-username">—</span>
-        <button id="logout-btn" onclick="logoutUser()">Sign Out</button>
+            <button class="got-it-btn" onclick="closeModal()">Got It</button>
+        </div>
     </div>
 
-    <!-- Three fixed icon buttons: stats | settings | help -->
-    <img id="stats-btn"    src="column-chart-icon.png"   alt="Stats"    onclick="openStats()"    aria-label="Statistics">
-    <img id="settings-btn" src="setting-line-icon.webp"  alt="Settings" onclick="openSettings()" aria-label="Settings">
-    <img id="help-btn"     src="help.png"                alt="Help"     onclick="openModal()"    aria-label="Help">
+    <!-- ── Settings Modal ──────────────────────────────────────────────────── -->
+    <div id="settings-modal" onclick="if(event.target===this) closeSettings()">
+        <div class="modal-content">
+            <button class="modal-close-btn" onclick="closeSettings()" aria-label="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+            <h2 class="modal-title-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.56V21a2 2 0 0 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.56V3a2 2 0 0 1 4 0v.09a1.7 1.7 0 0 0 1 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9v0a1.7 1.7 0 0 0 1.56 1H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
+                Settings
+            </h2>
+            <p class="modal-intro">Manage your ChessIQ experience.</p>
 
+            <div class="modal-section">
+                <h3>Positional Rating</h3>
+                <p class="modal-instruction-intro">Your current PR: <strong id="settings-pr-display">—</strong></p>
+                <p class="modal-instruction-intro subtle">Resetting returns your PR to the starting value (500) and clears your puzzle count and streak.</p>
+                <div id="reset-confirm-area">
+                    <button class="settings-action-btn danger" onclick="showResetConfirm()">Reset Rating</button>
+                </div>
+                <div id="reset-confirm-prompt" style="display:none;">
+                    <p class="modal-instruction-intro danger-text">Are you sure? This cannot be undone.</p>
+                    <div class="confirm-row">
+                        <button class="settings-action-btn danger" onclick="confirmResetPR()">Yes, Reset</button>
+                        <button class="settings-action-btn" onclick="cancelResetConfirm()">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-section">
+                <h3>Display</h3>
+                <ul class="modal-list">
+                    <li><strong>Board Theme</strong> — Classic <span class="soon">(more coming soon)</span></li>
+                    <li><strong>Piece Style</strong> — Standard <span class="soon">(more coming soon)</span></li>
+                </ul>
+            </div>
+
+            <div class="modal-section">
+                <h3>About</h3>
+                <ul class="modal-list">
+                    <li><strong>Version</strong> — ChessIQ v0.75</li>
+                    <li><strong>Status</strong> — Beta, active development</li>
+                </ul>
+            </div>
+
+            <button class="got-it-btn" onclick="closeSettings()">Close</button>
+        </div>
+    </div>
+
+    <!-- ── Stats Modal ─────────────────────────────────────────────────────── -->
+    <div id="stats-modal" onclick="if(event.target===this) closeStats()">
+        <div class="modal-content stats-modal-content">
+            <button class="modal-close-btn" onclick="closeStats()" aria-label="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+
+            <h2 class="modal-title-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+                Your Stats
+            </h2>
+            <p class="modal-intro">A snapshot of your positional training progress.</p>
+
+            <div class="stats-kpi-row">
+                <div class="stats-kpi-card">
+                    <div class="stats-kpi-value" id="stat-pr">—</div>
+                    <div class="stats-kpi-label">Current PR</div>
+                </div>
+                <div class="stats-kpi-card">
+                    <div class="stats-kpi-value" id="stat-puzzles">—</div>
+                    <div class="stats-kpi-label">Puzzles Played</div>
+                </div>
+                <div class="stats-kpi-card">
+                    <div class="stats-kpi-value" id="stat-streak">—</div>
+                    <div class="stats-kpi-label">Current Streak</div>
+                </div>
+                <div class="stats-kpi-card">
+                    <div class="stats-kpi-value" id="stat-accuracy">—</div>
+                    <div class="stats-kpi-label">Accuracy</div>
+                </div>
+            </div>
+
+            <div class="modal-section stats-chart-section">
+                <div class="stats-section-header">
+                    <h3>PR Over Time</h3>
+                    <span class="stats-pr-change-badge" id="stat-pr-change-badge"></span>
+                </div>
+                <div id="stats-chart-container">
+                    <svg id="stats-sparkline" viewBox="0 0 480 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"></svg>
+                    <div class="stats-chart-labels">
+                        <span id="chart-label-left"></span>
+                        <span id="chart-label-right"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-section">
+                <h3>Breakdown</h3>
+                <div class="stats-detail-grid">
+                    <div class="stats-detail-item">
+                        <span class="stats-detail-label">Difficulty Tier</span>
+                        <span class="stats-detail-value" id="stat-difficulty">—</span>
+                    </div>
+                    <div class="stats-detail-item">
+                        <span class="stats-detail-label">Best Streak</span>
+                        <span class="stats-detail-value" id="stat-best-streak">—</span>
+                    </div>
+                    <div class="stats-detail-item">
+                        <span class="stats-detail-label">Correct Answers</span>
+                        <span class="stats-detail-value" id="stat-correct">—</span>
+                    </div>
+                    <div class="stats-detail-item">
+                        <span class="stats-detail-label">Wrong Answers</span>
+                        <span class="stats-detail-value" id="stat-wrong">—</span>
+                    </div>
+                    <div class="stats-detail-item">
+                        <span class="stats-detail-label">PR Change (last 10)</span>
+                        <span class="stats-detail-value" id="stat-recent-delta">—</span>
+                    </div>
+                    <div class="stats-detail-item">
+                        <span class="stats-detail-label">Peak PR</span>
+                        <span class="stats-detail-value" id="stat-peak-pr">—</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="got-it-btn" onclick="closeStats()">Close</button>
+        </div>
+    </div>
+
+    <script type="module" src="experience.js"></script> 
     <script type="module" src="main.js"></script>
 </body>
 </html>
