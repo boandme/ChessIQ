@@ -1,100 +1,123 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ChessIQ Information</title>
-  <link rel="stylesheet" href="main.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChessIQ — Information</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="main.css">
 </head>
 <body>
-  <button id="hamburger-menu" onclick="openSidebar()" aria-label="Menu">
-    <span></span>
-    <span></span>
-    <span></span>
-  </button>
 
-  <aside id="sidebar" class="sidebar">
-    <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close">&times;</button>
-    <nav class="sidebar-nav">
-      <h3>Products</h3>
-      <ul>
-        <li><a href="index.html" onclick="closeSidebar()">PositionGuesser</a></li>
-      </ul>
-    </nav>
-  </aside>
+    <canvas id="bg-canvas" aria-hidden="true"></canvas>
+    <div id="bg-vignette" aria-hidden="true"></div>
+    <div id="bg-grid" aria-hidden="true"></div>
+    <div id="page-transition" aria-hidden="true"><span class="pt-bar"></span></div>
 
-  <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+    <button id="hamburger-menu" onclick="openSidebar()" aria-label="Menu">
+        <span></span><span></span><span></span>
+    </button>
 
-  <header class="global-header">
-    <h1 class="logo-title">ChessIQ v0.5</h1>
-    <nav class="secondary-nav">
-      <a href="index.html">Home</a>
-      <a href="credits.html">Credits</a>
-      <a href="info.html" class="active">Information</a>
-    </nav>
-  </header>
+    <aside id="sidebar" class="sidebar">
+        <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+        <div class="sidebar-brand">CHESS<span>IQ</span></div>
+        <nav class="sidebar-nav">
+            <h3>Products</h3>
+            <ul>
+                <li><a href="index.html" onclick="closeSidebar()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
+                    PositionGuesser
+                </a></li>
+            </ul>
+        </nav>
+        <div class="sidebar-foot">v0.75 — BETA</div>
+    </aside>
+    <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
 
-  <main class="content">
-    <h1>Information</h1>
-    <section>
-      <h2>Notice</h2>
-    <p>ChessIQ is still in the beta/development phase.</p>
-  </section>
+    <header class="topbar">
+        <div class="topbar-left">
+            <a href="index.html" class="brand" aria-label="ChessIQ home">
+                <span class="brand-mark">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
+                </span>
+                <span class="brand-text">CHESS<span>IQ</span></span>
+                <span class="brand-ver">v0.75</span>
+            </a>
+        </div>
+        <nav class="topnav">
+            <a href="index.html">Home</a>
+            <a href="credits.html">Credits</a>
+            <a href="info.html" class="active">Information</a>
+        </nav>
+        <div class="topbar-right">
+            <button id="help-btn" class="icon-btn" onclick="openModal()" aria-label="Help" title="How to play">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.2"/><path d="M9.2 9.2a2.8 2.8 0 0 1 5.4 1c0 1.9-2.8 2.5-2.8 2.5"/><line x1="12" y1="17" x2="12" y2="17.01"/></svg>
+            </button>
+        </div>
+    </header>
 
-  <section>
-    <h2>General Information</h2>
-    <p>
-      ChessIQ is a positional training tool for intermediate and above chess players that tests your ability to visualize and evaluate positions.
-    </p>
-    <p>
-      Players are given a position and must analyze it, either by simple material, space, or other positional concepts. It’s like tactical puzzles, but it trains your positional play to be very useful in real games!
-    </p>
-    <p>
-      Although ChessIQ is in the beta stage right now, many more updates are coming soon, leading up to v1.0.
-    </p>
-    <p>
-      ChessIQ’s main product is the <strong>Position Guessing Tool</strong>, but additional features such as AI opponents to play against are also coming soon.
-    </p>
-  </section>
+    <main class="content reveal">
+        <div class="page-kicker">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
+            <span>ChessIQ</span>
+        </div>
+        <h1>Information</h1>
 
-  <section>
-    <h2>Inspiration</h2>
-    <p>
-      This game was inspired by tactical puzzles, with the idea of creating a way to effectively practice positional thinking.
-    </p>
-  </section>
-  <section>
-    <h2> Further Information</h2>
-    <p>
-      Lichess Article: <a href = "https://lichess.org/@/Vyom_Joshi/blog/train-smarter-introducing-chessiq-the-positional-puzzle-trainer/8dQAwHRw" target = "_blank">Train Smarter: Introducing ChessIQ</a> 
-    </p>
-  </section>
-</div>
+        <section>
+            <h2>Notice</h2>
+            <p>ChessIQ is still in the beta / development phase.</p>
+        </section>
 
-<div id="modal">
-  <div class="modal-content">
-    <button class="modal-close-btn" onclick="closeModal()" aria-label="Close">&times;</button>
-    
-    <h2>Welcome to ChessIQ!</h2>
-    <p class="modal-intro">Train your positional knowledge in chess and master the art of self-analysis. This skill is invaluable for chess players of all levels!</p><br>
-    
-    <div class="modal-section">
-      <h3>How To Play</h3>
-      <p class="modal-instruction-intro">You will be given a position. Analyze it and determine which side has the advantage:</p>
-      <ul class="modal-list">
-        <li><strong>White Winning:</strong> Click the White King</li>
-        <li><strong>Black Winning:</strong> Click the Black King</li>
-        <li><strong>Equal Position:</strong> Click the Equal symbol</li>
-      </ul>
+        <section>
+            <h2>General Information</h2>
+            <p>ChessIQ is a positional training tool for intermediate and above chess players that tests your ability to visualize and evaluate positions.</p>
+            <p>Players are given a position and must analyze it — by simple material, space, or other positional concepts. It's like tactical puzzles, but it trains your positional play to be very useful in real games.</p>
+            <p>Although ChessIQ is in the beta stage right now, many more updates are coming soon, leading up to v1.0.</p>
+            <p>ChessIQ's main product is the <strong>Position Guessing Tool</strong>, but additional features such as AI opponents to play against are also coming soon.</p>
+        </section>
+
+        <section>
+            <h2>Inspiration</h2>
+            <p>This game was inspired by tactical puzzles, with the idea of creating a way to effectively practice positional thinking.</p>
+        </section>
+
+        <section>
+            <h2>Further Information</h2>
+            <p>Lichess Article — <a href="https://lichess.org/@/Vyom_Joshi/blog/train-smarter-introducing-chessiq-the-positional-puzzle-trainer/8dQAwHRw" target="_blank" rel="noopener">Train Smarter: Introducing ChessIQ</a></p>
+        </section>
+    </main>
+
+    <!-- Help modal -->
+    <div id="modal">
+        <div class="modal-content">
+            <button class="modal-close-btn" onclick="closeModal()" aria-label="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+            <h2>Welcome to ChessIQ</h2>
+            <p class="modal-intro">Train your positional knowledge and master the art of self-analysis — a skill invaluable for chess players of every level.</p>
+            <div class="modal-section">
+                <h3>How To Play</h3>
+                <p class="modal-instruction-intro">You'll be given a position. Read it, then call who holds the advantage:</p>
+                <ul class="modal-list">
+                    <li><strong>White Winning</strong> — choose the White tile</li>
+                    <li><strong>Black Winning</strong> — choose the Black tile</li>
+                    <li><strong>Equal Position</strong> — choose the Equal tile</li>
+                </ul>
+            </div>
+            <button class="got-it-btn" onclick="closeModal()">Got It</button>
+        </div>
     </div>
-    
-    <button class="got-it-btn" onclick="closeModal()">Got It!</button>
-  </div>
-  </div>
-</div>
 
-<img id = 'help-btn' src = 'help.png' onclick = 'openModal()'>
-
-<script type = "module" src="main.js"></script>
+    <script type="module" src="experience.js"></script>
+    <script>
+        window.openSidebar  = () => { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebar-overlay').classList.add('open'); };
+        window.closeSidebar = () => { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('open'); };
+        window.openModal    = () => document.getElementById('modal').style.display = 'flex';
+        window.closeModal   = () => document.getElementById('modal').style.display = 'none';
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeSidebar(); closeModal(); } });
+    </script>
 </body>
 </html>

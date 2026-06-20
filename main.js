@@ -219,7 +219,7 @@ var current_position = 0;
 function initPositions() {
     const boardEl = document.getElementById('board');
     const turnEl  = document.getElementById('turn');
-    if (boardEl) boardEl.innerHTML = '<p style="padding:40px;text-align:center;color:#14532d;font-size:1.2rem;">Loading positions...</p>';
+    if (boardEl) boardEl.innerHTML = '<p style="padding:40px;text-align:center;">Loading positions...</p>';
     if (turnEl)  turnEl.innerHTML  = 'Loading...';
 
     get(ref(db, 'positions')).then((snapshot) => {
@@ -269,25 +269,30 @@ window.nextPosition = function() {
     correct_result = findResult(pos.Eval);
     document.getElementById("turn").innerHTML = pos.Turn;
     answered = false;
-    document.getElementById("result").innerHTML = "";
+    const resultEl = document.getElementById("result");
+    resultEl.innerHTML = '<p id="resultText">Click a piece to make your choice</p>';
+    resultEl.classList.remove("correct", "incorrect");
     document.getElementById("evaluation-display").innerHTML = "";
 };
 
 function sendAnswer(guess) {
     if (answered) return;
+    const resultEl = document.getElementById("result");
     if (guess === correct_result) {
-        document.getElementById("result").innerHTML = "Correct!";
-        document.getElementById("result").style.color = "green";
+        resultEl.innerHTML = '<p style="color:var(--ok);font-weight:700;">Correct</p>';
+        resultEl.classList.remove("incorrect");
+        resultEl.classList.add("correct");
     } else {
-        document.getElementById("result").innerHTML = "Incorrect! The current position is: <br>" + correct_result;
-        document.getElementById("result").style.color = "red";
+        resultEl.innerHTML = '<p style="color:var(--bad);font-weight:700;">Incorrect — the position is<br><span style="color:var(--text);">' + correct_result + '</span></p>';
+        resultEl.classList.remove("correct");
+        resultEl.classList.add("incorrect");
     }
     answered = true;
     const difficulty    = getDifficultyFromPR();
     const pool          = positionsByDiff[difficulty] || [];
     const evaluationRaw = parseFloat(pool[current_position].Eval) / 100;
     const displayEval   = evaluationRaw > 0 ? `+${evaluationRaw}` : `${evaluationRaw}`;
-    document.getElementById("evaluation-display").innerHTML = `<strong>Evaluation: ${displayEval}</strong>`;
+    document.getElementById("evaluation-display").innerHTML = `Evaluation&nbsp;&nbsp;${displayEval}`;
     updatePR(difficulty, guess === correct_result);
 }
 window.sendAnswer = sendAnswer;
@@ -463,9 +468,9 @@ function renderSparkline() {
         text.setAttribute('x', W / 2);
         text.setAttribute('y', H / 2 + 5);
         text.setAttribute('text-anchor', 'middle');
-        text.setAttribute('fill', 'rgba(20,83,45,0.4)');
+        text.setAttribute('fill', 'rgba(165,165,178,0.7)');
         text.setAttribute('font-size', '13');
-        text.setAttribute('font-family', 'Space Grotesk, sans-serif');
+        text.setAttribute('font-family', 'JetBrains Mono, monospace');
         text.textContent = 'Play more puzzles to see your trend';
         svg.appendChild(text);
         document.getElementById('chart-label-left').textContent  = '';
@@ -496,11 +501,11 @@ function renderSparkline() {
     grad.setAttribute('x2', '0'); grad.setAttribute('y2', '1');
     const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
     stop1.setAttribute('offset', '0%');
-    stop1.setAttribute('stop-color', '#22c55e');
+    stop1.setAttribute('stop-color', '#ffd400');
     stop1.setAttribute('stop-opacity', '0.35');
     const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
     stop2.setAttribute('offset', '100%');
-    stop2.setAttribute('stop-color', '#22c55e');
+    stop2.setAttribute('stop-color', '#ffd400');
     stop2.setAttribute('stop-opacity', '0.02');
     grad.appendChild(stop1);
     grad.appendChild(stop2);
@@ -522,7 +527,7 @@ function renderSparkline() {
         const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         line.setAttribute('x1', PAD); line.setAttribute('x2', W - PAD);
         line.setAttribute('y1', y);   line.setAttribute('y2', y);
-        line.setAttribute('stroke', 'rgba(34,197,94,0.12)');
+        line.setAttribute('stroke', 'rgba(255,212,0,0.12)');
         line.setAttribute('stroke-width', '1');
         svg.appendChild(line);
 
@@ -530,9 +535,9 @@ function renderSparkline() {
         label.setAttribute('x', PAD - 4);
         label.setAttribute('y', y + 4);
         label.setAttribute('text-anchor', 'end');
-        label.setAttribute('fill', 'rgba(20,83,45,0.45)');
+        label.setAttribute('fill', 'rgba(165,165,178,0.6)');
         label.setAttribute('font-size', '9');
-        label.setAttribute('font-family', 'Space Grotesk, sans-serif');
+        label.setAttribute('font-family', 'JetBrains Mono, monospace');
         label.textContent = Math.round(minVal + frac * range);
         svg.appendChild(label);
     });
@@ -542,7 +547,7 @@ function renderSparkline() {
     const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     line.setAttribute('d', lineD);
     line.setAttribute('fill', 'none');
-    line.setAttribute('stroke', '#22c55e');
+    line.setAttribute('stroke', '#ffd400');
     line.setAttribute('stroke-width', '2.5');
     line.setAttribute('stroke-linejoin', 'round');
     line.setAttribute('stroke-linecap', 'round');
@@ -554,8 +559,8 @@ function renderSparkline() {
         circle.setAttribute('cx', x);
         circle.setAttribute('cy', y);
         circle.setAttribute('r', vals.length > 20 ? '0' : '3');
-        circle.setAttribute('fill', '#22c55e');
-        circle.setAttribute('stroke', '#fff');
+        circle.setAttribute('fill', '#ffd400');
+        circle.setAttribute('stroke', '#08080a');
         circle.setAttribute('stroke-width', '1.5');
         svg.appendChild(circle);
     });
@@ -564,7 +569,7 @@ function renderSparkline() {
     [[points[0], vals[0]], [points[points.length - 1], vals[vals.length - 1]]].forEach(([[x, y], v]) => {
         const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         c.setAttribute('cx', x); c.setAttribute('cy', y); c.setAttribute('r', '5');
-        c.setAttribute('fill', '#22c55e'); c.setAttribute('stroke', '#fff'); c.setAttribute('stroke-width', '2');
+        c.setAttribute('fill', '#ffd400'); c.setAttribute('stroke', '#08080a'); c.setAttribute('stroke-width', '2');
         svg.appendChild(c);
     });
 

@@ -4,220 +4,137 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ChessIQ — Sign In</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="main.css">
     <style>
-        /* ── Auth page overrides ─────────────────────────────────────────── */
+        /* ── Auth page overrides (matte / yellow theme) ──────────────────────── */
         body {
             justify-content: center;
             align-items: center;
-            padding-top: 20px;
+            padding: 40px 20px;
             min-height: 100vh;
         }
 
         .auth-card {
-            background: rgba(255,255,255,0.95);
-            border: 3px solid var(--bright-green);
-            border-radius: 24px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-            padding: 40px 44px 36px;
+            position: relative;
             width: 100%;
             max-width: 440px;
-            position: relative;
+            background: var(--surface);
+            border: 1px solid var(--line-bright);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.6), var(--glow);
+            padding: 42px 40px 32px;
+            animation: modal-in 0.4s var(--ease-out);
+        }
+        .auth-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, transparent, var(--yellow), transparent);
+        }
+        .auth-card::after {
+            content: ''; position: absolute; top: -1px; left: -1px;
+            width: 24px; height: 24px;
+            border-top: 2px solid var(--yellow); border-left: 2px solid var(--yellow);
         }
 
-        .auth-logo {
-            text-align: center;
-            margin-bottom: 28px;
+        .auth-logo { text-align: center; margin-bottom: 26px; }
+        .auth-logo .mark {
+            width: 56px; height: 56px; margin: 0 auto 14px;
+            display: grid; place-items: center;
+            color: var(--bg); background: var(--yellow); box-shadow: var(--glow);
+            clip-path: polygon(16% 0, 100% 0, 100% 84%, 84% 100%, 0 100%, 0 16%);
         }
-
+        .auth-logo .mark svg { width: 28px; height: 28px; }
         .auth-logo h1 {
-            font-family: 'Space Grotesk', "Segoe UI", sans-serif;
-            font-size: 2.4rem;
-            font-weight: 800;
-            color: var(--primary-green);
-            margin: 0 0 4px;
-            letter-spacing: 0.5px;
+            font-family: var(--font-display); font-size: 2.1rem; font-weight: 700;
+            color: var(--text); margin: 0 0 6px; letter-spacing: 0.02em;
         }
-
-        .auth-logo p {
-            font-size: 0.88rem;
-            color: #6b7280;
-            margin: 0;
-        }
+        .auth-logo h1 span { color: var(--yellow); }
+        .auth-logo p { font-size: 0.9rem; color: var(--text-dim); margin: 0; }
 
         /* Tab switcher */
         .auth-tabs {
-            display: flex;
-            border-radius: 50px;
-            background: #f3f4f6;
-            padding: 4px;
-            margin-bottom: 28px;
+            display: flex; gap: 4px; padding: 4px; margin-bottom: 26px;
+            background: var(--surface-2); border: 1px solid var(--line);
         }
-
         .auth-tab {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 50px;
-            background: transparent;
-            font-size: 0.95rem;
-            font-weight: 700;
-            font-family: 'Space Grotesk', "Segoe UI", sans-serif;
-            color: #9ca3af;
-            cursor: pointer;
-            transition: all 0.22s ease;
+            flex: 1; padding: 11px; border: none; background: transparent;
+            font-family: var(--font-display); font-size: 0.92rem; font-weight: 700;
+            color: var(--text-dim); cursor: pointer;
+            transition: all 0.2s var(--ease-snap);
+            clip-path: polygon(6% 0, 100% 0, 94% 100%, 0 100%);
         }
-
-        .auth-tab.active {
-            background: var(--primary-green);
-            color: white;
-            box-shadow: 0 4px 12px rgba(20,83,45,0.25);
-        }
+        .auth-tab.active { background: var(--yellow); color: var(--bg); }
 
         /* Form */
         .auth-form { display: flex; flex-direction: column; gap: 16px; }
         .auth-form.hidden { display: none; }
-
-        .field-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
+        .field-group { display: flex; flex-direction: column; gap: 7px; }
         .field-group label {
-            font-size: 0.82rem;
-            font-weight: 700;
-            color: var(--primary-green);
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
+            font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700;
+            color: var(--yellow); letter-spacing: 0.14em; text-transform: uppercase;
         }
-
         .field-group input {
-            padding: 12px 16px;
-            border: 2px solid #e5e7eb;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-family: "Segoe UI", sans-serif;
-            color: #111;
-            background: #fafafa;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            outline: none;
+            padding: 13px 15px;
+            background: var(--bg-2); border: 1px solid var(--line-bright);
+            color: var(--text); font-size: 1rem; font-family: var(--font-body);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease; outline: none;
         }
+        .field-group input::placeholder { color: var(--text-faint); }
+        .field-group input:focus { border-color: var(--yellow); box-shadow: 0 0 0 3px var(--yellow-soft); }
+        .field-group input.error { border-color: var(--bad); box-shadow: 0 0 0 3px rgba(255,77,77,0.15); }
 
-        .field-group input:focus {
-            border-color: var(--bright-green);
-            box-shadow: 0 0 0 3px rgba(34,197,94,0.18);
-            background: #fff;
-        }
+        /* Messages */
+        .auth-msg { font-size: 0.88rem; font-weight: 600; padding: 11px 14px; display: none; border: 1px solid transparent; }
+        .auth-msg.error   { display: block; background: rgba(255,77,77,0.1); color: var(--bad); border-color: rgba(255,77,77,0.4); }
+        .auth-msg.success { display: block; background: var(--yellow-soft); color: var(--yellow); border-color: var(--yellow-line); }
 
-        .field-group input.error {
-            border-color: #dc2626;
-            box-shadow: 0 0 0 3px rgba(220,38,38,0.12);
-        }
-
-        /* Error / success messages */
-        .auth-msg {
-            font-size: 0.88rem;
-            font-weight: 600;
-            padding: 10px 14px;
-            border-radius: 10px;
-            display: none;
-        }
-
-        .auth-msg.error {
-            background: #fef2f2;
-            color: #dc2626;
-            border: 1.5px solid #fca5a5;
-            display: block;
-        }
-
-        .auth-msg.success {
-            background: #f0fdf4;
-            color: #16a34a;
-            border: 1.5px solid #86efac;
-            display: block;
-        }
-
-        /* Submit button */
+        /* Submit */
         .auth-submit {
-            padding: 14px;
-            border: none;
-            border-radius: 50px;
-            background: linear-gradient(135deg, var(--bright-green) 0%, var(--primary-green) 100%);
-            color: white;
-            font-size: 1rem;
-            font-weight: 800;
-            font-family: 'Space Grotesk', "Segoe UI", sans-serif;
-            letter-spacing: 0.5px;
-            cursor: pointer;
-            transition: all 0.22s ease;
-            box-shadow: 0 6px 20px rgba(34,197,94,0.35);
-            margin-top: 4px;
+            padding: 15px; border: none; cursor: pointer; margin-top: 4px;
+            background: var(--yellow); color: var(--bg);
+            font-family: var(--font-display); font-size: 1rem; font-weight: 700;
+            letter-spacing: 0.06em; text-transform: uppercase;
+            box-shadow: var(--glow);
+            transition: transform 0.2s var(--ease-snap), box-shadow 0.2s ease, background 0.2s ease;
+            clip-path: polygon(5% 0, 100% 0, 95% 100%, 0 100%);
         }
-
-        .auth-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 28px rgba(34,197,94,0.45);
-        }
-
-        .auth-submit:active {
-            transform: translateY(1px);
-        }
-
-        .auth-submit:disabled {
-            opacity: 0.65;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* Password rules hint */
-        .pwd-hint {
-            font-size: 0.78rem;
-            color: #9ca3af;
-            margin-top: 2px;
-        }
-
-        /* Loading spinner inside button */
+        .auth-submit:hover { background: var(--yellow-bright); transform: translateY(-2px); box-shadow: var(--glow-strong); }
+        .auth-submit:active { transform: translateY(0); }
+        .auth-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
         .auth-submit.loading::after {
-            content: '';
-            display: inline-block;
-            width: 14px;
-            height: 14px;
-            border: 2px solid rgba(255,255,255,0.5);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.7s linear infinite;
-            margin-left: 10px;
-            vertical-align: middle;
+            content: ''; display: inline-block; width: 14px; height: 14px;
+            margin-left: 10px; vertical-align: middle;
+            border: 2px solid rgba(8,8,10,0.4); border-top-color: var(--bg);
+            border-radius: 50%; animation: spin 0.7s linear infinite;
         }
-
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .auth-divider {
-            text-align: center;
-            font-size: 0.8rem;
-            color: #9ca3af;
-            margin: 4px 0 0;
-        }
-
+        .pwd-hint { font-size: 0.76rem; color: var(--text-faint); font-family: var(--font-mono); }
         .auth-card-footer {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 0.82rem;
-            color: #6b7280;
+            text-align: center; margin-top: 22px;
+            font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-faint);
+            letter-spacing: 0.08em;
         }
 
         @media (max-width: 480px) {
-            .auth-card { padding: 28px 20px 24px; }
-            .auth-logo h1 { font-size: 1.9rem; }
+            .auth-card { padding: 32px 22px 24px; }
+            .auth-logo h1 { font-size: 1.8rem; }
         }
     </style>
 </head>
 <body>
 
+    <canvas id="bg-canvas" aria-hidden="true"></canvas>
+    <div id="bg-vignette" aria-hidden="true"></div>
+    <div id="bg-grid" aria-hidden="true"></div>
+    <div id="page-transition" aria-hidden="true"><span class="pt-bar"></span></div>
+
     <div class="auth-card">
         <div class="auth-logo">
-            <h1>♟ ChessIQ</h1>
+            <div class="mark">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
+            </div>
+            <h1>CHESS<span>IQ</span></h1>
             <p>Train your positional instinct</p>
         </div>
 
@@ -266,10 +183,11 @@
         </form>
 
         <div class="auth-card-footer">
-            ChessIQ v0.5 &nbsp;·&nbsp; Beta
+            CHESSIQ v0.5 &nbsp;·&nbsp; BETA
         </div>
     </div>
 
+    <script type="module" src="experience.js"></script>
     <script type="module">
         import { initializeApp }                      from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
         import { getDatabase, ref, set, get }         from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
