@@ -85,7 +85,14 @@ onAuthStateChanged(auth, async (user) => {
     currentUID  = user.uid;
 
     const snap = await get(ref(db, `users/${currentUID}`));
-    let profileUsername = user.displayName || 'Player';
+
+    // Always read username from the DB record first — it is the authoritative source.
+    // user.displayName can arrive null on the very first onAuthStateChanged fire
+    // right after createUserWithEmailAndPassword + updateProfile, so we never
+    // fall back to it for an existing record or for new writes.
+    let profileUsername = null;
+    console.log("AUTH displayName:", user.displayName);
+    console.log("AUTH uid:", user.uid);
 
     if (snap.exists()) {
         const data    = snap.val();
@@ -97,21 +104,67 @@ onAuthStateChanged(auth, async (user) => {
         bestStreak    = data.bestStreak   ?? 0;
         peakPR        = data.peakPR       ?? playerPR;
         prHistory     = Array.isArray(data.prHistory) ? data.prHistory : [];
-        if (data.username) profileUsername = data.username;
+
+        // DB username is ground truth — fall back to displayName only if DB has none
+       profileUsername =
+            (typeof data.username === "string" && data.username.trim() !== "")
+        ? data.username.trim()
+        : null;
+
+        // If DB was missing username (legacy record), patch it in now
+        if (!data.username && user.displayName) {
+            await update(ref(db, `users/${currentUID}`), { username: user.displayName });
+        }
     } else {
-        await set(ref(db, `users/${currentUID}`), {
-            username:     profileUsername,
-            email:        user.email,
-            pr:           PR_START,
-            totalPuzzles: 0,
-            streak:       0,
-            correctCount: 0,
-            wrongCount:   0,
-            bestStreak:   0,
-            peakPR:       PR_START,
-            prHistory:    [],
-            createdAt:    Date.now(),
-        });
+        // Brand-new user: snap doesn't exist yet (login.js writes it, but
+        // onAuthStateChanged may fire before that write completes).
+        // Try a few short retries (backoff) to allow the signup flow to finish
+        // and avoid overwriting the canonical record.
+        let retry = null;
+        const delays = [300, 700, 1200];
+        for (const d of delays) {
+            await new Promise(r => setTimeout(r, d));
+            retry = await get(ref(db, `users/${currentUID}`));
+            if (retry.exists()) break;
+        }
+
+        if (retry && retry.exists()) {
+            const data    = retry.val();
+            playerPR      = data.pr           ?? PR_START;
+            totalPuzzles  = data.totalPuzzles ?? 0;
+            currentStreak = data.streak       ?? 0;
+            correctCount  = data.correctCount ?? 0;
+            wrongCount    = data.wrongCount   ?? 0;
+            bestStreak    = data.bestStreak   ?? 0;
+            peakPR        = data.peakPR       ?? PR_START;
+            prHistory     = Array.isArray(data.prHistory) ? data.prHistory : [];
+            profileUsername = (typeof data.username === 'string' && data.username.trim() !== '')
+                             ? data.username.trim()
+                             : (user.displayName || 'Player');
+        } else {
+            // Fallback: login.js write hasn't landed — create a minimal record.
+            // Use displayName which MAY be set by the signup flow; otherwise 'Player'.
+            profileUsername = user.displayName || 'Player';
+            await set(ref(db, `users/${currentUID}`), {
+                username:     profileUsername,
+                email:        user.email,
+                pr:           PR_START,
+                totalPuzzles: 0,
+                streak:       0,
+                correctCount: 0,
+                wrongCount:   0,
+                bestStreak:   0,
+                peakPR:       PR_START,
+                prHistory:    [],
+                createdAt:    Date.now(),
+            });
+        }
+    }
+
+    // ── Self-heal: if DB still has 'Player' but Auth has a real displayName, fix it
+    if (profileUsername === 'Player' && user.displayName && user.displayName !== 'Player') {
+        profileUsername = user.displayName;
+        await update(ref(db, `users/${currentUID}`), { username: user.displayName });
     }
 
     const nameEl = document.getElementById('header-username');

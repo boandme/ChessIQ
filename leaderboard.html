@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChessIQ — Global Leaderboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="main.css">
+    <style>
+        /* ── Leaderboard-specific styles ─────────────────────────────────────── */
+        .lb-wrap {
+            width: 100%;
+            max-width: 860px;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        /* ── Header card ─────────────────────────────────────────────────────── */
+        .lb-header {
+            position: relative;
+            background: var(--surface);
+            border: 1px solid var(--line-bright);
+            border-bottom: none;
+            padding: 36px 40px 28px;
+        }
+        .lb-header::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--yellow), transparent 70%);
+        }
+        .lb-header::after {
+            content: '';
+            position: absolute; bottom: -1px; right: -1px;
+            width: 22px; height: 22px;
+            border-bottom: 2px solid var(--yellow);
+            border-right: 2px solid var(--yellow);
+        }
+        .lb-title-row {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .lb-title-left { display: flex; flex-direction: column; gap: 10px; }
+        .lb-meta-row {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+        .lb-meta-chip {
+            font-family: var(--font-mono);
+            font-size: 0.68rem; font-weight: 700;
+            letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--text-faint);
+            padding: 4px 10px;
+            border: 1px solid var(--line);
+            background: var(--surface-2);
+        }
+        .lb-meta-chip span { color: var(--yellow); }
+        .lb-rank-badge {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+        .lb-rank-badge-label {
+            font-family: var(--font-mono);
+            font-size: 0.62rem; font-weight: 700;
+            letter-spacing: 0.18em; text-transform: uppercase;
+            color: var(--text-faint);
+        }
+        .lb-rank-badge-value {
+            font-family: var(--font-mono);
+            font-size: 1.5rem; font-weight: 800;
+            color: var(--yellow);
+            text-shadow: var(--glow);
+            letter-spacing: -0.02em;
+        }
+
+        /* ── Column headers ──────────────────────────────────────────────────── */
+        .lb-col-headers {
+            display: grid;
+            grid-template-columns: 64px 1fr 120px 110px 100px;
+            gap: 0;
+            padding: 10px 24px;
+            background: var(--surface-2);
+            border: 1px solid var(--line);
+            border-top: none;
+            border-bottom: none;
+        }
+        .lb-col-label {
+            font-family: var(--font-mono);
+            font-size: 0.62rem; font-weight: 700;
+            letter-spacing: 0.18em; text-transform: uppercase;
+            color: var(--text-faint);
+        }
+        .lb-col-label.right { text-align: right; }
+        .lb-col-label.center { text-align: center; }
+
+        /* ── List container ──────────────────────────────────────────────────── */
+        .lb-list {
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--line-bright);
+            border-top: none;
+            overflow: hidden;
+        }
+
+        /* ── Individual row ──────────────────────────────────────────────────── */
+        .lb-row {
+            display: grid;
+            grid-template-columns: 64px 1fr 120px 110px 100px;
+            gap: 0;
+            align-items: center;
+            padding: 0 24px;
+            min-height: 62px;
+            border-bottom: 1px solid var(--line);
+            background: var(--surface);
+            position: relative;
+            transition: background 0.18s ease, border-color 0.18s ease;
+            cursor: default;
+        }
+        .lb-row:last-child { border-bottom: none; }
+        .lb-row:hover { background: var(--surface-2); }
+
+        /* gold / silver / bronze top rows */
+        .lb-row.rank-1 {
+            background: linear-gradient(90deg, rgba(255,212,0,0.10) 0%, var(--surface) 55%);
+            border-left: 3px solid var(--yellow);
+        }
+        .lb-row.rank-1:hover { background: linear-gradient(90deg, rgba(255,212,0,0.16) 0%, var(--surface-2) 55%); }
+        .lb-row.rank-2 {
+            background: linear-gradient(90deg, rgba(192,192,192,0.07) 0%, var(--surface) 55%);
+            border-left: 3px solid #b0b0b8;
+        }
+        .lb-row.rank-3 {
+            background: linear-gradient(90deg, rgba(205,127,50,0.07) 0%, var(--surface) 55%);
+            border-left: 3px solid #b87333;
+        }
+
+        /* your own row */
+        .lb-row.is-you {
+            background: linear-gradient(90deg, rgba(255,212,0,0.07) 0%, var(--surface) 60%);
+            border-left: 3px solid var(--yellow);
+        }
+        .lb-row.is-you::after {
+            content: 'YOU';
+            position: absolute;
+            right: 20px;
+            font-family: var(--font-mono);
+            font-size: 0.6rem; font-weight: 800;
+            letter-spacing: 0.18em;
+            color: var(--yellow);
+            border: 1px solid var(--yellow-line);
+            background: var(--yellow-soft);
+            padding: 2px 7px;
+        }
+
+        /* ── Rank cell ───────────────────────────────────────────────────────── */
+        .lb-rank {
+            font-family: var(--font-mono);
+            font-size: 1.05rem; font-weight: 800;
+            color: var(--text-faint);
+            letter-spacing: -0.01em;
+        }
+        .lb-row.rank-1 .lb-rank { color: var(--yellow); text-shadow: var(--glow); font-size: 1.2rem; }
+        .lb-row.rank-2 .lb-rank { color: #c8c8d0; }
+        .lb-row.rank-3 .lb-rank { color: #c87c3e; }
+
+        .lb-rank-medal { font-size: 1.3rem; line-height: 1; }
+
+        /* ── Name cell ───────────────────────────────────────────────────────── */
+        .lb-name-cell { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        .lb-avatar {
+            width: 36px; height: 36px; flex-shrink: 0;
+            display: grid; place-items: center;
+            background: var(--surface-3);
+            border: 1px solid var(--line-bright);
+            clip-path: polygon(20% 0, 100% 0, 100% 80%, 80% 100%, 0 100%, 0 20%);
+            font-family: var(--font-display);
+            font-size: 0.82rem; font-weight: 700;
+            color: var(--yellow);
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+        .lb-row.rank-1 .lb-avatar { background: rgba(255,212,0,0.12); border-color: var(--yellow-line); }
+        .lb-username {
+            font-family: var(--font-display);
+            font-size: 1.0rem; font-weight: 700;
+            color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            letter-spacing: 0.01em;
+        }
+        .lb-row.rank-1 .lb-username { color: var(--yellow); }
+
+        /* ── PR cell ─────────────────────────────────────────────────────────── */
+        .lb-pr {
+            font-family: var(--font-mono);
+            font-size: 1.08rem; font-weight: 800;
+            color: var(--text);
+            text-align: right;
+            letter-spacing: -0.01em;
+        }
+        .lb-row.rank-1 .lb-pr { color: var(--yellow); text-shadow: 0 0 12px rgba(255,212,0,0.3); }
+
+        /* ── Puzzles cell ────────────────────────────────────────────────────── */
+        .lb-puzzles {
+            font-family: var(--font-mono);
+            font-size: 0.9rem; font-weight: 600;
+            color: var(--text-dim);
+            text-align: right;
+        }
+
+        /* ── Accuracy cell ───────────────────────────────────────────────────── */
+        .lb-accuracy {
+            font-family: var(--font-mono);
+            font-size: 0.9rem; font-weight: 700;
+            text-align: right;
+            padding-right: 30px; /* leave room for YOU badge */
+        }
+        .lb-accuracy.high  { color: var(--ok); }
+        .lb-accuracy.mid   { color: var(--yellow); }
+        .lb-accuracy.low   { color: var(--bad); }
+
+        /* ── States ──────────────────────────────────────────────────────────── */
+        .lb-loading,
+        .lb-empty,
+        .lb-error {
+            padding: 60px 24px;
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: 0.92rem;
+            color: var(--text-faint);
+            letter-spacing: 0.06em;
+            border: 1px solid var(--line-bright);
+            border-top: none;
+            background: var(--surface);
+        }
+        .lb-loading-spinner {
+            width: 32px; height: 32px;
+            border: 2px solid var(--line-bright);
+            border-top-color: var(--yellow);
+            border-radius: 50%;
+            animation: lb-spin 0.75s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes lb-spin { to { transform: rotate(360deg); } }
+
+        .lb-footer {
+            padding: 14px 24px;
+            font-family: var(--font-mono);
+            font-size: 0.66rem; font-weight: 600;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            color: var(--text-faint);
+            background: var(--surface-2);
+            border: 1px solid var(--line);
+            border-top: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .lb-footer-dot {
+            display: inline-block;
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--yellow);
+            box-shadow: 0 0 8px var(--yellow);
+            animation: pulse-dot 2s infinite;
+            margin-right: 7px;
+            vertical-align: middle;
+        }
+
+        /* ── Responsive ──────────────────────────────────────────────────────── */
+        @media (max-width: 700px) {
+            .lb-col-headers,
+            .lb-row {
+                grid-template-columns: 48px 1fr 90px;
+            }
+            /* hide puzzles + accuracy on small screens */
+            .lb-col-label:nth-child(4),
+            .lb-col-label:nth-child(5),
+            .lb-puzzles,
+            .lb-accuracy { display: none; }
+            .lb-header { padding: 28px 22px 22px; }
+            .lb-row { padding: 0 16px; }
+            .lb-col-headers { padding: 10px 16px; }
+            .lb-footer { padding: 12px 16px; }
+        }
+        @media (max-width: 480px) {
+            .lb-title-row { flex-direction: column; align-items: flex-start; }
+            .lb-rank-badge { align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="bg-canvas" aria-hidden="true"></canvas>
+    <div id="bg-vignette" aria-hidden="true"></div>
+    <div id="bg-grid" aria-hidden="true"></div>
+    <div id="page-transition" aria-hidden="true"><span class="pt-bar"></span></div>
+
+    <button id="hamburger-menu" onclick="openSidebar()" aria-label="Menu">
+        <span></span><span></span><span></span>
+    </button>
+
+    <aside id="sidebar" class="sidebar">
+        <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+        <div class="sidebar-brand">CHESS<span>IQ</span></div>
+        <nav class="sidebar-nav">
+            <h3>Products</h3>
+            <ul>
+                <li><a href="index.html" onclick="closeSidebar()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
+                    PositionGuesser
+                </a></li>
+            </ul>
+        </nav>
+        <div class="sidebar-foot">v0.75 — BETA</div>
+    </aside>
+    <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <header class="topbar">
+        <div class="topbar-left">
+            <a href="index.html" class="brand" aria-label="ChessIQ home">
+                <span class="brand-mark">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
+                </span>
+                <span class="brand-text">CHESS<span>IQ</span></span>
+                <span class="brand-ver">v0.75</span>
+            </a>
+        </div>
+        <nav class="topnav">
+            <a href="index.html">Home</a>
+            <a href="leaderboard.html" class="active">Leaderboard</a>
+            <a href="credits.html">Credits</a>
+            <a href="info.html">Information</a>
+        </nav>
+        <div class="topbar-right">
+            <div id="user-badge">
+                <div class="user-dot"></div>
+                <span id="header-username">—</span>
+                <button id="logout-btn" onclick="logoutUser()">Sign Out</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="lb-wrap reveal">
+
+        <!-- Header card -->
+        <div class="lb-header">
+            <div class="lb-title-row">
+                <div class="lb-title-left">
+                    <div class="page-kicker">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
+                        <span>ChessIQ</span>
+                    </div>
+                    <h1 style="color:var(--text);font-family:var(--font-display);font-weight:700;font-size:2.4rem;letter-spacing:-0.01em;margin:0 0 4px;">
+                        Global Leaderboard
+                    </h1>
+                    <div class="lb-meta-row">
+                        <div class="lb-meta-chip">Ranked by <span>Positional Rating</span></div>
+                        <div class="lb-meta-chip">Players: <span id="lb-player-count">—</span></div>
+                        <div class="lb-meta-chip">Updated <span>live</span></div>
+                    </div>
+                </div>
+                <div class="lb-rank-badge">
+                    <div class="lb-rank-badge-label">Your Rank</div>
+                    <div class="lb-rank-badge-value" id="lb-your-rank">—</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Column headers -->
+        <div class="lb-col-headers">
+            <div class="lb-col-label">#</div>
+            <div class="lb-col-label">Player</div>
+            <div class="lb-col-label right">PR</div>
+            <div class="lb-col-label right">Puzzles</div>
+            <div class="lb-col-label right">Accuracy</div>
+        </div>
+
+        <!-- Rows render here -->
+        <div class="lb-list" id="lb-list">
+            <div class="lb-loading" id="lb-loading">
+                <div class="lb-loading-spinner"></div>
+                LOADING RANKINGS...
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="lb-footer">
+            <div><span class="lb-footer-dot"></span>Live data from Firebase Realtime Database</div>
+            <div id="lb-last-updated">—</div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp }                       from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+        import { getDatabase, ref, get, onValue }      from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey:            "AIzaSyDtGbU8BN06Y_GNDmhV1FJFRhTvD603DN0",
+            authDomain:        "positionguessr.firebaseapp.com",
+            databaseURL:       "https://positionguessr-default-rtdb.firebaseio.com",
+            projectId:         "positionguessr",
+            storageBucket:     "positionguessr.firebasestorage.app",
+            messagingSenderId: "954415790631",
+            appId:             "1:954415790631:web:0a5381589df51fc3abec02",
+            measurementId:     "G-M63L8MVR6Z"
+        };
+
+        const app  = initializeApp(firebaseConfig);
+        const db   = getDatabase(app);
+        const auth = getAuth(app);
+
+        let currentUID = null;
+
+        // ── Auth gate ─────────────────────────────────────────────────────────
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            currentUID = user.uid;
+            const nameEl = document.getElementById('header-username');
+            if (nameEl) nameEl.textContent = user.displayName || 'Player';
+
+            // Start live listener
+            startLeaderboard();
+        });
+
+        window.logoutUser = async () => {
+            await signOut(auth);
+            window.location.href = 'login.html';
+        };
+
+        // ── Live leaderboard listener ─────────────────────────────────────────
+        function startLeaderboard() {
+            const usersRef = ref(db, 'users');
+
+            onValue(usersRef, (snapshot) => {
+                if (!snapshot.exists()) {
+                    renderEmpty();
+                    return;
+                }
+
+                // Build array from Firebase snapshot
+                const raw = snapshot.val();
+                const players = Object.entries(raw).map(([uid, data]) => ({
+                    uid,
+                    username:     data.username    || 'Anonymous',
+                    pr:           data.pr          ?? 500,
+                    totalPuzzles: data.totalPuzzles ?? 0,
+                    correctCount: data.correctCount ?? 0,
+                    wrongCount:   data.wrongCount   ?? 0,
+                }));
+
+                // Sort highest PR first; tie-break by most puzzles played
+                players.sort((a, b) => b.pr - a.pr || b.totalPuzzles - a.totalPuzzles);
+
+                renderLeaderboard(players);
+                updateTimestamp();
+            }, (error) => {
+                renderError(error.message);
+            });
+        }
+
+        // ── Render rows ───────────────────────────────────────────────────────
+        function renderLeaderboard(players) {
+            const list = document.getElementById('lb-list');
+
+            // Player count
+            document.getElementById('lb-player-count').textContent = players.length;
+
+            // Your rank
+            const yourIdx = players.findIndex(p => p.uid === currentUID);
+            document.getElementById('lb-your-rank').textContent =
+                yourIdx >= 0 ? `#${yourIdx + 1}` : '—';
+
+            if (players.length === 0) { renderEmpty(); return; }
+
+            const MEDALS = ['🥇', '🥈', '🥉'];
+
+            const html = players.map((p, i) => {
+                const rank       = i + 1;
+                const rankClass  = rank <= 3 ? `rank-${rank}` : '';
+                const isYou      = p.uid === currentUID ? 'is-you' : '';
+                const total      = p.correctCount + p.wrongCount;
+                const accuracy   = total > 0 ? Math.round((p.correctCount / total) * 100) : null;
+                const accDisplay = accuracy !== null ? `${accuracy}%` : '—';
+                const accClass   = accuracy === null ? '' : accuracy >= 70 ? 'high' : accuracy >= 45 ? 'mid' : 'low';
+                const initial    = p.username.charAt(0).toUpperCase();
+                const rankDisplay = rank <= 3
+                    ? `<span class="lb-rank-medal">${MEDALS[rank - 1]}</span>`
+                    : `<span>${rank}</span>`;
+
+                return `
+                <div class="lb-row ${rankClass} ${isYou}">
+                    <div class="lb-rank">${rankDisplay}</div>
+                    <div class="lb-name-cell">
+                        <div class="lb-avatar">${initial}</div>
+                        <div class="lb-username">${escHtml(p.username)}</div>
+                    </div>
+                    <div class="lb-pr">${p.pr.toLocaleString()}</div>
+                    <div class="lb-puzzles">${p.totalPuzzles.toLocaleString()}</div>
+                    <div class="lb-accuracy ${accClass}">${accDisplay}</div>
+                </div>`;
+            }).join('');
+
+            list.innerHTML = html;
+        }
+
+        function renderEmpty() {
+            document.getElementById('lb-list').innerHTML =
+                `<div class="lb-empty">NO PLAYERS YET — BE THE FIRST TO PLAY</div>`;
+            document.getElementById('lb-player-count').textContent = '0';
+            document.getElementById('lb-your-rank').textContent = '—';
+        }
+
+        function renderError(msg) {
+            document.getElementById('lb-list').innerHTML =
+                `<div class="lb-error">FAILED TO LOAD — ${escHtml(msg)}</div>`;
+        }
+
+        function updateTimestamp() {
+            const el = document.getElementById('lb-last-updated');
+            if (!el) return;
+            const now = new Date();
+            el.textContent = `Last updated ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+        }
+
+        function escHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+    </script>
+
+    <!-- Background canvas + page animation (shared with other pages) -->
+    <script type="module" src="experience.js"></script>
+
+    <script>
+        window.openSidebar  = () => { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebar-overlay').classList.add('open'); };
+        window.closeSidebar = () => { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('open'); };
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidebar(); });
+
+        // Entrance animation
+        document.addEventListener('DOMContentLoaded', () => {
+            requestAnimationFrame(() => {
+                document.querySelectorAll('.reveal').forEach(el => el.classList.add('in'));
+            });
+        });
+    </script>
+</body>
+</html>
