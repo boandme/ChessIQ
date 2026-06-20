@@ -161,13 +161,14 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 - Two main modes of the game: Normal rating play, unrated puzzle streak timed(3min, 5min )- see how much you can get 
 - 📚 Positional theme tagging (isolated pawns, bishop pair, space advantage)
 - 🎓 Beginner mode with post-guess explanations
-- 🔁 Daily challenge positions
-- 📊 Accuracy-based rating system
+- 🔁 Daily challenge positions → revealed at midnight, distributions also revealed
+- (1.5+) Evaluation Bar Guesser instead of white/black/equal
+- Positional theme tagging on puzzles in the model; Will take a while to pre-train
+- (Training specialization) - Last ‘X’ puzzles mistake log → if thematic puzzle tagging added, it becomes a powerful tool
 - 🧠 Optional engine explanation after each guess
 - 🌙 Dark mode and board theme customization
-- 🧪 A/B testing for training effectiveness
-- 🏆 Global or friends-only leaderboards
-- 📱 Mobile-first UI optimizations
+- 🏆 Add a friend system after multiplayer: →  Global or friends-only leaderboards
+- 📱 (2027) → Mobile-first UI optimizations
 
 ---
 
@@ -176,3 +177,4 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 - Idea and Development: Boandme
 - Testing: EntyXD
 - Icons and Symbols: UXWing
+
