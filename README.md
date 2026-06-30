@@ -127,18 +127,19 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 - Google integrations for logins
 - Full statistics overview page[done]
 
-## v0.95 - Time-based and point system upgrades 🏆[DELAYED to v0.9]
+## v0.95 - Time-based and point system upgrades 🏆[DELAYED to v0.95]
  - More synced multiplayer point systems reliant on what difficulty puzzles, as well as time
  - Formula-based puzzle calculations
 #### v1.0 – Full Release 🎉 (2026)
 
 - Official launch
 - Complete feature set with polished performance and UX
-
+- MAJOR UI POLISH all around, transitios upgrade
+- security terms & privacy terms - prevent issues
 - Lichess & Devpost Release
 - Further publication
 =======
-- Updated PR(Positional Rating Calculations)
+- Updated PR(Positional Rating Calculations) out based on relative puzzle difficulty and accuracy
 
 
 #### v1.1 - New gamemode: Regular & blitz-paced modes update
