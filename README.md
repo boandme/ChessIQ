@@ -106,7 +106,6 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 - Localstorage-based primitive elo system
 - Complex mechanics and equations for computing elo based on streaks, confidence intervals, etc
 
-### 🔜 Planned Updates
 
 
 
@@ -115,15 +114,18 @@ Think of ChessIQ as tactical puzzles for positional thinking.
  - matches a vibrant theme - change-up from green theme to yellow/black blend of modern look. 
 
 
+#### v0.85 - login-free play  + UI updates
+ - players can play a bit of puzzles onload before hacing to login/create acc
+ -smoother transitions of main pages
 
-#### v0.9 – Accounts and Leaderboards Full release👤 (June 2026)
+### 🔜 Planned Updates
 
-- first: primitive user accounts + no google acc support
-- User accounts and authentication
-- Score tracking and long-term progress analytics
-- Global leaderboards of PR(Positional Rating) already instated above in earlier updates
+#### v0.9 – Accounts and Leaderboards Full release👤 (June 2026) 
+- User accounts and authentication - [done]
+- Score tracking and long-term progress analytics[done]
+- Global leaderboards of PR(Positional Rating) already instated above in earlier updates[done]
 - Google integrations for logins
-- Full statistics overview page
+- Full statistics overview page[done]
 
 ## v0.95 - Time-based and point system upgrades 🏆[DELAYED to v0.9]
  - More synced multiplayer point systems reliant on what difficulty puzzles, as well as time
