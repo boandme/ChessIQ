@@ -74,10 +74,43 @@ const analytics = getAnalytics(app);
 const db       = getDatabase(app);
 const auth     = getAuth(app);
 
+// ── Guest mode state ───────────────────────────────────────────────────────────
+const GUEST_FREE_PUZZLES = 5;   // how many puzzles a signed-out visitor can try
+var isGuest         = true;
+var guestPuzzleCount = 0;
+
+function showSignedInUI(profileUsername) {
+    isGuest = false;
+    const badge   = document.getElementById('user-badge');
+    const signin  = document.getElementById('signin-btn');
+    const banner  = document.getElementById('guest-banner');
+    if (badge)  badge.style.display  = 'flex';
+    if (signin) signin.style.display = 'none';
+    if (banner) banner.style.display = 'none';
+
+    const nameEl = document.getElementById('header-username');
+    if (nameEl) nameEl.textContent = profileUsername;
+}
+
+function showGuestUI() {
+    isGuest = true;
+    const badge  = document.getElementById('user-badge');
+    const signin = document.getElementById('signin-btn');
+    const banner = document.getElementById('guest-banner');
+    if (badge)  badge.style.display  = 'none';
+    if (signin) signin.style.display = 'flex';
+    if (banner) banner.style.display = 'flex';
+}
+
 // ── Auth gate ─────────────────────────────────────────────────────────────────
+// No longer force-redirects to login.html — guests can browse and play a
+// limited number of free puzzles. Only Firebase-backed features (saved PR,
+// leaderboard placement, persistent stats) require signing in.
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
-        window.location.href = 'login.html';
+        showGuestUI();
+        renderPR();
+        initPositions();
         return;
     }
 
@@ -169,6 +202,7 @@ onAuthStateChanged(auth, async (user) => {
 
     const nameEl = document.getElementById('header-username');
     if (nameEl) nameEl.textContent = profileUsername;
+    showSignedInUI(profileUsername);
 
     renderPR();
     initPositions();
@@ -176,7 +210,7 @@ onAuthStateChanged(auth, async (user) => {
 
 // ── Save to Firebase ──────────────────────────────────────────────────────────
 async function saveStatsToFirebase() {
-    if (!currentUID) return;
+    if (!currentUID || isGuest) return;
     await update(ref(db, `users/${currentUID}`), {
         pr:           playerPR,
         totalPuzzles: totalPuzzles,
@@ -309,6 +343,10 @@ function loadPuzzleForPR() {
 }
 
 window.nextPosition = function() {
+    if (isGuest && guestPuzzleCount >= GUEST_FREE_PUZZLES) {
+        showGuestGate();
+        return;
+    }
     const difficulty = getDifficultyFromPR();
     const pool = positionsByDiff[difficulty] || [];
     if (!pool.length) {
@@ -330,6 +368,10 @@ window.nextPosition = function() {
 
 function sendAnswer(guess) {
     if (answered) return;
+    if (isGuest && guestPuzzleCount >= GUEST_FREE_PUZZLES) {
+        showGuestGate();
+        return;
+    }
     const resultEl = document.getElementById("result");
     if (guess === correct_result) {
         resultEl.innerHTML = '<p style="color:var(--ok);font-weight:700;">Correct</p>';
@@ -347,8 +389,21 @@ function sendAnswer(guess) {
     const displayEval   = evaluationRaw > 0 ? `+${evaluationRaw}` : `${evaluationRaw}`;
     document.getElementById("evaluation-display").innerHTML = `Evaluation&nbsp;&nbsp;${displayEval}`;
     updatePR(difficulty, guess === correct_result);
+
+    if (isGuest) {
+        guestPuzzleCount++;
+        if (guestPuzzleCount >= GUEST_FREE_PUZZLES) {
+            // Let them see this result, then gate on their next "Next Position" click
+        }
+    }
 }
 window.sendAnswer = sendAnswer;
+
+function showGuestGate() {
+    const gate = document.getElementById('guest-gate');
+    if (gate) gate.style.display = 'flex';
+}
+window.showGuestGate = showGuestGate;
 
 function findResult(evaluation) {
     if ((Math.abs(parseFloat(evaluation)) / 100) <= 1) return "Equal";
