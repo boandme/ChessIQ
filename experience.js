@@ -34,49 +34,26 @@ const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').match
 
 /* ────────────────────────────────────────────────────────────────────────────
    2. PAGE TRANSITIONS
-   On load: reveal-wipe out. On internal link click: cover-wipe in, then navigate.
+   On load: content fades in via the existing .reveal observer below.
+   Links navigate natively — no full-screen cover, no artificial delay.
    ──────────────────────────────────────────────────────────────────────────── */
 (function pageTransitions() {
     const pt = document.getElementById('page-transition');
-    if (!pt) return;
 
-    // Reveal on initial paint
-    requestAnimationFrame(() => {
-        pt.classList.add('cover');               // start covered (instant)
-        requestAnimationFrame(() => {
-            pt.classList.remove('cover');
-            pt.classList.add('reveal');
-        });
-    });
+    // The full-screen cover/wipe was producing a visible black flash on every
+    // navigation (its color matches the page's own near-black background, so
+    // any gap before the new page paints reads as a "blank black page").
+    // Disable it completely — never shown, never intercepts clicks.
+    if (pt) {
+        pt.classList.remove('cover', 'reveal');
+        pt.style.display = 'none';
+    }
 
-    const isInternal = (a) => {
-        if (!a) return false;
-        const href = a.getAttribute('href') || '';
-        if (!href || href.startsWith('#') || a.target === '_blank') return false;
-        if (/^(https?:|mailto:|tel:)/i.test(href)) return false;
-        if (a.hasAttribute('onclick') && /sendAnswer|Sidebar|Modal|Settings|Stats/.test(a.getAttribute('onclick'))) {
-            // still allow nav for sidebar links that also navigate (index.html etc.)
-        }
-        return /\.html($|\?|#)/.test(href) || href === '/' ;
-    };
-
-    document.addEventListener('click', (e) => {
-        const a = e.target.closest('a');
-        if (!isInternal(a)) return;
-        const href = a.getAttribute('href');
-        // same page? let it scroll/no-op
-        if (href === window.location.pathname.split('/').pop()) return;
-        if (reduceMotion) return;             // native nav
-
-        e.preventDefault();
-        pt.classList.remove('reveal');
-        pt.classList.add('cover');
-        setTimeout(() => { window.location.href = href; }, 420);
-    });
-
-    window.addEventListener('pageshow', (e) => {
-        if (e.persisted) { pt.classList.remove('cover'); pt.classList.add('reveal'); }
-    });
+    // Internal links are left to navigate the normal, native browser way —
+    // no preventDefault, no setTimeout delay. This is what makes navigation
+    // feel instant and "tab-like" rather than gated behind an animation.
+    // Content fade-in is already handled by the .reveal IntersectionObserver
+    // above, which is unaffected by this change.
 })();
 
 /* ────────────────────────────────────────────────────────────────────────────

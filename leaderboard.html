@@ -345,11 +345,15 @@
             <a href="info.html">Information</a>
         </nav>
         <div class="topbar-right">
-            <div id="user-badge">
+            <div id="user-badge" style="display:none;">
                 <div class="user-dot"></div>
                 <span id="header-username">—</span>
                 <button id="logout-btn" onclick="logoutUser()">Sign Out</button>
             </div>
+            <a id="signin-btn" href="login.html" style="display:none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
+                <span>Sign In</span>
+            </a>
         </div>
     </header>
 
@@ -427,12 +431,24 @@
         let currentUID = null;
 
         // ── Auth gate ─────────────────────────────────────────────────────────
+        // Guests can view the public leaderboard without signing in — only
+        // "Your Rank" personalization and the user badge require an account.
         onAuthStateChanged(auth, (user) => {
+            const badge  = document.getElementById('user-badge');
+            const signin = document.getElementById('signin-btn');
+
             if (!user) {
-                window.location.href = 'login.html';
+                currentUID = null;
+                if (badge)  badge.style.display  = 'none';
+                if (signin) signin.style.display = 'flex';
+                startLeaderboard();
                 return;
             }
+
             currentUID = user.uid;
+            if (badge)  badge.style.display  = 'flex';
+            if (signin) signin.style.display = 'none';
+
             const nameEl = document.getElementById('header-username');
             if (nameEl) nameEl.textContent = user.displayName || 'Player';
 
