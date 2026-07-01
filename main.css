@@ -570,7 +570,6 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
 #board-frame .corner.br { bottom: 6px; right: 6px; border-bottom: 2px solid var(--yellow); border-right: 2px solid var(--yellow); }
 #board {
     display: flex; justify-content: center; align-items: center;
-    min-height: 320px;
     color: var(--text-dim);
 }
 #board p { font-family: var(--font-mono); font-size: 1rem; color: var(--text-dim); letter-spacing: 0.04em; }
@@ -581,17 +580,18 @@ svg.board, #board svg {
 
 /* ── Turn badge ───────────────────────────────────────────────────────────── */
 #turn {
-    align-self: center;
+    width: 100%;
     font-family: var(--font-display);
-    font-size: 1.1rem; font-weight: 700;
+    font-size: 1.0rem; font-weight: 700;
     color: var(--text);
-    text-transform: uppercase; letter-spacing: 0.16em;
-    padding: 12px 28px;
+    text-transform: uppercase; letter-spacing: 0.14em;
+    padding: 10px 18px;
     background: var(--surface-2);
     border: 1px solid var(--line-bright);
     border-left: 3px solid var(--yellow);
     position: relative; overflow: hidden;
-    min-width: 220px; text-align: center;
+    text-align: center;
+    box-sizing: border-box;
 }
 #turn:empty { display: none; }
 #turn::before {

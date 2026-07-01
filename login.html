@@ -120,6 +120,49 @@
             .auth-card { padding: 32px 22px 24px; }
             .auth-logo h1 { font-size: 1.8rem; }
         }
+
+        /* ── Google sign-in ───────────────────────────────────────────────────── */
+        .auth-divider {
+            display: flex; align-items: center; gap: 12px;
+            margin: 20px 0 4px;
+            font-family: var(--font-mono); font-size: 0.68rem;
+            font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--text-faint);
+        }
+        .auth-divider::before,
+        .auth-divider::after {
+            content: ''; flex: 1; height: 1px; background: var(--line);
+        }
+
+        .btn-google {
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            width: 100%; padding: 13px 16px;
+            background: var(--surface-2); border: 1px solid var(--line-bright);
+            color: var(--text); cursor: pointer; margin-bottom: 6px;
+            font-family: var(--font-display); font-size: 0.95rem; font-weight: 700;
+            letter-spacing: 0.02em;
+            transition: background 0.18s ease, border-color 0.18s ease,
+                        transform 0.18s var(--ease-snap), box-shadow 0.18s ease;
+            clip-path: polygon(5% 0, 100% 0, 95% 100%, 0 100%);
+            position: relative; overflow: hidden;
+        }
+        .btn-google:hover {
+            background: var(--surface-3, #1e1e22);
+            border-color: var(--yellow-line);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        .btn-google:active { transform: translateY(0); }
+        .btn-google:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+        .btn-google .g-logo {
+            width: 20px; height: 20px; flex-shrink: 0;
+        }
+        .btn-google.loading::after {
+            content: ''; display: inline-block; width: 14px; height: 14px;
+            margin-left: 8px; vertical-align: middle;
+            border: 2px solid rgba(255,255,255,0.2); border-top-color: var(--yellow);
+            border-radius: 50%; animation: spin 0.7s linear infinite;
+        }
     </style>
 </head>
 <body>
@@ -143,6 +186,20 @@
             <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
             <button class="auth-tab"        id="tab-signup" onclick="switchTab('signup')">Create Account</button>
         </div>
+
+        <!-- Google sign-in (works for both sign-in and new accounts) -->
+        <button class="btn-google" id="btn-google" onclick="handleGoogleAuth()">
+            <!-- Google's official coloured G logo as inline SVG -->
+            <svg class="g-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+            Continue with Google
+        </button>
+
+        <div class="auth-divider">or</div>
 
         <!-- Shared message area -->
         <div class="auth-msg" id="auth-msg"></div>
@@ -193,7 +250,8 @@
         import { getDatabase, ref, set, get }         from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
         import { getAuth, createUserWithEmailAndPassword,
                  signInWithEmailAndPassword, onAuthStateChanged,
-                 updateProfile }                      from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+                 updateProfile, GoogleAuthProvider,
+                 signInWithPopup }                    from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey:            "AIzaSyDtGbU8BN06Y_GNDmhV1FJFRhTvD603DN0",
@@ -256,6 +314,76 @@
             };
             return map[code] || 'Something went wrong. Please try again.';
         }
+
+        // ── Google sign-in (handles both new and returning Google users) ─────────
+        window.handleGoogleAuth = async function() {
+            const btn = document.getElementById('btn-google');
+            btn.disabled = true;
+            btn.classList.add('loading');
+            btn.textContent = '';   // spinner via ::after, text via loading state
+            showMsg('', '');
+
+            try {
+                const provider = new GoogleAuthProvider();
+                provider.setCustomParameters({ prompt: 'select_account' });
+                const cred = await signInWithPopup(auth, provider);
+                const user = cred.user;
+                const uid  = user.uid;
+
+                // Check if this Google user already has a DB record
+                const snap = await get(ref(db, `users/${uid}`));
+
+                if (!snap.exists()) {
+                    // New Google user — derive a clean username from their display name
+                    let baseUsername = (user.displayName || 'Player')
+                        .replace(/[^a-zA-Z0-9_\-]/g, '')   // strip illegal chars
+                        .slice(0, 18)
+                        || 'Player';
+
+                    // Ensure username uniqueness — append numbers if taken
+                    let username = baseUsername;
+                    let attempt  = 0;
+                    while (true) {
+                        const taken = await get(ref(db, `usernames/${username.toLowerCase()}`));
+                        if (!taken.exists()) break;
+                        attempt++;
+                        username = `${baseUsername}${attempt}`;
+                    }
+
+                    // Write initial user record
+                    await set(ref(db, `users/${uid}`), {
+                        username:     username,
+                        email:        user.email || '',
+                        pr:           PR_START,
+                        totalPuzzles: 0,
+                        streak:       0,
+                        correctCount: 0,
+                        wrongCount:   0,
+                        bestStreak:   0,
+                        peakPR:       PR_START,
+                        prHistory:    [],
+                        provider:     'google',
+                        createdAt:    Date.now(),
+                    });
+
+                    // Reserve username
+                    await set(ref(db, `usernames/${username.toLowerCase()}`), uid);
+
+                    // Sync display name so main.js onAuthStateChanged picks it up
+                    await updateProfile(user, { displayName: username });
+                }
+
+                // onAuthStateChanged will redirect to index.html
+            } catch (err) {
+                // User closed the popup — don't show an error
+                if (err.code !== 'auth/popup-closed-by-user' &&
+                    err.code !== 'auth/cancelled-popup-request') {
+                    showMsg(friendlyError(err.code), 'error');
+                }
+                btn.disabled = false;
+                btn.classList.remove('loading');
+            }
+        };
 
         // ── Login ─────────────────────────────────────────────────────────────
         window.handleLogin = async function(e) {
