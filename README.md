@@ -127,9 +127,10 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 - Google integrations for logins
 - Full statistics overview page[done]
 
-## v0.95 - Time-based and point system upgrades 🏆[DELAYED to v0.95]
+## v0.95 - Time-based and point system upgrades, Stats page upgrade 🏆[DELAYED to v0.95]
  - More synced multiplayer point systems reliant on what difficulty puzzles, as well as time
  - Formula-based puzzle calculations
+ - upgrade stats page to have specific logistics/trends based on time OR last 'x' puzzles completed, more specification for training purposes. 
 #### v1.0 – Full Release 🎉 (2026)
 
 - Official launch
@@ -138,7 +139,7 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 - security terms & privacy terms - prevent issues
 - Lichess & Devpost Release
 - Further publication
-=======
+- [optional] - in stats/training page, show the last x positions solved in a log format, their eval, answer, rating change, etc
 - Updated PR(Positional Rating Calculations) out based on relative puzzle difficulty and accuracy
 
 
@@ -167,7 +168,9 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 - 🔁 Daily challenge positions → revealed at midnight, distributions also revealed
 - (1.5+) Evaluation Bar Guesser instead of white/black/equal
 - Positional theme tagging on puzzles in the model; Will take a while to pre-train
-- (Training specialization) - Last ‘X’ puzzles mistake log → if thematic puzzle tagging added, it becomes a powerful tool
+- (Training specialization) - Last ‘X’ puzzles mistake log → if thematic puzzle tagging added, it becomes a powerful tool(add to STATS page)
+- imrpove hompage ux
+-lederboard page ux improv a bit
 - 🧠 Optional engine explanation after each guess
 - 🌙 Dark mode and board theme customization
 - 🏆 Add a friend system after multiplayer: →  Global or friends-only leaderboards
