@@ -56,7 +56,8 @@ function getDifficultyFromPR() {
 import { initializeApp }                         from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getDatabase, ref, get, set, update }   from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
 import { getAnalytics }                          from "https://www.gstatic.com/firebasejs/12.1.0/firebase-analytics.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut,
+         GoogleAuthProvider, signInWithPopup }  from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey:            "AIzaSyDtGbU8BN06Y_GNDmhV1FJFRhTvD603DN0",
@@ -295,7 +296,85 @@ window.renderPR = renderPR;
 // ── Logout ────────────────────────────────────────────────────────────────────
 window.logoutUser = async function() {
     await signOut(auth);
-    window.location.href = 'login.html';
+    isGuest         = true;
+    guestPuzzleCount = 0;
+    playerPR        = PR_START;
+    totalPuzzles    = 0;
+    currentStreak   = 0;
+    correctCount    = 0;
+    wrongCount      = 0;
+    bestStreak      = 0;
+    peakPR          = PR_START;
+    prHistory       = [];
+    currentUID      = null;
+    currentUser     = null;
+    showGuestUI();
+    renderPR();
+};
+
+// ── Google sign-in (callable from the homepage Sign In button) ────────────────
+window.handleGoogleAuth = async function() {
+    const signinBtn = document.getElementById('signin-btn');
+    if (signinBtn) {
+        signinBtn.style.opacity = '0.6';
+        signinBtn.style.pointerEvents = 'none';
+    }
+
+    try {
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        const cred = await signInWithPopup(auth, provider);
+        const user = cred.user;
+        const uid  = user.uid;
+
+        // Check if this Google user already has a DB record
+        const snap = await get(ref(db, `users/${uid}`));
+
+        if (!snap.exists()) {
+            // Brand new Google user — derive a clean username
+            let baseUsername = (user.displayName || 'Player')
+                .replace(/[^a-zA-Z0-9_\-]/g, '')
+                .slice(0, 18) || 'Player';
+
+            let username = baseUsername;
+            let attempt  = 0;
+            while (true) {
+                const taken = await get(ref(db, `usernames/${username.toLowerCase()}`));
+                if (!taken.exists()) break;
+                attempt++;
+                username = `${baseUsername}${attempt}`;
+            }
+
+            await set(ref(db, `users/${uid}`), {
+                username:     username,
+                email:        user.email || '',
+                pr:           PR_START,
+                totalPuzzles: 0,
+                streak:       0,
+                correctCount: 0,
+                wrongCount:   0,
+                bestStreak:   0,
+                peakPR:       PR_START,
+                prHistory:    [],
+                provider:     'google',
+                createdAt:    Date.now(),
+            });
+            await set(ref(db, `usernames/${username.toLowerCase()}`), uid);
+            await import("https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js")
+                .then(m => m.updateProfile(user, { displayName: username }))
+                .catch(() => {});
+        }
+        // onAuthStateChanged will fire and call showSignedInUI + load game state
+    } catch (err) {
+        if (err.code !== 'auth/popup-closed-by-user' &&
+            err.code !== 'auth/cancelled-popup-request') {
+            console.error('Google sign-in error:', err.code, err.message);
+        }
+        if (signinBtn) {
+            signinBtn.style.opacity = '';
+            signinBtn.style.pointerEvents = '';
+        }
+    }
 };
 
 // ── Positions ─────────────────────────────────────────────────────────────────
