@@ -138,11 +138,11 @@
                     </div>
                 </div>
             </div>
+
         </section>
 
         <section id="right-panel" class="reveal">
             <div class="panel-heading">Make your call</div>
-
             <h3 id="turn"></h3>
 
             <div id="actionRow">
@@ -229,6 +229,16 @@
             <p class="modal-intro">Manage your ChessIQ experience.</p>
 
             <div class="modal-section">
+                <h3>Profile</h3>
+                <label class="settings-field-label" for="settings-username-input">Username</label>
+                <div class="settings-inline-form">
+                    <input id="settings-username-input" class="settings-text-input" type="text" maxlength="18" autocomplete="nickname" placeholder="Choose a username">
+                    <button class="settings-action-btn compact" onclick="saveUsername()">Save</button>
+                </div>
+                <p id="settings-username-status" class="settings-status"></p>
+            </div>
+
+            <div class="modal-section">
                 <h3>Positional Rating</h3>
                 <p class="modal-instruction-intro">Your current PR: <strong id="settings-pr-display">—</strong></p>
                 <p class="modal-instruction-intro subtle">Resetting returns your PR to the starting value (500) and clears your puzzle count and streak.</p>
@@ -275,69 +285,114 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
                 Your Stats
             </h2>
-            <p class="modal-intro">A snapshot of your positional training progress.</p>
 
-            <div class="stats-kpi-row">
-                <div class="stats-kpi-card">
-                    <div class="stats-kpi-value" id="stat-pr">—</div>
-                    <div class="stats-kpi-label">Current PR</div>
+            <!-- ── Tab bar ─────────────────────────────────────────────────── -->
+            <div class="stats-tabs">
+                <button class="stats-tab-btn active" data-tab="overview" onclick="switchStatsTab('overview')">Overview</button>
+                <button class="stats-tab-btn" data-tab="log" onclick="switchStatsTab('log')">Puzzle Log</button>
+            </div>
+
+            <!-- ══ OVERVIEW TAB ════════════════════════════════════════════════ -->
+            <div class="stats-tab-panel active" data-tab="overview">
+                <div class="stats-kpi-row">
+                    <div class="stats-kpi-card">
+                        <div class="stats-kpi-value" id="stat-pr">—</div>
+                        <div class="stats-kpi-label">Current PR</div>
+                    </div>
+                    <div class="stats-kpi-card">
+                        <div class="stats-kpi-value" id="stat-puzzles">—</div>
+                        <div class="stats-kpi-label">Puzzles Played</div>
+                    </div>
+                    <div class="stats-kpi-card">
+                        <div class="stats-kpi-value" id="stat-streak">—</div>
+                        <div class="stats-kpi-label">Current Streak</div>
+                    </div>
+                    <div class="stats-kpi-card">
+                        <div class="stats-kpi-value" id="stat-accuracy">—</div>
+                        <div class="stats-kpi-label">Accuracy</div>
+                    </div>
                 </div>
-                <div class="stats-kpi-card">
-                    <div class="stats-kpi-value" id="stat-puzzles">—</div>
-                    <div class="stats-kpi-label">Puzzles Played</div>
+
+                <div class="modal-section stats-chart-section">
+                    <div class="stats-section-header">
+                        <h3>PR Over Time</h3>
+                        <span class="stats-pr-change-badge" id="stat-pr-change-badge"></span>
+                    </div>
+                    <div id="stats-chart-container">
+                        <svg id="stats-sparkline" viewBox="0 0 480 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"></svg>
+                        <div class="stats-chart-labels">
+                            <span id="chart-label-left"></span>
+                            <span id="chart-label-right"></span>
+                        </div>
+                    </div>
                 </div>
-                <div class="stats-kpi-card">
-                    <div class="stats-kpi-value" id="stat-streak">—</div>
-                    <div class="stats-kpi-label">Current Streak</div>
-                </div>
-                <div class="stats-kpi-card">
-                    <div class="stats-kpi-value" id="stat-accuracy">—</div>
-                    <div class="stats-kpi-label">Accuracy</div>
+
+                <div class="modal-section">
+                    <h3>Breakdown</h3>
+                    <div class="stats-detail-grid">
+                        <div class="stats-detail-item">
+                            <span class="stats-detail-label">Difficulty Tier</span>
+                            <span class="stats-detail-value" id="stat-difficulty">—</span>
+                        </div>
+                        <div class="stats-detail-item">
+                            <span class="stats-detail-label">Best Streak</span>
+                            <span class="stats-detail-value" id="stat-best-streak">—</span>
+                        </div>
+                        <div class="stats-detail-item">
+                            <span class="stats-detail-label">Correct Answers</span>
+                            <span class="stats-detail-value" id="stat-correct">—</span>
+                        </div>
+                        <div class="stats-detail-item">
+                            <span class="stats-detail-label">Wrong Answers</span>
+                            <span class="stats-detail-value" id="stat-wrong">—</span>
+                        </div>
+                        <div class="stats-detail-item">
+                            <span class="stats-detail-label">PR Change (last 10)</span>
+                            <span class="stats-detail-value" id="stat-recent-delta">—</span>
+                        </div>
+                        <div class="stats-detail-item">
+                            <span class="stats-detail-label">Peak PR</span>
+                            <span class="stats-detail-value" id="stat-peak-pr">—</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="modal-section stats-chart-section">
-                <div class="stats-section-header">
-                    <h3>PR Over Time</h3>
-                    <span class="stats-pr-change-badge" id="stat-pr-change-badge"></span>
-                </div>
-                <div id="stats-chart-container">
-                    <svg id="stats-sparkline" viewBox="0 0 480 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"></svg>
-                    <div class="stats-chart-labels">
-                        <span id="chart-label-left"></span>
-                        <span id="chart-label-right"></span>
-                    </div>
-                </div>
-            </div>
+            <!-- ══ PUZZLE LOG TAB ══════════════════════════════════════════════ -->
+            <div class="stats-tab-panel" data-tab="log">
 
-            <div class="modal-section">
-                <h3>Breakdown</h3>
-                <div class="stats-detail-grid">
-                    <div class="stats-detail-item">
-                        <span class="stats-detail-label">Difficulty Tier</span>
-                        <span class="stats-detail-value" id="stat-difficulty">—</span>
+                <!-- Controls row -->
+                <div class="log-controls">
+                    <div class="log-controls-left">
+                        <label class="log-label" for="log-count-select">Show last</label>
+                        <select id="log-count-select" class="log-select" onchange="renderPuzzleLog()">
+                            <option value="5">5 puzzles</option>
+                            <option value="10" selected>10 puzzles</option>
+                            <option value="15">15 puzzles</option>
+                            <option value="20">20 puzzles</option>
+                            <option value="25">25 puzzles</option>
+                            <option value="50">50 puzzles</option>
+                        </select>
                     </div>
-                    <div class="stats-detail-item">
-                        <span class="stats-detail-label">Best Streak</span>
-                        <span class="stats-detail-value" id="stat-best-streak">—</span>
-                    </div>
-                    <div class="stats-detail-item">
-                        <span class="stats-detail-label">Correct Answers</span>
-                        <span class="stats-detail-value" id="stat-correct">—</span>
-                    </div>
-                    <div class="stats-detail-item">
-                        <span class="stats-detail-label">Wrong Answers</span>
-                        <span class="stats-detail-value" id="stat-wrong">—</span>
-                    </div>
-                    <div class="stats-detail-item">
-                        <span class="stats-detail-label">PR Change (last 10)</span>
-                        <span class="stats-detail-value" id="stat-recent-delta">—</span>
-                    </div>
-                    <div class="stats-detail-item">
-                        <span class="stats-detail-label">Peak PR</span>
-                        <span class="stats-detail-value" id="stat-peak-pr">—</span>
+                    <div class="log-net-pill">
+                        <span class="log-net-label">Net Change</span>
+                        <span class="log-net-value" id="log-net-delta">—</span>
                     </div>
                 </div>
+
+                <!-- Column headers -->
+                <div class="log-header-row">
+                    <span class="log-col log-num">#</span>
+                    <span class="log-col log-result-icon">—</span>
+                    <span class="log-col log-pr">PR</span>
+                    <span class="log-col log-delta">Δ PR</span>
+                    <span class="log-col log-eval">Eval</span>
+                    <span class="log-col log-diff">Tier</span>
+                    <span class="log-col log-time">Time</span>
+                </div>
+
+                <!-- Rows injected by renderPuzzleLog() -->
+                <div id="log-list"></div>
             </div>
 
             <button class="got-it-btn" onclick="closeStats()">Close</button>

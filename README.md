@@ -124,7 +124,7 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 - User accounts and authentication - [done]
 - Score tracking and long-term progress analytics[done]
 - Global leaderboards of PR(Positional Rating) already instated above in earlier updates[done]
-- Google integrations for logins
+- Google integrations for logins[done]
 - Full statistics overview page[done]
 
 ## v0.95 - Time-based and point system upgrades, Stats page upgrade 🏆[DELAYED to v0.95]
