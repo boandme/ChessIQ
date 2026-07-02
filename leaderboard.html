@@ -11,7 +11,7 @@
         /* ── Leaderboard-specific styles ─────────────────────────────────────── */
         .lb-wrap {
             width: 100%;
-            max-width: 860px;
+            max-width: 1040px;
             display: flex;
             flex-direction: column;
             gap: 0;
@@ -85,7 +85,7 @@
         /* ── Column headers ──────────────────────────────────────────────────── */
         .lb-col-headers {
             display: grid;
-            grid-template-columns: 64px 1fr 120px 110px 100px;
+            grid-template-columns: 72px minmax(260px, 1fr) 130px 120px 130px;
             gap: 0;
             padding: 10px 24px;
             background: var(--surface-2);
@@ -114,7 +114,7 @@
         /* ── Individual row ──────────────────────────────────────────────────── */
         .lb-row {
             display: grid;
-            grid-template-columns: 64px 1fr 120px 110px 100px;
+            grid-template-columns: 72px minmax(260px, 1fr) 130px 120px 130px;
             gap: 0;
             align-items: center;
             padding: 0 24px;
@@ -147,11 +147,12 @@
         .lb-row.is-you {
             background: linear-gradient(90deg, rgba(255,212,0,0.07) 0%, var(--surface) 60%);
             border-left: 3px solid var(--yellow);
+            padding-right: 94px;
         }
         .lb-row.is-you::after {
             content: 'YOU';
             position: absolute;
-            right: 20px;
+            right: 24px;
             font-family: var(--font-mono);
             font-size: 0.6rem; font-weight: 800;
             letter-spacing: 0.18em;
@@ -221,7 +222,7 @@
             font-family: var(--font-mono);
             font-size: 0.9rem; font-weight: 700;
             text-align: right;
-            padding-right: 30px; /* leave room for YOU badge */
+            padding-right: 0;
         }
         .lb-accuracy.high  { color: var(--ok); }
         .lb-accuracy.mid   { color: var(--yellow); }

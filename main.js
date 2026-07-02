@@ -13,6 +13,7 @@ var totalPuzzles  = 0;
 var currentStreak = 0;
 var currentUser   = null;
 var currentUID    = null;
+var currentUsername = 'Player';
 
 // Stats tracking
 var correctCount  = 0;
@@ -56,8 +57,7 @@ function getDifficultyFromPR() {
 import { initializeApp }                         from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getDatabase, ref, get, set, update }   from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
 import { getAnalytics }                          from "https://www.gstatic.com/firebasejs/12.1.0/firebase-analytics.js";
-import { getAuth, onAuthStateChanged, signOut,
-         GoogleAuthProvider, signInWithPopup }  from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey:            "AIzaSyDtGbU8BN06Y_GNDmhV1FJFRhTvD603DN0",
@@ -82,6 +82,7 @@ var guestPuzzleCount = 0;
 
 function showSignedInUI(profileUsername) {
     isGuest = false;
+    currentUsername = profileUsername || 'Player';
     const badge   = document.getElementById('user-badge');
     const signin  = document.getElementById('signin-btn');
     const banner  = document.getElementById('guest-banner');
@@ -90,7 +91,7 @@ function showSignedInUI(profileUsername) {
     if (banner) banner.style.display = 'none';
 
     const nameEl = document.getElementById('header-username');
-    if (nameEl) nameEl.textContent = profileUsername;
+    if (nameEl) nameEl.textContent = currentUsername;
 }
 
 function showGuestUI() {
@@ -203,6 +204,7 @@ onAuthStateChanged(auth, async (user) => {
 
     const nameEl = document.getElementById('header-username');
     if (nameEl) nameEl.textContent = profileUsername;
+    currentUsername = profileUsername || 'Player';
     showSignedInUI(profileUsername);
 
     renderPR();
@@ -244,7 +246,14 @@ function updatePR(difficulty, correct) {
     if (playerPR > peakPR) peakPR = playerPR;
     if (currentStreak > bestStreak) bestStreak = currentStreak;
 
-    prHistory.push({ pr: playerPR, ts: Date.now() });
+    prHistory.push({
+        pr:         playerPR,
+        delta:      delta,
+        correct:    correct,
+        difficulty: difficulty,
+        posEval:    null,   // filled in by sendAnswer after calling updatePR
+        ts:         Date.now(),
+    });
     if (prHistory.length > 50) prHistory = prHistory.slice(prHistory.length - 50);
 
     saveStatsToFirebase();
@@ -296,85 +305,7 @@ window.renderPR = renderPR;
 // ── Logout ────────────────────────────────────────────────────────────────────
 window.logoutUser = async function() {
     await signOut(auth);
-    isGuest         = true;
-    guestPuzzleCount = 0;
-    playerPR        = PR_START;
-    totalPuzzles    = 0;
-    currentStreak   = 0;
-    correctCount    = 0;
-    wrongCount      = 0;
-    bestStreak      = 0;
-    peakPR          = PR_START;
-    prHistory       = [];
-    currentUID      = null;
-    currentUser     = null;
-    showGuestUI();
-    renderPR();
-};
-
-// ── Google sign-in (callable from the homepage Sign In button) ────────────────
-window.handleGoogleAuth = async function() {
-    const signinBtn = document.getElementById('signin-btn');
-    if (signinBtn) {
-        signinBtn.style.opacity = '0.6';
-        signinBtn.style.pointerEvents = 'none';
-    }
-
-    try {
-        const provider = new GoogleAuthProvider();
-        provider.setCustomParameters({ prompt: 'select_account' });
-        const cred = await signInWithPopup(auth, provider);
-        const user = cred.user;
-        const uid  = user.uid;
-
-        // Check if this Google user already has a DB record
-        const snap = await get(ref(db, `users/${uid}`));
-
-        if (!snap.exists()) {
-            // Brand new Google user — derive a clean username
-            let baseUsername = (user.displayName || 'Player')
-                .replace(/[^a-zA-Z0-9_\-]/g, '')
-                .slice(0, 18) || 'Player';
-
-            let username = baseUsername;
-            let attempt  = 0;
-            while (true) {
-                const taken = await get(ref(db, `usernames/${username.toLowerCase()}`));
-                if (!taken.exists()) break;
-                attempt++;
-                username = `${baseUsername}${attempt}`;
-            }
-
-            await set(ref(db, `users/${uid}`), {
-                username:     username,
-                email:        user.email || '',
-                pr:           PR_START,
-                totalPuzzles: 0,
-                streak:       0,
-                correctCount: 0,
-                wrongCount:   0,
-                bestStreak:   0,
-                peakPR:       PR_START,
-                prHistory:    [],
-                provider:     'google',
-                createdAt:    Date.now(),
-            });
-            await set(ref(db, `usernames/${username.toLowerCase()}`), uid);
-            await import("https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js")
-                .then(m => m.updateProfile(user, { displayName: username }))
-                .catch(() => {});
-        }
-        // onAuthStateChanged will fire and call showSignedInUI + load game state
-    } catch (err) {
-        if (err.code !== 'auth/popup-closed-by-user' &&
-            err.code !== 'auth/cancelled-popup-request') {
-            console.error('Google sign-in error:', err.code, err.message);
-        }
-        if (signinBtn) {
-            signinBtn.style.opacity = '';
-            signinBtn.style.pointerEvents = '';
-        }
-    }
+    window.location.href = 'login.html';
 };
 
 // ── Positions ─────────────────────────────────────────────────────────────────
@@ -469,6 +400,12 @@ function sendAnswer(guess) {
     document.getElementById("evaluation-display").innerHTML = `Evaluation&nbsp;&nbsp;${displayEval}`;
     updatePR(difficulty, guess === correct_result);
 
+    // Patch posEval into the history entry that updatePR just pushed
+    if (prHistory.length > 0) {
+        prHistory[prHistory.length - 1].posEval = evaluationRaw;
+        saveStatsToFirebase();
+    }
+
     if (isGuest) {
         guestPuzzleCount++;
         if (guestPuzzleCount >= GUEST_FREE_PUZZLES) {
@@ -527,6 +464,17 @@ window.openSettings = function() {
     if (!modal) return;
     const prDisplay = document.getElementById('settings-pr-display');
     if (prDisplay) prDisplay.textContent = playerPR;
+    const usernameInput = document.getElementById('settings-username-input');
+    const usernameStatus = document.getElementById('settings-username-status');
+    if (usernameInput) {
+        usernameInput.value = isGuest ? '' : currentUsername;
+        usernameInput.disabled = isGuest;
+        usernameInput.placeholder = isGuest ? 'Sign in to change username' : 'Choose a username';
+    }
+    if (usernameStatus) {
+        usernameStatus.textContent = isGuest ? 'Sign in to edit your username.' : '';
+        usernameStatus.className = 'settings-status';
+    }
     cancelResetConfirm();
     modal.style.display = 'flex';
 };
@@ -546,6 +494,53 @@ window.cancelResetConfirm = function() {
     const prompt = document.getElementById('reset-confirm-prompt');
     if (area)   area.style.display   = 'block';
     if (prompt) prompt.style.display = 'none';
+};
+
+window.saveUsername = async function() {
+    const input = document.getElementById('settings-username-input');
+    const status = document.getElementById('settings-username-status');
+    if (!input || !status) return;
+
+    status.className = 'settings-status';
+    if (isGuest || !currentUID || !currentUser) {
+        status.textContent = 'Sign in to edit your username.';
+        status.classList.add('error');
+        return;
+    }
+
+    const nextUsername = input.value.trim().replace(/\s+/g, ' ');
+    if (nextUsername.length < 3 || nextUsername.length > 18) {
+        status.textContent = 'Use 3 to 18 characters.';
+        status.classList.add('error');
+        return;
+    }
+    if (!/^[A-Za-z0-9 _.-]+$/.test(nextUsername)) {
+        status.textContent = 'Use letters, numbers, spaces, dots, dashes, or underscores.';
+        status.classList.add('error');
+        return;
+    }
+
+    input.disabled = true;
+    status.textContent = 'Saving...';
+
+    try {
+        await update(ref(db, `users/${currentUID}`), { username: nextUsername });
+        await updateProfile(currentUser, { displayName: nextUsername });
+        currentUsername = nextUsername;
+
+        const nameEl = document.getElementById('header-username');
+        if (nameEl) nameEl.textContent = nextUsername;
+
+        input.value = nextUsername;
+        status.textContent = 'Username updated.';
+        status.className = 'settings-status success';
+    } catch (error) {
+        console.error(error);
+        status.textContent = 'Could not update username. Try again.';
+        status.className = 'settings-status error';
+    } finally {
+        input.disabled = false;
+    }
 };
 
 window.confirmResetPR = async function() {
@@ -577,12 +572,19 @@ window.openStats = function() {
     const modal = document.getElementById('stats-modal');
     if (!modal) return;
     populateStatsModal();
+    switchStatsTab('overview');   // always open on overview
     modal.style.display = 'flex';
 };
 
 window.closeStats = function() {
     const modal = document.getElementById('stats-modal');
     if (modal) modal.style.display = 'none';
+};
+
+window.switchStatsTab = function(tab) {
+    document.querySelectorAll('.stats-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    document.querySelectorAll('.stats-tab-panel').forEach(p => p.classList.toggle('active', p.dataset.tab === tab));
+    if (tab === 'log') renderPuzzleLog();
 };
 
 function populateStatsModal() {
@@ -771,7 +773,65 @@ function renderSparkline() {
     if (rightLbl) rightLbl.textContent = fmt(prHistory[prHistory.length - 1].ts) + ` (${prHistory[prHistory.length - 1].pr})`;
 }
 
-// ── Sidebar ───────────────────────────────────────────────────────────────────
+// ── Puzzle log tab ────────────────────────────────────────────────────────────
+window.renderPuzzleLog = function() { renderPuzzleLog(); };
+function renderPuzzleLog() {
+    const container = document.getElementById('log-list');
+    const netEl     = document.getElementById('log-net-delta');
+    const dropdown  = document.getElementById('log-count-select');
+    if (!container) return;
+
+    const count  = parseInt(dropdown ? dropdown.value : '10', 10);
+    const slice  = prHistory.slice(-count).reverse();  // most recent first
+
+    // Net PR change over the selected window
+    if (slice.length >= 2) {
+        const net  = slice[0].pr - slice[slice.length - 1].pr;
+        const sign = net >= 0 ? '+' : '';
+        netEl.textContent = `${sign}${net} PR`;
+        netEl.className   = 'log-net-value ' + (net >= 0 ? 'positive' : 'negative');
+    } else if (slice.length === 1) {
+        netEl.textContent = `${slice[0].delta >= 0 ? '+' : ''}${slice[0].delta} PR`;
+        netEl.className   = 'log-net-value ' + (slice[0].delta >= 0 ? 'positive' : 'negative');
+    } else {
+        netEl.textContent = '—';
+        netEl.className   = 'log-net-value';
+    }
+
+    if (!slice.length) {
+        container.innerHTML = `<div class="log-empty">No puzzles played yet. Start solving to build your history.</div>`;
+        return;
+    }
+
+    const fmt = ts => {
+        const d = new Date(ts);
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
+    container.innerHTML = slice.map((entry, i) => {
+        const num        = prHistory.length - i;
+        const sign       = entry.delta >= 0 ? '+' : '';
+        const deltaClass = entry.delta >= 0 ? 'positive' : 'negative';
+        const resultClass  = entry.correct ? 'correct' : 'incorrect';
+        const resultLabel  = entry.correct ? '✓' : '✗';
+        const posEval    = entry.posEval !== null && entry.posEval !== undefined
+            ? (entry.posEval > 0 ? `+${entry.posEval.toFixed(2)}` : entry.posEval.toFixed(2))
+            : '—';
+        const diff = entry.difficulty || '—';
+        const time = entry.ts ? fmt(entry.ts) : '—';
+
+        return `
+        <div class="log-row ${resultClass}">
+            <span class="log-num">#${num}</span>
+            <span class="log-result-icon ${resultClass}">${resultLabel}</span>
+            <span class="log-pr">${entry.pr}</span>
+            <span class="log-delta ${deltaClass}">${sign}${entry.delta}</span>
+            <span class="log-eval">${posEval}</span>
+            <span class="log-diff diff-${diff.toLowerCase()}">${diff}</span>
+            <span class="log-time">${time}</span>
+        </div>`;
+    }).join('');
+}
 window.openSidebar = function() {
     const sidebarEl = document.getElementById('sidebar');
     const overlayEl = document.getElementById('sidebar-overlay');
