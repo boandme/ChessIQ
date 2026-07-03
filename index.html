@@ -42,7 +42,7 @@
                 </a></li>
             </ul>
         </nav>
-        <div class="sidebar-foot">v0.9 — BETA</div>
+        <div class="sidebar-foot">v1.0 — BETA</div>
     </aside>
 
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
@@ -55,7 +55,7 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
                 </span>
                 <span class="brand-text">CHESS<span>IQ</span></span>
-                <span class="brand-ver">v0.9</span>
+                <span class="brand-ver">v1.0</span>
             </a>
         </div>
 
@@ -103,6 +103,11 @@
     <div id="guest-banner" class="reveal" style="display:none;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.2"/><path d="M12 8v5"/><line x1="12" y1="16" x2="12" y2="16.01"/></svg>
         <span>Playing as guest — progress won't be saved. <a href="login.html">Sign in</a> to track your rating.</span>
+    </div>
+
+    <div id="provisional-banner" class="reveal" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"/><path d="M4 5h12l-1.5 4L16 13H4"/><path d="M18 19h2"/></svg>
+        <span><strong>Provisional mode</strong> puzzle <b id="provisional-count">1/10</b>: all difficulties are mixed in, and PR jumps are much bigger only for these first 10 puzzles.</span>
     </div>
 
     <!-- ── Main layout ─────────────────────────────────────────────────────── -->
@@ -243,7 +248,7 @@
                 <p class="modal-instruction-intro">Your current PR: <strong id="settings-pr-display">—</strong></p>
                 <p class="modal-instruction-intro subtle">Resetting returns your PR to the starting value (500) and clears your puzzle count and streak.</p>
                 <div id="reset-confirm-area">
-                    <button class="settings-action-btn danger" onclick="showResetConfirm()">Reset Rating</button>
+                    <button class="settings-action-btn danger" onclick="showResetConfirm()">Reset Account</button>
                 </div>
                 <div id="reset-confirm-prompt" style="display:none;">
                     <p class="modal-instruction-intro danger-text">Are you sure? This cannot be undone.</p>
@@ -265,7 +270,7 @@
             <div class="modal-section">
                 <h3>About</h3>
                 <ul class="modal-list">
-                    <li><strong>Version</strong> — ChessIQ v0.75</li>
+                    <li><strong>Version</strong> — ChessIQ v1.0</li>
                     <li><strong>Status</strong> — Beta, active development</li>
                 </ul>
             </div>

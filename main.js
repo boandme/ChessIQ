@@ -6,6 +6,7 @@ var evaluation;
 // ── Positional Rating constants ───────────────────────────────────────────────
 const PR_MAX   = 3200;
 const PR_START = 500;
+const PROVISIONAL_PUZZLES = 10;
 
 // ── In-memory player state (loaded from Firebase after auth) ──────────────────
 var playerPR      = PR_START;
@@ -28,6 +29,28 @@ const PR_BASE = {
     Medium: { correct: 61,  wrong: -61 },
     Hard:   { correct: 96,  wrong: -38 },
 };
+
+const PR_PROVISIONAL_BASE = {
+    Easy:   { correct: 220, wrong: -210 },
+    Medium: { correct: 285, wrong: -260 },
+    Hard:   { correct: 390, wrong: -190 },
+};
+
+function isProvisionalMode() {
+    return !isGuest && totalPuzzles < PROVISIONAL_PUZZLES;
+}
+
+function renderProvisionalNotice() {
+    const notice = document.getElementById('provisional-banner');
+    const countEl = document.getElementById('provisional-count');
+    if (!notice) return;
+
+    const active = isProvisionalMode();
+    notice.style.display = active ? 'flex' : 'none';
+    if (countEl) {
+        countEl.textContent = `${Math.min(totalPuzzles + 1, PROVISIONAL_PUZZLES)}/${PROVISIONAL_PUZZLES}`;
+    }
+}
 
 function confidenceMultiplier() {
     return 1 + 1.5 * Math.exp(-totalPuzzles / 15);
@@ -92,6 +115,7 @@ function showSignedInUI(profileUsername) {
 
     const nameEl = document.getElementById('header-username');
     if (nameEl) nameEl.textContent = currentUsername;
+    renderProvisionalNotice();
 }
 
 function showGuestUI() {
@@ -102,6 +126,7 @@ function showGuestUI() {
     if (badge)  badge.style.display  = 'none';
     if (signin) signin.style.display = 'flex';
     if (banner) banner.style.display = 'flex';
+    renderProvisionalNotice();
 }
 
 // ── Auth gate ─────────────────────────────────────────────────────────────────
@@ -228,12 +253,13 @@ async function saveStatsToFirebase() {
 
 // ── PR update ─────────────────────────────────────────────────────────────────
 function updatePR(difficulty, correct) {
-    const base = PR_BASE[difficulty];
+    const provisional = isProvisionalMode();
+    const base = provisional ? PR_PROVISIONAL_BASE[difficulty] : PR_BASE[difficulty];
     if (!base) return;
 
     const baseValue    = correct ? base.correct : base.wrong;
     const ratingFactor = 1 - (playerPR / 4480);
-    const confMult     = confidenceMultiplier();
+    const confMult     = provisional ? 1 : confidenceMultiplier();
     const streakMult   = streakMultiplier(correct);
     const delta        = Math.round(baseValue * ratingFactor * confMult * streakMult);
 
@@ -251,6 +277,7 @@ function updatePR(difficulty, correct) {
         delta:      delta,
         correct:    correct,
         difficulty: difficulty,
+        provisional: provisional,
         posEval:    null,   // filled in by sendAnswer after calling updatePR
         ts:         Date.now(),
     });
@@ -258,16 +285,18 @@ function updatePR(difficulty, correct) {
 
     saveStatsToFirebase();
 
-    const sign = delta >= 0 ? '+' : '';
-    const streakLabel = currentStreak > 1  ? `x${currentStreak} correct streak`
-                      : currentStreak < -1 ? `x${Math.abs(currentStreak)} wrong streak`
-                      : 'no streak';
-    console.log(
-        `PR update | difficulty: ${difficulty} | correct: ${correct} | ` +
-        `delta: ${sign}${delta} | confMult: x${confMult.toFixed(2)} | ` +
-        `streakMult: x${streakMult.toFixed(2)} (${streakLabel}) | ` +
-        `puzzle #${totalPuzzles} | new PR: ${playerPR}`
-    );
+    if (provisional) {
+        const sign = delta >= 0 ? '+' : '';
+        const streakLabel = currentStreak > 1  ? `x${currentStreak} correct streak`
+                          : currentStreak < -1 ? `x${Math.abs(currentStreak)} wrong streak`
+                          : 'no streak';
+        console.log(
+            `Provisional PR update | puzzle ${totalPuzzles}/${PROVISIONAL_PUZZLES} | ` +
+            `difficulty: ${difficulty} | correct: ${correct} | ` +
+            `change: ${sign}${delta} | new PR: ${playerPR} | ` +
+            `streakMult: x${streakMult.toFixed(2)} (${streakLabel})`
+        );
+    }
 
     renderPR(delta);
 }
@@ -281,6 +310,7 @@ function renderPR(delta) {
 
     valEl.textContent = playerPR;
     subEl.textContent = `${totalPuzzles} puzzle${totalPuzzles !== 1 ? 's' : ''} played`;
+    renderProvisionalNotice();
 
     if (delta !== undefined) {
         const sign = delta >= 0 ? '+' : '';
@@ -312,6 +342,8 @@ window.logoutUser = async function() {
 var positions = [];
 var positionsByDiff = { Easy: [], Medium: [], Hard: [] };
 var current_position = 0;
+var currentPuzzle = null;
+var currentPuzzleDifficulty = null;
 
 function initPositions() {
     const boardEl = document.getElementById('board');
@@ -335,11 +367,13 @@ function initPositions() {
 }
 
 function loadPuzzleForPR() {
-    const difficulty = getDifficultyFromPR();
-    const pool = positionsByDiff[difficulty] || [];
+    const difficulty = isProvisionalMode() ? null : getDifficultyFromPR();
+    const pool = isProvisionalMode() ? positions : (positionsByDiff[difficulty] || []);
     if (pool.length) {
         current_position = Math.floor(Math.random() * pool.length);
         const pos = pool[current_position];
+        currentPuzzle = pos;
+        currentPuzzleDifficulty = pos.Difficulty || difficulty;
         renderSVG(pos.SVG);
         correct_result = findResult(pos.Eval);
         const turnEl = document.getElementById('turn');
@@ -357,8 +391,8 @@ window.nextPosition = function() {
         showGuestGate();
         return;
     }
-    const difficulty = getDifficultyFromPR();
-    const pool = positionsByDiff[difficulty] || [];
+    const difficulty = isProvisionalMode() ? null : getDifficultyFromPR();
+    const pool = isProvisionalMode() ? positions : (positionsByDiff[difficulty] || []);
     if (!pool.length) {
         document.getElementById('board').innerHTML = '<p>No positions available</p>';
         document.getElementById('turn').innerHTML  = '';
@@ -366,6 +400,8 @@ window.nextPosition = function() {
     }
     current_position = Math.floor(Math.random() * pool.length);
     const pos = pool[current_position];
+    currentPuzzle = pos;
+    currentPuzzleDifficulty = pos.Difficulty || difficulty;
     renderSVG(pos.SVG);
     correct_result = findResult(pos.Eval);
     document.getElementById("turn").innerHTML = pos.Turn;
@@ -374,6 +410,7 @@ window.nextPosition = function() {
     resultEl.innerHTML = '<p id="resultText">Click a piece to make your choice</p>';
     resultEl.classList.remove("correct", "incorrect");
     document.getElementById("evaluation-display").innerHTML = "";
+    renderProvisionalNotice();
 };
 
 function sendAnswer(guess) {
@@ -393,9 +430,8 @@ function sendAnswer(guess) {
         resultEl.classList.add("incorrect");
     }
     answered = true;
-    const difficulty    = getDifficultyFromPR();
-    const pool          = positionsByDiff[difficulty] || [];
-    const evaluationRaw = parseFloat(pool[current_position].Eval) / 100;
+    const difficulty    = currentPuzzleDifficulty || getDifficultyFromPR();
+    const evaluationRaw = parseFloat(currentPuzzle.Eval) / 100;
     const displayEval   = evaluationRaw > 0 ? `+${evaluationRaw}` : `${evaluationRaw}`;
     document.getElementById("evaluation-display").innerHTML = `Evaluation&nbsp;&nbsp;${displayEval}`;
     updatePR(difficulty, guess === correct_result);
@@ -555,6 +591,7 @@ window.confirmResetPR = async function() {
 
     await saveStatsToFirebase();
     renderPR();
+    renderProvisionalNotice();
 
     const prDisplay = document.getElementById('settings-pr-display');
     if (prDisplay) {
@@ -564,7 +601,6 @@ window.confirmResetPR = async function() {
         prDisplay.classList.add('reset-flash');
     }
     cancelResetConfirm();
-    console.log(`PR reset | new PR: ${playerPR}`);
 };
 
 // ── Stats modal ───────────────────────────────────────────────────────────────
@@ -603,7 +639,7 @@ function populateStatsModal() {
     setText('stat-accuracy', accuracy);
 
     // ── Breakdown grid ─────────────────────────────────────────────────────────
-    setText('stat-difficulty',  getDifficultyFromPR());
+    setText('stat-difficulty',  isProvisionalMode() ? `Provisional ${Math.min(totalPuzzles + 1, PROVISIONAL_PUZZLES)}/${PROVISIONAL_PUZZLES}` : getDifficultyFromPR());
     setText('stat-best-streak', bestStreak > 0 ? `${bestStreak} ✓` : '—');
     setText('stat-correct',     correctCount);
     setText('stat-wrong',       wrongCount);
