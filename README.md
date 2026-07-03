@@ -6,8 +6,7 @@ Instead of finding a forced move like in traditional tactical puzzles, ChessIQ c
 
 Think of ChessIQ as tactical puzzles for positional thinking.
 
-**Status:** 🚧 Currently in beta, with active development leading up to v1.0.
-
+**Status:** 🚧 Currently in beta, with active development leading up to v1.5
 ---
 
 ## 🧠 Core Concept
@@ -32,8 +31,6 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 
 - AI opponents trained on real games
 - Difficulty-based positional challenges
-- Player accounts and long-term progress tracking
-- Positional Rating System/ Points for Puzzles based on difficulty
 - Precomputed explanations for each position, leading to further learning opportunities
 
 ---
@@ -127,7 +124,7 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 - Google integrations for logins[done]
 - Full statistics overview page[done]
 
-### 🔜 Planned Updates
+
 
 ## v0.95 - Time-based and point system upgrades, Stats page upgrade 🏆[DELAYED to ????]
  - More synced multiplayer point systems reliant on what difficulty puzzles, as well as time
@@ -146,19 +143,25 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 - Mystery feaatures?
 - Updated PR(Positional Rating Calculations) out based on relative puzzle difficulty and accuracy
 
+### 🔜 Planned Updates
 
-#### v1.1 - New gamemode: Regular & blitz-paced modes update
+#### v1.1 - Achievements update(2026-27)
+   - Users collect achievements as they solve
+   - All collected and notcollected achievements visible on a page
+   - rewards player for Personal Best
+
+#### v1.2 - New gamemode: Regular & blitz-paced modes update
  - On homescreen, ability to switch between regular, rated play
  - OR a new gamemode: Rush(3 or 5 min), where you try to get the most amt of puzzles correct in the limited time as possible. 
  - Integrations with global leaderboard - seperate leaderboard for Rush
 
-#### v1.2 - Friends & Personalization Update(2026) 👱
+#### v1.3 - Friends & Personalization Update(2026) 👱
  - Ability to add friends
  - Leaderboards within friends
  - Personalization such as dark/light mode, super beginner mode
  - Daily rewards, streaks, etc
 
-#### v1.3 - AI-based Explanations & Reflections(2026-27) 🤖
+#### v1.5 - AI-based Explanations & Reflections(2026-27) 🤖
 - Pre-cached explanations for each stored position in the database
 - Good for long-term learning and reflection,  leading to better opportunities for the user to hone positional skill. 
 
@@ -166,15 +169,16 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 
 ## 💡 Future Ideas
 
+- Position Accuracy heatmap after user guessed; shows the percent of people that put white equal or black after guessing --> good for user retainment
+- Player recognition + reward for getting a personal best!
+- Crowdsourcing: Randomly after a certain amount of puzzles completed, survey the player on what convinced them of the answer - material, position, etc --> not for ALL though
 - Two main modes of the game: Normal rating play, unrated puzzle streak timed(3min, 5min )- see how much you can get 
 - 📚 Positional theme tagging (isolated pawns, bishop pair, space advantage)
 - 🎓 Beginner mode with post-guess explanations
 - 🔁 Daily challenge positions → revealed at midnight, distributions also revealed
 - (1.5+) Evaluation Bar Guesser instead of white/black/equal
 - Positional theme tagging on puzzles in the model; Will take a while to pre-train
-- (Training specialization) - Last ‘X’ puzzles mistake log → if thematic puzzle tagging added, it becomes a powerful tool(add to STATS page)
-- imrpove hompage ux
--lederboard page ux improv a bit
+- 
 - 🧠 Optional engine explanation after each guess
 - 🌙 Dark mode and board theme customization
 - 🏆 Add a friend system after multiplayer: →  Global or friends-only leaderboards
