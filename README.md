@@ -191,4 +191,5 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 - Idea and Development: Boandme
 - Testing: EntyXD
 - Icons and Symbols: UXWing
+- Data: Lichess API
 
