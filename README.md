@@ -118,7 +118,7 @@ Think of ChessIQ as tactical puzzles for positional thinking.
  - players can play a bit of puzzles onload before hacing to login/create acc
  -smoother transitions of main pages
 
-### 🔜 Planned Updates
+
 
 #### v0.9 – Accounts and Leaderboards Full release👤 (June 2026) 
 - User accounts and authentication - [done]
@@ -127,7 +127,9 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 - Google integrations for logins[done]
 - Full statistics overview page[done]
 
-## v0.95 - Time-based and point system upgrades, Stats page upgrade 🏆[DELAYED to v0.95]
+### 🔜 Planned Updates
+
+## v0.95 - Time-based and point system upgrades, Stats page upgrade 🏆[DELAYED to ????]
  - More synced multiplayer point systems reliant on what difficulty puzzles, as well as time
  - Formula-based puzzle calculations
  - upgrade stats page to have specific logistics/trends based on time OR last 'x' puzzles completed, more specification for training purposes. 
@@ -140,6 +142,8 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 - Lichess & Devpost Release
 - Further publication
 - [optional] - in stats/training page, show the last x positions solved in a log format, their eval, answer, rating change, etc
+- Puzzle review log
+- Mystery feaatures?
 - Updated PR(Positional Rating Calculations) out based on relative puzzle difficulty and accuracy
 
 

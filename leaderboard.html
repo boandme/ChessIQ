@@ -147,12 +147,13 @@
         .lb-row.is-you {
             background: linear-gradient(90deg, rgba(255,212,0,0.07) 0%, var(--surface) 60%);
             border-left: 3px solid var(--yellow);
-            padding-right: 94px;
         }
         .lb-row.is-you::after {
             content: 'YOU';
             position: absolute;
+            top: 50%;
             right: 24px;
+            transform: translateY(-50%);
             font-family: var(--font-mono);
             font-size: 0.6rem; font-weight: 800;
             letter-spacing: 0.18em;
@@ -160,6 +161,12 @@
             border: 1px solid var(--yellow-line);
             background: var(--yellow-soft);
             padding: 2px 7px;
+            pointer-events: none;
+            z-index: 1;
+        }
+        /* Nudge accuracy cell left on your row so YOU badge doesn't overlap it */
+        .lb-row.is-you .lb-accuracy {
+            padding-right: 54px;
         }
 
         /* ── Rank cell ───────────────────────────────────────────────────────── */
