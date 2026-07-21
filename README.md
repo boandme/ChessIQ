@@ -6,6 +6,9 @@ Instead of finding a forced move like in traditional tactical puzzles, ChessIQ c
 
 Think of ChessIQ as tactical puzzles for positional thinking.
 
+## ChessIQ's multiple uses ##
+ - ChessIQ scales with your level. Beginners start by counting material — learning which side simply has more pieces — and that alone builds a foundation for reading positions. As your rating climbs, the puzzles shift toward what ChessIQ was originally built for: recognizing positional imbalances, space, piece activity, and structural advantages that don't show up in a piece count. One tool, two very different kinds of chess thinking, on a single continuous ladder.
+
 **Status:** 🚧 Currently in beta, with active development leading up to v1.5
 ---
 
@@ -126,7 +129,7 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 
 
 
-## v0.95 - Time-based and point system upgrades, Stats page upgrade 🏆[DELAYED to ????]
+## v0.95 - Time-based and point system upgrades, Stats page upgrade
  - More synced multiplayer point systems reliant on what difficulty puzzles, as well as time
  - Formula-based puzzle calculations
  - upgrade stats page to have specific logistics/trends based on time OR last 'x' puzzles completed, more specification for training purposes. 
@@ -144,6 +147,10 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 - Updated PR(Positional Rating Calculations) out based on relative puzzle difficulty and accuracy
 
 ### 🔜 Planned Updates
+
+###v1.05- User experience & further appeal update
+ - Better Transitions in UI
+ - more small additions
 
 #### v1.1 - Achievements update(2026-27)
    - Users collect achievements as they solve
