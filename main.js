@@ -328,6 +328,9 @@ function renderPR(delta) {
 
         valEl.classList.add('bump');
         setTimeout(() => valEl.classList.remove('bump'), 200);
+
+        // Check PR milestones on every PR-changing update
+        if (!isGuest) checkMilestone(playerPR);
     }
 }
 window.renderPR = renderPR;
@@ -344,27 +347,6 @@ var positionsByDiff = { Easy: [], Medium: [], Hard: [] };
 var current_position = 0;
 var currentPuzzle = null;
 var currentPuzzleDifficulty = null;
-
-function initPositions() {
-    const boardEl = document.getElementById('board');
-    const turnEl  = document.getElementById('turn');
-    if (boardEl) boardEl.innerHTML = '<p style="padding:40px;text-align:center;">Loading positions...</p>';
-    if (turnEl)  turnEl.innerHTML  = 'Loading...';
-
-    get(ref(db, 'positions')).then((snapshot) => {
-        if (snapshot.exists()) {
-            positions = Object.values(snapshot.val());
-            positionsByDiff.Easy   = positions.filter(p => p.Difficulty === "Easy");
-            positionsByDiff.Medium = positions.filter(p => p.Difficulty === "Medium");
-            positionsByDiff.Hard   = positions.filter(p => p.Difficulty === "Hard");
-            if (boardEl) loadPuzzleForPR();
-        }
-    }).catch((error) => {
-        console.error(error);
-        if (document.getElementById('board'))
-            document.getElementById('board').innerHTML = '<p style="color:red;">Error loading positions</p>';
-    });
-}
 
 function loadPuzzleForPR() {
     const difficulty = isProvisionalMode() ? null : getDifficultyFromPR();
@@ -893,3 +875,337 @@ document.addEventListener('keydown', function(event) {
         window.closeStats    && window.closeStats();
     }
 });
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  DARK / LIGHT THEME TOGGLE
+// ══════════════════════════════════════════════════════════════════════════════
+(function initTheme() {
+    const saved = localStorage.getItem('chessiq-theme') || 'dark';
+    if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+})();
+
+window.toggleTheme = function() {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'light' ? 'dark' : 'light';
+    if (next === 'dark') {
+        document.documentElement.removeAttribute('data-theme');
+    } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+    }
+    localStorage.setItem('chessiq-theme', next);
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  PR MILESTONE TOAST
+// ══════════════════════════════════════════════════════════════════════════════
+const PR_MILESTONES = [
+    { pr: 1000, title: 'Four Digits!',       desc: 'Your PR just crossed 1,000. You\'re finding your footing.' },
+    { pr: 1200, title: 'Club Player',         desc: 'PR 1,200 — you\'re reading positions with real intent now.' },
+    { pr: 1500, title: 'Intermediate Eye',    desc: 'PR 1,500 — positional patterns are clicking for you.' },
+    { pr: 1800, title: 'Advanced Vision',     desc: 'PR 1,800 — most players never see what you\'re seeing.' },
+    { pr: 2100, title: 'Expert Level',        desc: 'PR 2,100 — you evaluate like a tournament player.' },
+    { pr: 2400, title: 'Master Class',        desc: 'PR 2,400 — elite positional understanding.' },
+    { pr: 2700, title: 'Grandmaster Eye',     desc: 'PR 2,700 — you see the board like the best in the world.' },
+    { pr: 3000, title: 'Legendary',           desc: 'PR 3,000 — almost no one reaches this.' },
+];
+
+var toastTimer = null;
+var shownMilestones = new Set(
+    JSON.parse(localStorage.getItem('chessiq-milestones') || '[]')
+);
+
+function checkMilestone(newPR) {
+    for (const m of PR_MILESTONES) {
+        if (newPR >= m.pr && !shownMilestones.has(m.pr)) {
+            shownMilestones.add(m.pr);
+            localStorage.setItem('chessiq-milestones', JSON.stringify([...shownMilestones]));
+            showMilestoneToast(m, newPR);
+            break; // only one toast at a time
+        }
+    }
+}
+
+function showMilestoneToast(milestone, pr) {
+    const toast   = document.getElementById('pr-milestone-toast');
+    const titleEl = document.getElementById('toast-title');
+    const descEl  = document.getElementById('toast-desc');
+    const prEl    = document.getElementById('toast-pr-val');
+    if (!toast) return;
+
+    titleEl.textContent = milestone.title;
+    descEl.textContent  = milestone.desc;
+    prEl.textContent    = pr;
+
+    // Reset animation
+    toast.classList.remove('show');
+    void toast.offsetWidth;
+
+    // Rebuild progress bar (restart animation)
+    const oldBar = toast.querySelector('.toast-progress');
+    if (oldBar) oldBar.remove();
+    const bar = document.createElement('div');
+    bar.className = 'toast-progress';
+    toast.appendChild(bar);
+
+    toast.classList.add('show');
+
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => dismissToast(), 4000);
+}
+
+window.dismissToast = function() {
+    const toast = document.getElementById('pr-milestone-toast');
+    if (toast) toast.classList.remove('show');
+    clearTimeout(toastTimer);
+};
+
+// Hook into renderPR to check milestones after every PR update
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  PUZZLE OF THE DAY
+// ══════════════════════════════════════════════════════════════════════════════
+function todayUTC() {
+    const d = new Date();
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+}
+
+var potdData      = null;   // { positionKey, date, eval, turn, svg, correctAnswer }
+var potdAnswered  = false;
+var potdUserAnswer = null;
+
+// Called once positions are loaded
+async function initPOTD() {
+    const today    = todayUTC();
+    const potdRef  = ref(db, `potd/${today}`);
+    const potdSnap = await get(potdRef);
+
+    if (potdSnap.exists()) {
+        // Use existing daily puzzle
+        potdData = potdSnap.val();
+    } else {
+        // Generate today's puzzle — pick one position at random from full pool
+        if (!positions.length) return;
+        const pick = positions[Math.floor(Math.random() * positions.length)];
+        const key  = pick.id || pick.key || String(Math.floor(Math.random() * 1e9));
+        potdData   = {
+            date:          today,
+            positionKey:   key,
+            svg:           pick.SVG,
+            turn:          pick.Turn,
+            eval:          pick.Eval,
+            correctAnswer: findResult(pick.Eval),
+            votes:         { White: 0, Equal: 0, Black: 0 },
+        };
+        // Only write if signed in to avoid anonymous ballot stuffing
+        if (!isGuest) {
+            await set(potdRef, potdData);
+        }
+    }
+
+    updatePOTDCard();
+
+    // Check if this user already answered today
+    if (!isGuest && currentUID) {
+        const userPOTD = await get(ref(db, `users/${currentUID}/potd/${today}`));
+        if (userPOTD.exists()) {
+            potdAnswered   = true;
+            potdUserAnswer = userPOTD.val().answer;
+            updatePOTDCard();
+        }
+    }
+}
+
+function updatePOTDCard() {
+    const sub   = document.getElementById('potd-card-sub');
+    const badge = document.getElementById('potd-card-badge');
+    const today = todayUTC();
+    const d     = new Date();
+    const label = today; // e.g. 2026-07-20
+
+    if (!potdData) {
+        if (sub) sub.textContent = 'Loading...';
+        return;
+    }
+    if (sub) sub.textContent = `${label} — ${potdAnswered ? 'Answered' : 'Ready to play'}`;
+    if (badge) {
+        badge.textContent = potdAnswered ? 'DONE' : 'PLAY';
+        badge.className   = 'potd-badge' + (potdAnswered ? ' done' : '');
+    }
+}
+
+window.openPOTD = function() {
+    if (!potdData) return;
+    const modal = document.getElementById('potd-modal');
+    if (!modal) return;
+
+    // Populate board
+    document.getElementById('potd-modal-board').innerHTML = potdData.svg || '<p>Loading...</p>';
+    document.getElementById('potd-modal-turn').textContent = potdData.turn || '';
+    document.getElementById('potd-modal-date').textContent =
+        'Puzzle of the Day — ' + potdData.date;
+
+    // Countdown to next puzzle
+    renderPOTDCountdown();
+
+    if (!isGuest) {
+        document.getElementById('potd-signin-notice').style.display = 'none';
+        const choicesEl = document.getElementById('potd-choices');
+
+        if (potdAnswered) {
+            // Show result immediately
+            disablePOTDButtons(potdUserAnswer, potdData.correctAnswer);
+            showPOTDResult(potdUserAnswer, potdData.correctAnswer, potdData.eval, potdData.votes);
+        } else {
+            // Re-enable buttons for fresh attempt
+            choicesEl.style.display = 'grid';
+            ['potd-btn-white','potd-btn-equal','potd-btn-black'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) { btn.disabled = false; btn.className = 'potd-choice-btn'; }
+            });
+            document.getElementById('potd-result-box').classList.remove('visible');
+        }
+    } else {
+        document.getElementById('potd-signin-notice').style.display = 'block';
+        document.getElementById('potd-choices').style.display = 'none';
+        document.getElementById('potd-result-box').classList.remove('visible');
+    }
+
+    modal.style.display = 'flex';
+};
+
+window.closePOTD = function() {
+    const modal = document.getElementById('potd-modal');
+    if (modal) modal.style.display = 'none';
+};
+
+window.submitPOTD = async function(answer) {
+    if (potdAnswered || isGuest || !potdData) return;
+    const today = todayUTC();
+
+    // Disable buttons immediately
+    disablePOTDButtons(answer, potdData.correctAnswer);
+
+    // Increment vote in Firebase
+    const votesRef  = ref(db, `potd/${today}/votes`);
+    const votesSnap = await get(votesRef);
+    const votes = votesSnap.exists() ? votesSnap.val() : { White: 0, Equal: 0, Black: 0 };
+    const key = answer === 'White Winning' ? 'White' : answer === 'Black Winning' ? 'Black' : 'Equal';
+    votes[key] = (votes[key] || 0) + 1;
+    await set(votesRef, votes);
+    potdData.votes = votes;
+
+    // Save user's answer
+    await set(ref(db, `users/${currentUID}/potd/${today}`), {
+        answer:  answer,
+        correct: answer === potdData.correctAnswer,
+        ts:      Date.now(),
+    });
+
+    potdAnswered   = true;
+    potdUserAnswer = answer;
+
+    showPOTDResult(answer, potdData.correctAnswer, potdData.eval, votes);
+    updatePOTDCard();
+
+    // Live-listen for community vote updates
+    listenPOTDVotes(today);
+};
+
+function disablePOTDButtons(userAnswer, correct) {
+    const map = {
+        'White Winning': 'potd-btn-white',
+        'Equal':         'potd-btn-equal',
+        'Black Winning': 'potd-btn-black',
+    };
+    ['White Winning', 'Equal', 'Black Winning'].forEach(opt => {
+        const btn = document.getElementById(map[opt]);
+        if (!btn) return;
+        btn.disabled = true;
+        if (opt === userAnswer) {
+            btn.className = 'potd-choice-btn ' + (opt === correct ? 'selected-correct' : 'selected-wrong');
+        } else if (opt === correct) {
+            btn.className = 'potd-choice-btn reveal-correct';
+        } else {
+            btn.className = 'potd-choice-btn';
+        }
+    });
+}
+
+function showPOTDResult(userAnswer, correct, evalRaw, votes) {
+    const box     = document.getElementById('potd-result-box');
+    const titleEl = document.getElementById('potd-result-title');
+    const evalEl  = document.getElementById('potd-eval-line');
+
+    const isCorrect = userAnswer === correct;
+    titleEl.textContent = isCorrect ? '✓ Correct!' : `✗ Incorrect — the answer was ${correct}`;
+    titleEl.className   = 'potd-result-title ' + (isCorrect ? 'correct' : 'wrong');
+
+    const evalVal = parseFloat(evalRaw) / 100;
+    evalEl.innerHTML    = `Engine eval: <span>${evalVal > 0 ? '+' : ''}${evalVal.toFixed(2)}</span>`;
+
+    updatePOTDVoteBars(votes);
+    box.classList.add('visible');
+}
+
+function updatePOTDVoteBars(votes) {
+    const total = (votes.White || 0) + (votes.Equal || 0) + (votes.Black || 0);
+    const pct = v => total ? Math.round((v / total) * 100) : 0;
+    const pw = pct(votes.White || 0);
+    const pe = pct(votes.Equal || 0);
+    const pb = pct(votes.Black || 0);
+
+    document.getElementById('bar-white').style.width = pw + '%';
+    document.getElementById('bar-equal').style.width = pe + '%';
+    document.getElementById('bar-black').style.width = pb + '%';
+    document.getElementById('pct-white').textContent = pw + '%';
+    document.getElementById('pct-equal').textContent = pe + '%';
+    document.getElementById('pct-black').textContent = pb + '%';
+}
+
+var potdVoteListener = null;
+function listenPOTDVotes(today) {
+    if (potdVoteListener) return; // already listening
+    const { onValue } = window.__fbOnValue || {};
+    // We import onValue dynamically since it's not in scope here
+    import("https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js").then(m => {
+        potdVoteListener = m.onValue(ref(db, `potd/${today}/votes`), snap => {
+            if (snap.exists()) updatePOTDVoteBars(snap.val());
+        });
+    });
+}
+
+function renderPOTDCountdown() {
+    const el = document.getElementById('potd-countdown');
+    if (!el) return;
+    const now   = new Date();
+    const next  = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+    const diff  = next - now;
+    const h     = Math.floor(diff / 3600000);
+    const m     = Math.floor((diff % 3600000) / 60000);
+    const s     = Math.floor((diff % 60000) / 1000);
+    el.innerHTML = `Next puzzle in <span>${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</span>`;
+}
+setInterval(renderPOTDCountdown, 1000);
+
+// Wire POTD init after positions load — this replaces the original initPositions
+function initPositions() {
+    const boardEl = document.getElementById('board');
+    const turnEl  = document.getElementById('turn');
+    if (boardEl) boardEl.innerHTML = '<p style="padding:40px;text-align:center;">Loading positions...</p>';
+    if (turnEl)  turnEl.innerHTML  = 'Loading...';
+
+    get(ref(db, 'positions')).then((snapshot) => {
+        if (snapshot.exists()) {
+            positions = Object.values(snapshot.val());
+            positionsByDiff.Easy   = positions.filter(p => p.Difficulty === "Easy");
+            positionsByDiff.Medium = positions.filter(p => p.Difficulty === "Medium");
+            positionsByDiff.Hard   = positions.filter(p => p.Difficulty === "Hard");
+            if (boardEl) loadPuzzleForPR();
+            initPOTD(); // kick off POTD after positions are ready
+        }
+    }).catch((error) => {
+        console.error(error);
+        if (document.getElementById('board'))
+            document.getElementById('board').innerHTML = '<p style="color:red;">Error loading positions</p>';
+    });
+}
