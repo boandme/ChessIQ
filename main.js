@@ -8,6 +8,11 @@ const PR_MAX   = 3200;
 const PR_START = 500;
 const PROVISIONAL_PUZZLES = 10;
 
+// ── PR Decay constants ────────────────────────────────────────────────────────
+const DECAY_GRACE_DAYS   = 7;    // days of inactivity before decay starts
+const DECAY_PER_DAY      = 3;    // PR lost per day after grace period
+const DECAY_FLOOR        = 300;  // PR never decays below this
+
 // ── In-memory player state (loaded from Firebase after auth) ──────────────────
 var playerPR      = PR_START;
 var totalPuzzles  = 0;
@@ -15,6 +20,7 @@ var currentStreak = 0;
 var currentUser   = null;
 var currentUID    = null;
 var currentUsername = 'Player';
+var lastActiveDate  = null;   // 'YYYY-MM-DD' UTC string, updated each session
 
 // Stats tracking
 var correctCount  = 0;
@@ -164,6 +170,7 @@ onAuthStateChanged(auth, async (user) => {
         bestStreak    = data.bestStreak   ?? 0;
         peakPR        = data.peakPR       ?? playerPR;
         prHistory     = Array.isArray(data.prHistory) ? data.prHistory : [];
+        lastActiveDate = data.lastActiveDate ?? null;
 
         // DB username is ground truth — fall back to displayName only if DB has none
        profileUsername =
@@ -198,6 +205,7 @@ onAuthStateChanged(auth, async (user) => {
             bestStreak    = data.bestStreak   ?? 0;
             peakPR        = data.peakPR       ?? PR_START;
             prHistory     = Array.isArray(data.prHistory) ? data.prHistory : [];
+            lastActiveDate = data.lastActiveDate ?? null;
             profileUsername = (typeof data.username === 'string' && data.username.trim() !== '')
                              ? data.username.trim()
                              : (user.displayName || 'Player');
@@ -221,6 +229,9 @@ onAuthStateChanged(auth, async (user) => {
         }
     }
 
+    // ── Apply inactivity decay before showing PR ───────────────────────────────
+    applyPRDecay();
+
     // ── Self-heal: if DB still has 'Player' but Auth has a real displayName, fix it
     if (profileUsername === 'Player' && user.displayName && user.displayName !== 'Player') {
         profileUsername = user.displayName;
@@ -236,18 +247,73 @@ onAuthStateChanged(auth, async (user) => {
     initPositions();
 });
 
+// ── Date helper (UTC) ─────────────────────────────────────────────────────────
+function todayUTCDate() {
+    const d = new Date();
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+}
+
+// ── PR Inactivity Decay ───────────────────────────────────────────────────────
+// Called once on login. If the user has been inactive for more than DECAY_GRACE_DAYS,
+// applies a PR reduction of DECAY_PER_DAY for each day beyond the grace period.
+// Never drops below DECAY_FLOOR. Writes the adjusted PR back to Firebase.
+function applyPRDecay() {
+    if (isGuest || !lastActiveDate) return;
+
+    const today     = todayUTCDate();
+    if (lastActiveDate === today) return;  // played today, no decay
+
+    // Calculate days since last active
+    const lastMs    = new Date(lastActiveDate).getTime();
+    const todayMs   = new Date(today).getTime();
+    const daysSince = Math.floor((todayMs - lastMs) / 86400000);
+
+    if (daysSince <= DECAY_GRACE_DAYS) return;  // within grace period
+
+    const decayDays   = daysSince - DECAY_GRACE_DAYS;
+    const totalDecay  = decayDays * DECAY_PER_DAY;
+    const decayedPR   = Math.max(DECAY_FLOOR, playerPR - totalDecay);
+
+    if (decayedPR < playerPR) {
+        const lost = playerPR - decayedPR;
+        playerPR   = decayedPR;
+
+        // Show decay banner so user understands the drop
+        showDecayBanner(daysSince, lost);
+
+        // Save immediately so the adjusted PR is persisted
+        saveStatsToFirebase();
+
+        console.log(
+            `PR decay applied | days inactive: ${daysSince} | grace: ${DECAY_GRACE_DAYS} | ` +
+            `decay days: ${decayDays} | lost: -${lost} | new PR: ${playerPR}`
+        );
+    }
+}
+
+function showDecayBanner(daysSince, lost) {
+    const banner = document.getElementById('decay-banner');
+    const lostEl = document.getElementById('decay-lost');
+    const daysEl = document.getElementById('decay-days');
+    if (!banner) return;
+    if (lostEl) lostEl.textContent = lost;
+    if (daysEl) daysEl.textContent = daysSince;
+    banner.style.display = 'flex';
+}
+
 // ── Save to Firebase ──────────────────────────────────────────────────────────
 async function saveStatsToFirebase() {
     if (!currentUID || isGuest) return;
     await update(ref(db, `users/${currentUID}`), {
-        pr:           playerPR,
-        totalPuzzles: totalPuzzles,
-        streak:       currentStreak,
-        correctCount: correctCount,
-        wrongCount:   wrongCount,
-        bestStreak:   bestStreak,
-        peakPR:       peakPR,
-        prHistory:    prHistory,
+        pr:             playerPR,
+        totalPuzzles:   totalPuzzles,
+        streak:         currentStreak,
+        correctCount:   correctCount,
+        wrongCount:     wrongCount,
+        bestStreak:     bestStreak,
+        peakPR:         peakPR,
+        prHistory:      prHistory,
+        lastActiveDate: todayUTCDate(),
     });
 }
 
@@ -1063,12 +1129,9 @@ document.addEventListener('keydown', function(event) {
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  DARK / LIGHT THEME TOGGLE
+//  Reading the saved theme is handled by experience.js (runs on all pages).
+//  This file only needs the toggle function since the button is index-only.
 // ══════════════════════════════════════════════════════════════════════════════
-(function initTheme() {
-    const saved = localStorage.getItem('chessiq-theme') || 'dark';
-    if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
-})();
-
 window.toggleTheme = function() {
     const current = document.documentElement.getAttribute('data-theme');
     const next = current === 'light' ? 'dark' : 'light';
@@ -1149,10 +1212,8 @@ window.dismissToast = function() {
 // ══════════════════════════════════════════════════════════════════════════════
 //  PUZZLE OF THE DAY
 // ══════════════════════════════════════════════════════════════════════════════
-function todayUTC() {
-    const d = new Date();
-    return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
-}
+// todayUTCDate() is defined above in the decay section — reuse it here
+function todayUTC() { return todayUTCDate(); }
 
 var potdData      = null;   // { positionKey, date, eval, turn, svg, correctAnswer }
 var potdAnswered  = false;
