@@ -347,6 +347,7 @@ var positionsByDiff = { Easy: [], Medium: [], Hard: [] };
 var current_position = 0;
 var currentPuzzle = null;
 var currentPuzzleDifficulty = null;
+var currentPuzzleVoteCache = null;  // cached after answer, cleared on next puzzle
 
 function loadPuzzleForPR() {
     const difficulty = isProvisionalMode() ? null : getDifficultyFromPR();
@@ -388,10 +389,13 @@ window.nextPosition = function() {
     correct_result = findResult(pos.Eval);
     document.getElementById("turn").innerHTML = pos.Turn;
     answered = false;
+    currentPuzzleVoteCache = null;
     const resultEl = document.getElementById("result");
     resultEl.innerHTML = '<p id="resultText">Click a piece to make your choice</p>';
     resultEl.classList.remove("correct", "incorrect");
     document.getElementById("evaluation-display").innerHTML = "";
+    const commEl = document.getElementById("community-results");
+    if (commEl) commEl.innerHTML = "";
     renderProvisionalNotice();
 };
 
@@ -430,6 +434,9 @@ function sendAnswer(guess) {
             // Let them see this result, then gate on their next "Next Position" click
         }
     }
+
+    // Submit community vote and render results — async, never blocks the UI
+    submitCommunityVote(guess, correct_result);
 }
 window.sendAnswer = sendAnswer;
 
@@ -850,6 +857,184 @@ function renderPuzzleLog() {
         </div>`;
     }).join('');
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  COMMUNITY RESULTS
+// ══════════════════════════════════════════════════════════════════════════════
+
+// Sanitise a Firebase key string — strip chars Firebase disallows in paths
+function safeVoteKey(k) {
+    return k ? String(k).replace(/[.#$/[\]\s]/g, '_') : null;
+}
+
+async function submitCommunityVote(userGuess, correctAnswer) {
+    const container = document.getElementById('community-results');
+    if (!container) return;
+
+    // Show skeleton immediately so there's no blank gap
+    container.innerHTML = buildCommSkeleton();
+
+    const rawKey    = currentPuzzle && currentPuzzle._key ? currentPuzzle._key : null;
+    const puzzleKey = safeVoteKey(rawKey);
+
+    if (!puzzleKey) {
+        // No stable key — can't store votes (shouldn't happen after Object.entries fix)
+        container.innerHTML = '';
+        return;
+    }
+
+    const voteRef  = ref(db, `puzzleVotes/${puzzleKey}`);
+    const voterRef = (!isGuest && currentUID)
+        ? ref(db, `puzzleVotes/${puzzleKey}/voters/${currentUID}`)
+        : null;
+
+    try {
+        // Check dupe vote (signed-in users only)
+        let alreadyVoted = false;
+        if (voterRef) {
+            const voterSnap = await get(voterRef);
+            alreadyVoted = voterSnap.exists();
+        }
+
+        // Fetch current counters
+        const snap  = await get(voteRef);
+        const raw   = snap.exists() ? snap.val() : {};
+        const votes = {
+            white: raw.white || 0,
+            equal: raw.equal || 0,
+            black: raw.black || 0,
+            total: raw.total || 0,
+        };
+
+        // Remember whether anyone had voted before this submission
+        const wasEmpty = votes.total === 0;
+
+        // Write only if signed in and haven't voted on this puzzle yet
+        if (!isGuest && !alreadyVoted && currentUID) {
+            const vk = userGuess === 'White Winning' ? 'white'
+                     : userGuess === 'Black Winning' ? 'black'
+                     : 'equal';
+            votes[vk]++;
+            votes.total++;
+
+            await update(voteRef, {
+                white: votes.white,
+                equal: votes.equal,
+                black: votes.black,
+                total: votes.total,
+            });
+            // Mark this user as having voted so re-opening won't double-count
+            await set(voterRef, { answer: userGuess, ts: Date.now() });
+        }
+
+        // Cache so reopening the result doesn't re-fetch
+        currentPuzzleVoteCache = { votes, userGuess, correctAnswer, wasEmpty };
+        renderCommunityCard(container, currentPuzzleVoteCache);
+
+    } catch (err) {
+        console.error('Community vote error:', err);
+        container.innerHTML = '';
+    }
+}
+
+function buildCommSkeleton() {
+    return `<div class="comm-card">
+        <div class="comm-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <span>Community Results</span>
+            <div class="comm-skel-chip"></div>
+        </div>
+        <div class="comm-skeleton">
+            <div class="comm-skel-row"><div class="comm-skel-label"></div><div class="comm-skel-bar"></div></div>
+            <div class="comm-skel-row"><div class="comm-skel-label"></div><div class="comm-skel-bar" style="width:65%"></div></div>
+            <div class="comm-skel-row"><div class="comm-skel-label"></div><div class="comm-skel-bar" style="width:45%"></div></div>
+        </div>
+    </div>`;
+}
+
+function renderCommunityCard(container, { votes, userGuess, correctAnswer, wasEmpty }) {
+    if (wasEmpty) {
+        // This user is the first — show friendly first-contributor message
+        container.innerHTML = `<div class="comm-card">
+            <div class="comm-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <span>Community Results</span>
+            </div>
+            <p class="comm-empty">No community data yet — you're the first to answer this position!</p>
+        </div>`;
+        return;
+    }
+
+    const total = votes.total || 1; // guard /0; total is always ≥1 here
+    const pct   = v => Math.round((v / total) * 100);
+    const pw = pct(votes.white);
+    const pe = pct(votes.equal);
+    const pb = pct(votes.black);
+
+    const rows = [
+        { key: 'White Winning', label: '♔ White', count: votes.white, p: pw, barCls: 'bar-white' },
+        { key: 'Equal',         label: '⚖ Equal', count: votes.equal, p: pe, barCls: 'bar-equal' },
+        { key: 'Black Winning', label: '♚ Black', count: votes.black, p: pb, barCls: 'bar-black' },
+    ];
+
+    const rowsHTML = rows.map(r => {
+        const isYou     = r.key === userGuess;
+        const isCorrect = r.key === correctAnswer;
+
+        const badge = (isYou && isCorrect) ? `<span class="comm-badge comm-badge--both">✓ You</span>`
+                    : isYou               ? `<span class="comm-badge comm-badge--you">You</span>`
+                    : isCorrect           ? `<span class="comm-badge comm-badge--correct">✓</span>`
+                    : '';
+
+        const rowMod = (isYou || isCorrect) ? ' comm-row--hl' : '';
+        const barMod = isCorrect ? ' bar-correct' : '';
+
+        return `<div class="comm-row${rowMod}">
+            <div class="comm-row-top">
+                <span class="comm-lbl">${r.label}</span>
+                <div class="comm-meta">${badge}<span class="comm-pct">${r.p}%</span><span class="comm-count">${r.count}</span></div>
+            </div>
+            <div class="comm-track">
+                <div class="comm-fill ${r.barCls}${barMod}" style="width:0" data-w="${r.p}%"></div>
+            </div>
+        </div>`;
+    }).join('');
+
+    container.innerHTML = `<div class="comm-card">
+        <div class="comm-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <span>Community Results</span>
+            <span class="comm-total">${total} vote${total !== 1 ? 's' : ''}</span>
+        </div>
+        ${rowsHTML}
+    </div>`;
+
+    // Animate bars — needs two rAF ticks so the browser registers the 0-width start
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        container.querySelectorAll('.comm-fill[data-w]').forEach(bar => {
+            bar.style.width = bar.getAttribute('data-w');
+        });
+    }));
+}
+
 window.openSidebar = function() {
     const sidebarEl = document.getElementById('sidebar');
     const overlayEl = document.getElementById('sidebar-overlay');
@@ -1196,7 +1381,8 @@ function initPositions() {
 
     get(ref(db, 'positions')).then((snapshot) => {
         if (snapshot.exists()) {
-            positions = Object.values(snapshot.val());
+            // Preserve Firebase key as _key on each position — used for puzzleVotes path
+            positions = Object.entries(snapshot.val()).map(([k, v]) => ({ ...v, _key: k }));
             positionsByDiff.Easy   = positions.filter(p => p.Difficulty === "Easy");
             positionsByDiff.Medium = positions.filter(p => p.Difficulty === "Medium");
             positionsByDiff.Hard   = positions.filter(p => p.Difficulty === "Hard");

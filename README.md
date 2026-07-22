@@ -6,45 +6,71 @@ Instead of finding a forced move like in traditional tactical puzzles, ChessIQ c
 
 Think of ChessIQ as tactical puzzles for positional thinking.
 
-**Status:** 🚧 Currently in beta, with active development leading up to v1.5
+## ChessIQ's multiple uses ##
+ - ChessIQ scales with your level. Beginners start by counting material — learning which side simply has more pieces — and that alone builds a foundation for reading positions. As your rating climbs, the puzzles shift toward what ChessIQ was originally built for: recognizing positional imbalances, space, piece activity, and structural advantages that don't show up in a piece count. One tool, two very different kinds of chess thinking, on a single continuous ladder.
+
+**Status:** ✅ v1.0 Official Release — actively developed with planned updates through v1.5 and beyond.
 ---
 
 ## 🧠 Core Concept
 
-- Analyze a given chess position
-- Evaluate the position without engine assistance
-- Decide which side stands better using positional understanding
-- Receive feedback based on engine evaluations from real games
+- Analyze real chess positions without engine assistance
+- Evaluate the position using strategic concepts instead of tactical calculation
+- Decide whether White, Black, or neither holds the advantage
+- Receive instant Stockfish feedback
+- Compare your answer with the ChessIQ community
+- Improve your positional intuition through repeated practice
 
----
-
+-- 
 ## 🚀 Main Features
 
-### 🎯 PositionPuzzler (Core Product)
+### 🎯 Position Puzzler(Core Product)
 
-- Real-game positions sourced from Lichess
+- Hundreds of real-game positions imported from Lichess
 - Evaluate whether White is better, Black is better, or the position is equal
-- Hone your positional skills just as you do tactical skills with regular puzzles
-- Designed to improve evaluation accuracy rather than calculation depth
+- Train positional understanding rather than tactical calculation
+- Position Rating (PR) matchmaking that scales puzzle difficulty to your playing strength
+- Instant Stockfish-powered evaluation after every guess
+- Randomized puzzle selection for endless practice
 
-### 🔮 Upcoming Features
+### 📊 Personalized Training
 
-- AI opponents trained on real games
-- Difficulty-based positional challenges
-- Precomputed explanations for each position, leading to further learning opportunities
+- Personal Position Rating (PR)
+- Detailed statistics dashboard
+- Puzzle history and training log
+- Rating progression tracking
+- Global leaderboard
 
----
+### 🌍 Community Results
+
+After completing a puzzle, compare your answer with the rest of the ChessIQ community.
+
+See exactly what percentage of players selected **White**, **Equal**, or **Black**, allowing you to compare your positional intuition against other players around the world. Challenging positions often reveal surprisingly split opinions, making every puzzle feel like part of a larger community experiment.
+
+### 🧩 Daily Puzzle
+
+Every day, all players receive the same featured positional challenge.
+
+Compete against the community on a single position each day while tracking your daily progress and comparing your evaluation with everyone else's.
 
 ## 🕹️ How to Play
 
-1. You will be shown a chess position
-2. Analyze the position using positional concepts
+1. Analyze the given chess position.
+2. Evaluate the position using positional concepts such as:
+   - Material
+   - Piece activity
+   - Pawn structure
+   - Space
+   - King safety
+   - Initiative
 3. Submit your evaluation:
-   - ♔ Click the White King if White is winning
-   - ♚ Click the Black King if Black is winning
-   - ⚖️ Click the Equal symbol if the position is roughly equal
+   - ♔ White Advantage
+   - ⚖️ Equal Position
+   - ♚ Black Advantage
+4. Review the engine evaluation and community responses.
+5. Continue improving your Position Rating.
 
----
+
 
 ## 🗂️ Version History and Roadmap
 
@@ -126,7 +152,7 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 
 
 
-## v0.95 - Time-based and point system upgrades, Stats page upgrade 🏆[DELAYED to ????]
+## v0.95 - Time-based and point system upgrades, Stats page upgrade
  - More synced multiplayer point systems reliant on what difficulty puzzles, as well as time
  - Formula-based puzzle calculations
  - upgrade stats page to have specific logistics/trends based on time OR last 'x' puzzles completed, more specification for training purposes. 
@@ -135,15 +161,19 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 - Official launch
 - Complete feature set with polished performance and UX
 - MAJOR UI POLISH all around, transitios upgrade
-- security terms & privacy terms - prevent issues
-- Lichess & Devpost Release
-- Further publication
-- [optional] - in stats/training page, show the last x positions solved in a log format, their eval, answer, rating change, etc
+- security terms & privacy terms -
+- Lichess & Devpost & Chess.com Release
+- Last 'x' puzzles training log w/ details in stats page
 - Puzzle review log
-- Mystery feaatures?
 - Updated PR(Positional Rating Calculations) out based on relative puzzle difficulty and accuracy
 
+
 ### 🔜 Planned Updates
+
+### 🌍v1.05- User experience & Community Results update
+ - Better Transitions in UI
+ - Dark mode/light mode toggle
+ - Community results after each puzzle showing how others faired against this puzzle. 
 
 #### v1.1 - Achievements update(2026-27)
    - Users collect achievements as they solve
