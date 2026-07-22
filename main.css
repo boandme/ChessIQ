@@ -700,6 +700,158 @@ svg.board, #board svg {
     letter-spacing: 0.04em;
 }
 
+/* ── Community Results ─────────────────────────────────────────────────────── */
+#community-results { width: 100%; }
+
+.comm-card {
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-top: 2px solid var(--line-bright);
+    padding: 12px 14px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    animation: comm-in 0.28s var(--ease-out) both;
+}
+@keyframes comm-in {
+    from { opacity: 0; transform: translateY(5px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* header row */
+.comm-header {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+}
+.comm-header svg { width: 13px; height: 13px; flex-shrink: 0; }
+.comm-total {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-faint);
+    letter-spacing: 0.08em;
+}
+
+/* individual option row */
+.comm-row { display: flex; flex-direction: column; gap: 5px; }
+.comm-row--hl .comm-lbl { color: var(--text); }
+
+.comm-row-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+.comm-lbl {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-dim);
+    flex-shrink: 0;
+}
+.comm-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.comm-pct {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--text);
+}
+.comm-count {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-weight: 600;
+    color: var(--text-faint);
+    min-width: 24px;
+    text-align: right;
+}
+
+/* badges */
+.comm-badge {
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    white-space: nowrap;
+}
+.comm-badge--you     { background: var(--yellow-soft);        border: 1px solid var(--yellow-line); color: var(--yellow); }
+.comm-badge--correct { background: rgba(198,255,66,0.10);     border: 1px solid rgba(198,255,66,0.30); color: var(--ok); }
+.comm-badge--both    { background: rgba(198,255,66,0.13);     border: 1px solid rgba(198,255,66,0.40); color: var(--ok); }
+
+/* progress bar */
+.comm-track {
+    width: 100%;
+    height: 5px;
+    background: var(--surface-3);
+    overflow: hidden;
+}
+.comm-fill {
+    height: 100%;
+    width: 0%;
+    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.bar-white { background: rgba(243,243,245,0.50); }
+.bar-equal { background: var(--yellow-deep); }
+.bar-black { background: rgba(90,90,110,0.65); }
+.bar-correct { background: var(--ok) !important; opacity: 0.8; }
+
+/* empty / first-contributor message */
+.comm-empty {
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    color: var(--text-faint);
+    text-align: center;
+    padding: 6px 0 2px;
+    letter-spacing: 0.04em;
+    line-height: 1.5;
+}
+
+/* skeleton loading state */
+.comm-skeleton { display: flex; flex-direction: column; gap: 8px; }
+.comm-skel-row { display: flex; align-items: center; gap: 8px; }
+.comm-skel-label {
+    width: 52px; height: 10px; flex-shrink: 0;
+    background: var(--surface-3);
+    position: relative; overflow: hidden;
+}
+.comm-skel-bar {
+    flex: 1; height: 5px;
+    background: var(--surface-3);
+    position: relative; overflow: hidden;
+}
+.comm-skel-chip {
+    margin-left: auto;
+    width: 44px; height: 10px;
+    background: var(--surface-3);
+    position: relative; overflow: hidden;
+}
+.comm-skel-label::after,
+.comm-skel-bar::after,
+.comm-skel-chip::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,212,0,0.07), transparent);
+    animation: skel-sweep 1.4s infinite;
+}
+@keyframes skel-sweep {
+    from { transform: translateX(-100%); }
+    to   { transform: translateX(100%); }
+}
+
 /* ── Next button ──────────────────────────────────────────────────────────── */
 #nextButton {
     margin-top: 0;
