@@ -1614,3 +1614,114 @@ svg.board, #board svg {
     text-align: center; margin-top: 10px; letter-spacing: 0.04em;
 }
 .potd-countdown span { color: var(--yellow); font-weight: 700; }
+/* ══════════════════════════════════════════════════════════════════════════
+   DIFFICULTY OVERRIDE
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Badge on PR card */
+.difficulty-override-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    background: var(--yellow-soft);
+    border: 1px solid var(--yellow-line);
+    color: var(--yellow);
+    margin-top: 4px;
+    animation: badge-in 0.25s var(--ease-out);
+}
+@keyframes badge-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* Settings: difficulty option grid */
+.diff-option-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.diff-option-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 6px 10px;
+    background: var(--surface-2);
+    border: 1.5px solid var(--line);
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease, transform 0.15s var(--ease-snap);
+    clip-path: polygon(8% 0, 100% 0, 92% 100%, 0 100%);
+}
+.diff-option-btn:hover {
+    background: var(--surface-3, #1e1e22);
+    border-color: var(--line-bright);
+    transform: translateY(-2px);
+}
+.diff-option-btn.active {
+    background: var(--yellow-soft);
+    border-color: var(--yellow-line);
+    color: var(--text);
+    box-shadow: 0 0 0 1px var(--yellow-line);
+}
+
+.diff-option-icon {
+    width: 28px; height: 28px;
+    display: grid; place-items: center;
+    color: var(--text-faint);
+}
+.diff-option-icon svg { width: 18px; height: 18px; }
+.diff-option-btn.active .diff-option-icon { color: var(--yellow); }
+
+.diff-option-icon.diff-easy   { color: var(--ok); }
+.diff-option-icon.diff-medium { color: var(--yellow); }
+.diff-option-icon.diff-hard   { color: var(--bad); }
+.diff-option-btn.active .diff-option-icon.diff-easy   { color: var(--ok); }
+.diff-option-btn.active .diff-option-icon.diff-medium { color: var(--yellow); }
+.diff-option-btn.active .diff-option-icon.diff-hard   { color: var(--bad); }
+
+.diff-option-name {
+    font-family: var(--font-display);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: inherit;
+}
+.diff-option-btn.active .diff-option-name { color: var(--text); }
+
+.diff-option-tag {
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+}
+.diff-option-btn.active .diff-option-tag { color: var(--yellow); }
+.diff-easy-tag   { color: var(--ok) !important; }
+.diff-medium-tag { color: var(--yellow) !important; }
+.diff-hard-tag   { color: var(--bad) !important; }
+
+.diff-override-desc {
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    color: var(--text-faint);
+    margin: 0;
+    line-height: 1.5;
+    min-height: 2.4em;
+    transition: color 0.2s ease;
+}
+
+@media (max-width: 480px) {
+    .diff-option-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
