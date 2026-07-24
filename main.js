@@ -82,6 +82,33 @@ function getDifficultyFromPR() {
     return "Hard";
 }
 
+// ── Difficulty override ───────────────────────────────────────────────────────
+// null = Adaptive (default), 'Easy' / 'Medium' / 'Hard' = manual override.
+// Persisted in localStorage so it survives page refreshes without a Firebase write.
+var difficultyOverride = localStorage.getItem('chessiq-difficulty') || null;
+// Guard against corrupt values
+if (!['Easy','Medium','Hard'].includes(difficultyOverride)) difficultyOverride = null;
+
+// Single source of truth for which difficulty pool to use right now.
+// Provisional mode always overrides everything.
+function getActiveDifficulty() {
+    if (isProvisionalMode()) return null;                    // provisional uses full pool
+    return difficultyOverride || getDifficultyFromPR();      // override or adaptive
+}
+
+window.setDifficultyOverride = function(value) {
+    // value: 'Easy' | 'Medium' | 'Hard' | 'Adaptive'
+    if (value === 'Adaptive') {
+        difficultyOverride = null;
+        localStorage.removeItem('chessiq-difficulty');
+    } else {
+        difficultyOverride = value;
+        localStorage.setItem('chessiq-difficulty', value);
+    }
+    renderDifficultyOverrideBadge();
+    updateSettingsDifficultyUI();
+};
+
 // ── Firebase imports ──────────────────────────────────────────────────────────
 import { initializeApp }                         from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getDatabase, ref, get, set, update }   from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
@@ -142,6 +169,7 @@ function showGuestUI() {
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
         showGuestUI();
+        renderDifficultyOverrideBadge();
         renderPR();
         initPositions();
         return;
@@ -243,6 +271,7 @@ onAuthStateChanged(auth, async (user) => {
     currentUsername = profileUsername || 'Player';
     showSignedInUI(profileUsername);
 
+    renderDifficultyOverrideBadge();
     renderPR();
     initPositions();
 });
@@ -416,7 +445,7 @@ var currentPuzzleDifficulty = null;
 var currentPuzzleVoteCache = null;  // cached after answer, cleared on next puzzle
 
 function loadPuzzleForPR() {
-    const difficulty = isProvisionalMode() ? null : getDifficultyFromPR();
+    const difficulty = isProvisionalMode() ? null : getActiveDifficulty();
     const pool = isProvisionalMode() ? positions : (positionsByDiff[difficulty] || []);
     if (pool.length) {
         current_position = Math.floor(Math.random() * pool.length);
@@ -440,7 +469,7 @@ window.nextPosition = function() {
         showGuestGate();
         return;
     }
-    const difficulty = isProvisionalMode() ? null : getDifficultyFromPR();
+    const difficulty = isProvisionalMode() ? null : getActiveDifficulty();
     const pool = isProvisionalMode() ? positions : (positionsByDiff[difficulty] || []);
     if (!pool.length) {
         document.getElementById('board').innerHTML = '<p>No positions available</p>';
@@ -482,7 +511,7 @@ function sendAnswer(guess) {
         resultEl.classList.add("incorrect");
     }
     answered = true;
-    const difficulty    = currentPuzzleDifficulty || getDifficultyFromPR();
+    const difficulty    = currentPuzzleDifficulty || getActiveDifficulty();
     const evaluationRaw = parseFloat(currentPuzzle.Eval) / 100;
     const displayEval   = evaluationRaw > 0 ? `+${evaluationRaw}` : `${evaluationRaw}`;
     document.getElementById("evaluation-display").innerHTML = `Evaluation&nbsp;&nbsp;${displayEval}`;
@@ -550,6 +579,35 @@ function openModal() {
 window.openModal = openModal;
 
 // ── Settings modal ────────────────────────────────────────────────────────────
+// ── Difficulty override UI helpers ────────────────────────────────────────────
+function renderDifficultyOverrideBadge() {
+    const badge = document.getElementById('difficulty-override-badge');
+    if (!badge) return;
+    if (difficultyOverride) {
+        badge.textContent = `Override: ${difficultyOverride}`;
+        badge.style.display = 'inline-flex';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+function updateSettingsDifficultyUI() {
+    const active = difficultyOverride || 'Adaptive';
+    document.querySelectorAll('.diff-option-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.diff === active);
+    });
+    // Update the description text
+    const desc = document.getElementById('diff-override-desc');
+    if (!desc) return;
+    const descriptions = {
+        Adaptive: 'Puzzles automatically match your current PR. Recommended for most players.',
+        Easy:     'Always serves Easy puzzles — great for counting material and beginner fundamentals.',
+        Medium:   'Always serves Medium puzzles — balanced positional challenges.',
+        Hard:     'Always serves Hard puzzles — advanced positional and imbalance evaluation.',
+    };
+    desc.textContent = descriptions[active] || '';
+}
+
 window.openSettings = function() {
     const modal = document.getElementById('settings-modal');
     if (!modal) return;
@@ -567,6 +625,7 @@ window.openSettings = function() {
         usernameStatus.className = 'settings-status';
     }
     cancelResetConfirm();
+    updateSettingsDifficultyUI();
     modal.style.display = 'flex';
 };
 
@@ -694,7 +753,13 @@ function populateStatsModal() {
     setText('stat-accuracy', accuracy);
 
     // ── Breakdown grid ─────────────────────────────────────────────────────────
-    setText('stat-difficulty',  isProvisionalMode() ? `Provisional ${Math.min(totalPuzzles + 1, PROVISIONAL_PUZZLES)}/${PROVISIONAL_PUZZLES}` : getDifficultyFromPR());
+    const activeDiff = getActiveDifficulty();
+    const diffDisplay = isProvisionalMode()
+        ? `Provisional ${Math.min(totalPuzzles + 1, PROVISIONAL_PUZZLES)}/${PROVISIONAL_PUZZLES}`
+        : difficultyOverride
+        ? `${difficultyOverride} (Override)`
+        : activeDiff;
+    setText('stat-difficulty', diffDisplay);
     setText('stat-best-streak', bestStreak > 0 ? `${bestStreak} ✓` : '—');
     setText('stat-correct',     correctCount);
     setText('stat-wrong',       wrongCount);

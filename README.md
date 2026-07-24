@@ -175,6 +175,10 @@ Compete against the community on a single position each day while tracking your 
  - Dark mode/light mode toggle
  - Community results after each puzzle showing how others faired against this puzzle. 
 
+#### V1.08 - Adaptive + Manual Difficulty Update
+ - Difficulty override option in Settings, where players can choose which difficulty puzzles they want, for specialized training rather than adaptive PR-based difficulty
+ - Adaptive option still available for long grinds
+
 #### v1.1 - Achievements update(2026-27)
    - Users collect achievements as they solve
    - All collected and notcollected achievements visible on a page

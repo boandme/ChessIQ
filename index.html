@@ -156,6 +156,7 @@
                 </div>
                 <div class="pr-value" id="pr-value">—</div>
                 <div class="pr-sub" id="pr-puzzles">0 puzzles played</div>
+                <div id="difficulty-override-badge" class="difficulty-override-badge" style="display:none;"></div>
                 <div id="pr-delta" class="pr-delta"></div>
                 <div class="pr-scanline"></div>
             </div>
@@ -292,6 +293,42 @@
                         <button class="settings-action-btn" onclick="cancelResetConfirm()">Cancel</button>
                     </div>
                 </div>
+            </div>
+
+            <div class="modal-section">
+                <h3>Difficulty Mode</h3>
+                <p class="modal-instruction-intro subtle">By default, puzzle difficulty adapts to your PR. Override to always train at a specific level.</p>
+                <div class="diff-option-grid">
+                    <button class="diff-option-btn active" data-diff="Adaptive" onclick="setDifficultyOverride('Adaptive')">
+                        <span class="diff-option-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </span>
+                        <span class="diff-option-name">Adaptive</span>
+                        <span class="diff-option-tag">Default</span>
+                    </button>
+                    <button class="diff-option-btn" data-diff="Easy" onclick="setDifficultyOverride('Easy')">
+                        <span class="diff-option-icon diff-easy">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                        </span>
+                        <span class="diff-option-name">Easy</span>
+                        <span class="diff-option-tag diff-easy-tag">Beginner</span>
+                    </button>
+                    <button class="diff-option-btn" data-diff="Medium" onclick="setDifficultyOverride('Medium')">
+                        <span class="diff-option-icon diff-medium">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        </span>
+                        <span class="diff-option-name">Medium</span>
+                        <span class="diff-option-tag diff-medium-tag">Intermediate</span>
+                    </button>
+                    <button class="diff-option-btn" data-diff="Hard" onclick="setDifficultyOverride('Hard')">
+                        <span class="diff-option-icon diff-hard">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
+                        </span>
+                        <span class="diff-option-name">Hard</span>
+                        <span class="diff-option-tag diff-hard-tag">Advanced</span>
+                    </button>
+                </div>
+                <p class="diff-override-desc" id="diff-override-desc">Puzzles automatically match your current PR. Recommended for most players.</p>
             </div>
 
             <div class="modal-section">
