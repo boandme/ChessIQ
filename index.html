@@ -53,7 +53,7 @@
                 </a></li>
             </ul>
         </nav>
-        <div class="sidebar-foot">v1.0 — BETA</div>
+        <div class="sidebar-foot">v1.05 — BETA</div>
     </aside>
 
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
@@ -66,7 +66,7 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
                 </span>
                 <span class="brand-text">CHESS<span>IQ</span></span>
-                <span class="brand-ver">v1.0</span>
+                <span class="brand-ver">v1.05</span>
             </a>
         </div>
 
@@ -259,7 +259,7 @@
 
     <!-- ── Settings Modal ──────────────────────────────────────────────────── -->
     <div id="settings-modal" onclick="if(event.target===this) closeSettings()">
-        <div class="modal-content">
+        <div class="modal-content settings-modal-wide">
             <button class="modal-close-btn" onclick="closeSettings()" aria-label="Close">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
             </button>
@@ -267,44 +267,53 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.56V21a2 2 0 0 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.56V3a2 2 0 0 1 4 0v.09a1.7 1.7 0 0 0 1 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9v0a1.7 1.7 0 0 0 1.56 1H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
                 Settings
             </h2>
-            <p class="modal-intro">Manage your ChessIQ experience.</p>
 
-            <div class="modal-section">
-                <h3>Profile</h3>
-                <label class="settings-field-label" for="settings-username-input">Username</label>
-                <div class="settings-inline-form">
-                    <input id="settings-username-input" class="settings-text-input" type="text" maxlength="18" autocomplete="nickname" placeholder="Choose a username">
-                    <button class="settings-action-btn compact" onclick="saveUsername()">Save</button>
-                </div>
-                <p id="settings-username-status" class="settings-status"></p>
-            </div>
+            <!-- ── Top 2-col row: Profile + Rating side by side ─────────────── -->
+            <div class="settings-col-row">
 
-            <div class="modal-section">
-                <h3>Positional Rating</h3>
-                <p class="modal-instruction-intro">Your current PR: <strong id="settings-pr-display">—</strong></p>
-                <p class="modal-instruction-intro subtle">Resetting returns your PR to the starting value (500) and clears your puzzle count and streak.</p>
-                <div id="reset-confirm-area">
-                    <button class="settings-action-btn danger" onclick="showResetConfirm()">Reset Account</button>
+                <div class="modal-section settings-col-half">
+                    <h3>Profile</h3>
+                    <label class="settings-field-label" for="settings-username-input">Username</label>
+                    <div class="settings-inline-form">
+                        <input id="settings-username-input" class="settings-text-input" type="text" maxlength="18" autocomplete="nickname" placeholder="Choose a username">
+                        <button class="settings-action-btn compact" onclick="saveUsername()">Save</button>
+                    </div>
+                    <p id="settings-username-status" class="settings-status"></p>
                 </div>
-                <div id="reset-confirm-prompt" style="display:none;">
-                    <p class="modal-instruction-intro danger-text">Are you sure? This cannot be undone.</p>
-                    <div class="confirm-row">
-                        <button class="settings-action-btn danger" onclick="confirmResetPR()">Yes, Reset</button>
-                        <button class="settings-action-btn" onclick="cancelResetConfirm()">Cancel</button>
+
+                <div class="modal-section settings-col-half">
+                    <h3>Positional Rating</h3>
+                    <p class="modal-instruction-intro">Current PR: <strong id="settings-pr-display">—</strong></p>
+                    <p class="modal-instruction-intro subtle">Resetting returns your PR to 500 and clears puzzle count and streak.</p>
+                    <div id="reset-confirm-area">
+                        <button class="settings-action-btn danger" onclick="showResetConfirm()">Reset Account</button>
+                    </div>
+                    <div id="reset-confirm-prompt" style="display:none;">
+                        <p class="modal-instruction-intro danger-text">Are you sure? This cannot be undone.</p>
+                        <div class="confirm-row">
+                            <button class="settings-action-btn danger" onclick="confirmResetPR()">Yes, Reset</button>
+                            <button class="settings-action-btn" onclick="cancelResetConfirm()">Cancel</button>
+                        </div>
                     </div>
                 </div>
+
             </div>
 
+            <!-- ── Difficulty Mode — full width ────────────────────────────── -->
             <div class="modal-section">
-                <h3>Difficulty Mode</h3>
-                <p class="modal-instruction-intro subtle">By default, puzzle difficulty adapts to your PR. Override to always train at a specific level.</p>
-                <div class="diff-option-grid">
+                <div class="settings-diff-header">
+                    <h3>Difficulty Mode</h3>
+                    <span class="settings-diff-subhead">Adaptive matches your PR automatically. Override to target a fixed level.</span>
+                </div>
+
+                <div class="diff-option-grid diff-option-grid--wide">
                     <button class="diff-option-btn active" data-diff="Adaptive" onclick="setDifficultyOverride('Adaptive')">
                         <span class="diff-option-icon">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
                         </span>
                         <span class="diff-option-name">Adaptive</span>
                         <span class="diff-option-tag">Default</span>
+                        <span class="diff-option-desc">Difficulty scales with your rating. Keeps puzzles consistently challenging as you improve.</span>
                     </button>
                     <button class="diff-option-btn" data-diff="Easy" onclick="setDifficultyOverride('Easy')">
                         <span class="diff-option-icon diff-easy">
@@ -312,6 +321,7 @@
                         </span>
                         <span class="diff-option-name">Easy</span>
                         <span class="diff-option-tag diff-easy-tag">Beginner</span>
+                        <span class="diff-option-desc">Positions decided by clear material imbalances. Trains the basics of piece counting and simple advantages.</span>
                     </button>
                     <button class="diff-option-btn" data-diff="Medium" onclick="setDifficultyOverride('Medium')">
                         <span class="diff-option-icon diff-medium">
@@ -319,6 +329,7 @@
                         </span>
                         <span class="diff-option-name">Medium</span>
                         <span class="diff-option-tag diff-medium-tag">Intermediate</span>
+                        <span class="diff-option-desc">Material is closer to equal. Requires reading space, king safety, and piece coordination to judge the position.</span>
                     </button>
                     <button class="diff-option-btn" data-diff="Hard" onclick="setDifficultyOverride('Hard')">
                         <span class="diff-option-icon diff-hard">
@@ -326,25 +337,31 @@
                         </span>
                         <span class="diff-option-name">Hard</span>
                         <span class="diff-option-tag diff-hard-tag">Advanced</span>
+                        <span class="diff-option-desc">Material is equal. The advantage lies in subtle positional factors — outposts, pawn structure, initiative, and long-term piece activity.</span>
                     </button>
                 </div>
                 <p class="diff-override-desc" id="diff-override-desc">Puzzles automatically match your current PR. Recommended for most players.</p>
             </div>
 
-            <div class="modal-section">
-                <h3>Display</h3>
-                <ul class="modal-list">
-                    <li><strong>Board Theme</strong> — Classic <span class="soon">(more coming soon)</span></li>
-                    <li><strong>Piece Style</strong> — Standard <span class="soon">(more coming soon)</span></li>
-                </ul>
-            </div>
+            <!-- ── Bottom 2-col row: Display + About ────────────────────────── -->
+            <div class="settings-col-row settings-col-row--last">
 
-            <div class="modal-section">
-                <h3>About</h3>
-                <ul class="modal-list">
-                    <li><strong>Version</strong> — ChessIQ v1.0</li>
-                    <li><strong>Status</strong> — Beta, active development</li>
-                </ul>
+                <div class="modal-section settings-col-half">
+                    <h3>Display</h3>
+                    <ul class="modal-list">
+                        <li><strong>Board Theme</strong> — Classic <span class="soon">(more coming soon)</span></li>
+                        <li><strong>Piece Style</strong> — Standard <span class="soon">(more coming soon)</span></li>
+                    </ul>
+                </div>
+
+                <div class="modal-section settings-col-half">
+                    <h3>About</h3>
+                    <ul class="modal-list">
+                        <li><strong>Version</strong> — ChessIQ v1.05</li>
+                        <li><strong>Status</strong> — Beta, active development</li>
+                    </ul>
+                </div>
+
             </div>
 
             <button class="got-it-btn" onclick="closeSettings()">Close</button>
