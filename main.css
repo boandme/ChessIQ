@@ -1462,7 +1462,7 @@ svg.board, #board svg {
    ══════════════════════════════════════════════════════════════════════════ */
 /* POTD card on homepage */
 .potd-card {
-    width: 100%; max-width: 860px;
+    width: 100%; max-width: 1120px;
     background: var(--surface);
     border: 1px solid var(--line-bright);
     border-left: 4px solid var(--yellow);
@@ -1724,4 +1724,113 @@ svg.board, #board svg {
     .diff-option-grid {
         grid-template-columns: repeat(2, 1fr);
     }
+}
+/* ══════════════════════════════════════════════════════════════════════════
+   SETTINGS MODAL — WIDE LAYOUT
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Override base modal width just for settings */
+.settings-modal-wide {
+    width: 820px;
+    max-width: 95vw;
+}
+
+/* Two-column row wrapper */
+.settings-col-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 18px;
+    margin-bottom: 0;
+}
+.settings-col-row--last { margin-bottom: 0; }
+
+/* Each half-width section keeps its own left-border style */
+.settings-col-half {
+    margin-bottom: 18px;
+    /* height-match: stretch to fill the taller sibling */
+    align-self: stretch;
+}
+
+/* ── Difficulty header row ──────────────────────────────────────────────── */
+.settings-diff-header {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+.settings-diff-header h3 { margin: 0; flex-shrink: 0; }
+.settings-diff-subhead {
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    color: var(--text-faint);
+    line-height: 1.4;
+}
+
+/* ── Wide difficulty grid: 4 cards in a row, taller cards ──────────────── */
+.diff-option-grid--wide {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+/* Taller card for the desc text */
+.diff-option-grid--wide .diff-option-btn {
+    padding: 14px 10px 12px;
+    gap: 5px;
+    clip-path: polygon(6% 0, 100% 0, 94% 100%, 0 100%);
+    align-items: flex-start;
+    text-align: left;
+}
+
+.diff-option-grid--wide .diff-option-icon {
+    width: 24px; height: 24px;
+    margin-bottom: 2px;
+    align-self: center;
+}
+.diff-option-grid--wide .diff-option-icon svg { width: 15px; height: 15px; }
+
+.diff-option-grid--wide .diff-option-name {
+    font-size: 0.86rem;
+    align-self: center;
+}
+
+.diff-option-grid--wide .diff-option-tag {
+    font-size: 0.58rem;
+    margin-bottom: 6px;
+}
+
+/* Description line inside each card */
+.diff-option-desc {
+    font-family: var(--font-body);
+    font-size: 0.74rem;
+    line-height: 1.45;
+    color: var(--text-faint);
+    margin-top: 4px;
+    border-top: 1px solid var(--line);
+    padding-top: 7px;
+    text-align: left;
+}
+.diff-option-btn.active .diff-option-desc {
+    color: var(--text-dim);
+    border-top-color: var(--yellow-line);
+}
+
+/* Name + tag row: keep them on the same line */
+.diff-option-grid--wide .diff-option-name,
+.diff-option-grid--wide .diff-option-tag {
+    display: inline;
+}
+/* Force icon on its own row */
+.diff-option-grid--wide .diff-option-icon { display: block; }
+.diff-option-grid--wide .diff-option-desc  { display: block; }
+
+/* Responsive: collapse to 2 cols on medium screens */
+@media (max-width: 700px) {
+    .settings-modal-wide { width: 96vw; }
+    .settings-col-row    { grid-template-columns: 1fr; gap: 0; }
+    .diff-option-grid--wide { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 420px) {
+    .diff-option-grid--wide { grid-template-columns: 1fr; }
 }
