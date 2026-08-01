@@ -2,7 +2,7 @@
 
 ChessIQ is a positional training tool designed for intermediate and advanced chess players who want to improve their ability to visualize, evaluate, and understand chess positions beyond tactics.
 
-Instead of finding a forced move like in traditional tactical puzzles, ChessIQ challenges players to judge the position itself using strategic concepts such as material balance, space, initiative, king safety, and piece activity.
+Instead of finding a forced move like in traditional tactical puzzles, ChessIQ challenges players to judge the position itself using strategic concepts such as material balance, space, initiative, king safety, and piece activity. After every guess, ChessIQ provides an engine evaluation alongside an AI-generated explanation that highlights the key positional ideas, common mistakes, strategic plans, and the reasoning behind the best move, turning every puzzle into a learning opportunity rather than just another rating gain
 
 Think of ChessIQ as tactical puzzles for positional thinking.
 
@@ -18,6 +18,8 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 - Evaluate the position using strategic concepts instead of tactical calculation
 - Decide whether White, Black, or neither holds the advantage
 - Receive instant Stockfish feedback
+- Learn from concise AI-generated explanations tailored to every position
+- Review the engine's best move and strategic plan
 - Compare your answer with the ChessIQ community
 - Improve your positional intuition through repeated practice
 
@@ -40,6 +42,19 @@ Think of ChessIQ as tactical puzzles for positional thinking.
 - Puzzle history and training log
 - Rating progression tracking
 - Global leaderboard
+
+### 🤖 AI Position Explanations
+
+Every puzzle includes a pre-generated AI explanation, allowing you to immediately understand *why* one side is better—not just what Stockfish says.
+
+Each explanation includes:
+
+- Why the evaluation favors one side
+- Key positional themes involved
+- A common mistake intermediate players often make
+- The engine's best move with a short explanation
+- A concise strategic plan for converting the advantage
+
 
 ### 🌍 Community Results
 
@@ -168,36 +183,45 @@ Compete against the community on a single position each day while tracking your 
 - Updated PR(Positional Rating Calculations) out based on relative puzzle difficulty and accuracy
 
 
-### 🔜 Planned Updates
 
 ### 🌍v1.05- User experience & Community Results update
  - Better Transitions in UI
  - Dark mode/light mode toggle
  - Community results after each puzzle showing how others faired against this puzzle. 
+ - Improved settings UI
 
 #### V1.08 - Adaptive + Manual Difficulty Update
  - Difficulty override option in Settings, where players can choose which difficulty puzzles they want, for specialized training rather than adaptive PR-based difficulty
  - Adaptive option still available for long grinds
 
-#### v1.1 - Achievements update(2026-27)
+
+
+### 🔜 Planned Updates
+
+ #### v1.2 - AI-based Explanations & Reflections(2026-27) 🤖
+- Pre-cached explanations for each stored position in the database - after you solve a puzzle
+- Good for long-term learning and reflection,  leading to better opportunities for the user to hone positional skill.
+- Complete explanation, analysis, and positional plans given by the AI trainer after each puzzle 
+
+#### v1.3 - Achievements update(2026-27)
    - Users collect achievements as they solve
    - All collected and notcollected achievements visible on a page
    - rewards player for Personal Best
 
-#### v1.2 - New gamemode: Regular & blitz-paced modes update
+#### v1.5 - New gamemode: Regular & blitz-paced modes update
  - On homescreen, ability to switch between regular, rated play
  - OR a new gamemode: Rush(3 or 5 min), where you try to get the most amt of puzzles correct in the limited time as possible. 
  - Integrations with global leaderboard - seperate leaderboard for Rush
 
-#### v1.3 - Friends & Personalization Update(2026) 👱
+
+
+#### v1.6 - Friends & Personalization Update(2026) 👱
  - Ability to add friends
  - Leaderboards within friends
  - Personalization such as dark/light mode, super beginner mode
  - Daily rewards, streaks, etc
 
-#### v1.5 - AI-based Explanations & Reflections(2026-27) 🤖
-- Pre-cached explanations for each stored position in the database
-- Good for long-term learning and reflection,  leading to better opportunities for the user to hone positional skill. 
+
 
 ### IN THE NEAR FUTURE: COMING TO MOBILE DEVICES!!! --> Both Android & Apple
 
