@@ -1,6 +1,6 @@
 # ♟️ ChessIQ
 
-ChessIQ is a positional training tool designed for intermediate and advanced chess players who want to improve their ability to visualize, evaluate, and understand chess positions beyond tactics.
+ChessIQ is a positional training tool designed for intermediate and advanced chess players who want to improve their ability to visualize, evaluate, and understand chess positions beyond tactics. Chess is the greatest of all time :D.
 
 Instead of finding a forced move like in traditional tactical puzzles, ChessIQ challenges players to judge the position itself using strategic concepts such as material balance, space, initiative, king safety, and piece activity. After every guess, ChessIQ provides an engine evaluation alongside an AI-generated explanation that highlights the key positional ideas, common mistakes, strategic plans, and the reasoning behind the best move, turning every puzzle into a learning opportunity rather than just another rating gain
 
