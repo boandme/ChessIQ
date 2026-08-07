@@ -256,6 +256,9 @@ Compete against the community on a single position each day while tracking your 
 - 🏆 Add a friend system after multiplayer: →  Global or friends-only leaderboards
 - 📱 (2027) → Mobile-first UI optimizations
 
+
+
+
 ---
 
 ## 🙏 Credits
