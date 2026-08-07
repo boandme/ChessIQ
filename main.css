@@ -208,6 +208,34 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
 }
 .topnav a.active::after { transform: scaleX(1); }
 
+/* ── POTD nav button ──────────────────────────────────────────────────────── */
+.potd-nav-btn {
+    display: flex; align-items: center; gap: 6px;
+    font-family: var(--font-display);
+    font-size: 0.88rem; font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 7px 13px;
+    background: var(--surface-2);
+    border: 1px solid var(--line-bright);
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease,
+                box-shadow 0.2s ease, transform 0.18s var(--ease-snap);
+    clip-path: polygon(8% 0, 100% 0, 92% 100%, 0 100%);
+    white-space: nowrap;
+}
+.potd-nav-btn .potd-nav-icon { font-size: 1rem; line-height: 1; }
+.potd-nav-btn:hover { color: var(--text); background: var(--surface-3); transform: translateY(-1px); }
+.potd-nav-btn.pending {
+    color: var(--yellow);
+    border-color: var(--yellow-line);
+    background: var(--yellow-soft);
+    box-shadow: 0 0 10px rgba(255,212,0,0.22);
+}
+.potd-nav-btn.pending:hover { box-shadow: 0 0 18px rgba(255,212,0,0.38); transform: translateY(-1px); }
+.potd-nav-btn.done { color: var(--text-faint); border-color: var(--line); background: transparent; box-shadow: none; }
+.potd-nav-btn.done:hover { color: var(--text-dim); background: var(--surface-2); transform: translateY(-1px); }
+
 .topbar-right { display: flex; align-items: center; gap: 12px; }
 
 /* ── Icon buttons ─────────────────────────────────────────────────────────── */
@@ -489,6 +517,7 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
 .game-instruction {
     display: flex; align-items: center; gap: 16px;
     padding: 12px 26px;
+    width: 100%; max-width: 1120px;
     margin-bottom: 18px;
     background: linear-gradient(90deg, var(--surface) 0%, var(--surface-2) 100%);
     border: 1px solid var(--line);
@@ -725,8 +754,8 @@ svg.board, #board svg {
     letter-spacing: 0.04em;
 }
 
-/* ── Community Results ─────────────────────────────────────────────────────── */
-#community-results { width: 100%; }
+/* ── Community Results [HIDDEN — re-enable by removing display:none below] ── */
+#community-results { width: 100%; display: none; /* [COMMUNITY VOTES HIDDEN] was: no display property */ }
 
 .comm-card {
     width: 100%;
@@ -896,6 +925,195 @@ svg.board, #board svg {
 #nextButton:hover { background: var(--yellow-bright); transform: translateY(-3px); box-shadow: var(--glow-strong); }
 #nextButton:hover svg { transform: translateX(5px); }
 #nextButton:active { transform: translateY(0); }
+
+/* ── AI Explanation ────────────────────────────────────────────────────── */
+#ai-explanation {
+    width: 100%;
+    display: none;          /* hidden until after guess */
+    flex-direction: column;
+    gap: 0;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-top: 2px solid var(--yellow-deep);
+    overflow: hidden;
+    animation: ai-exp-in 0.32s var(--ease-out) both;
+}
+#ai-explanation.visible {
+    display: flex;
+}
+@keyframes ai-exp-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+}
+
+.ai-exp-section {
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.ai-exp-section + .ai-exp-section {
+    border-top: 1px solid var(--line);
+}
+
+.ai-exp-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--yellow);
+}
+.ai-exp-label svg {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+    opacity: 0.85;
+}
+
+.ai-exp-text {
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: 0.96rem; /* was 0.83rem — increased by ~2px */
+    font-weight: 400;
+    color: var(--text-dim);
+    line-height: 1.55;
+    text-align: left;
+}
+
+/* Theme pill tags */
+.ai-exp-themes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.ai-theme-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    cursor: default;
+    transition: transform 0.18s var(--ease-snap), box-shadow 0.18s ease;
+    border: 1px solid transparent;
+}
+.ai-theme-tag:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+/* Cycling palette — 5 distinct accent colours derived from the existing palette */
+.ai-theme-tag:nth-child(5n+1) {
+    background: rgba(255, 212, 0, 0.13);
+    border-color: rgba(255, 212, 0, 0.35);
+    color: var(--yellow-bright);
+}
+.ai-theme-tag:nth-child(5n+2) {
+    background: rgba(198, 255, 66, 0.10);
+    border-color: rgba(198, 255, 66, 0.30);
+    color: var(--ok);
+}
+.ai-theme-tag:nth-child(5n+3) {
+    background: rgba(100, 160, 255, 0.11);
+    border-color: rgba(100, 160, 255, 0.30);
+    color: #80b4ff;
+}
+.ai-theme-tag:nth-child(5n+4) {
+    background: rgba(255, 140, 60, 0.11);
+    border-color: rgba(255, 140, 60, 0.30);
+    color: #ffaa66;
+}
+.ai-theme-tag:nth-child(5n+5) {
+    background: rgba(180, 100, 255, 0.11);
+    border-color: rgba(180, 100, 255, 0.28);
+    color: #c58fff;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   GUESS SECTION — COLLAPSIBLE
+   ══════════════════════════════════════════════════════════════════════════ */
+
+#guess-section {
+    width: 100%;
+    overflow: hidden;
+    max-height: 520px;
+    opacity: 1;
+    /* No transition on load — only enabled via JS classes */
+    transition: none;
+}
+#guess-section.collapsing,
+#guess-section.expanding {
+    transition:
+        max-height 0.36s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity    0.28s cubic-bezier(0.4, 0, 0.2, 1),
+        margin-bottom 0.36s cubic-bezier(0.4, 0, 0.2, 1);
+}
+#guess-section.collapsed {
+    max-height: 0;
+    opacity: 0;
+    margin-bottom: -16px; /* absorb the right-panel flex gap */
+    transition:
+        max-height 0.36s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity    0.28s cubic-bezier(0.4, 0, 0.2, 1),
+        margin-bottom 0.36s cubic-bezier(0.4, 0, 0.2, 1);
+}
+#guess-section-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-bottom: 2px;
+}
+/* Zero out h3 browser margins since it lives in a flex gap context */
+#turn { margin: 0; }
+
+/* ── Collapse / expand toggle button ─────────────────────────────────────── */
+#guess-toggle-wrap {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin-top: -6px;
+    margin-bottom: -6px;
+    position: relative;
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.22s ease;
+}
+#guess-toggle-wrap.visible {
+    display: flex;
+    opacity: 1;
+    transition: opacity 0.22s ease 0.20s;
+}
+#guess-toggle-btn {
+    width: 30px; height: 30px;
+    display: grid; place-items: center;
+    background: var(--surface-2);
+    border: 1px solid var(--yellow-line);
+    border-radius: 50%;
+    color: var(--yellow);
+    cursor: pointer;
+    box-shadow: none;
+    transition:
+        box-shadow  0.22s ease,
+        background  0.18s ease,
+        transform   0.18s var(--ease-snap);
+}
+#guess-toggle-btn svg { width: 14px; height: 14px; transition: transform 0.3s var(--ease-out); }
+#guess-toggle-btn:hover {
+    background: var(--yellow-soft);
+    border-color: var(--yellow);
+    box-shadow: 0 0 14px rgba(255,212,0,0.35), 0 0 0 3px rgba(255,212,0,0.10);
+    transform: scale(1.12);
+}
+#guess-toggle-btn.expanded svg { transform: rotate(180deg); }
 
 /* ══════════════════════════════════════════════════════════════════════════
    MODALS

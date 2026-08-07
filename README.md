@@ -171,7 +171,7 @@ Compete against the community on a single position each day while tracking your 
  - More synced multiplayer point systems reliant on what difficulty puzzles, as well as time
  - Formula-based puzzle calculations
  - upgrade stats page to have specific logistics/trends based on time OR last 'x' puzzles completed, more specification for training purposes. 
-#### v1.0 – Full Release 🎉 (2026)
+#### v1.0 – Full Release 🎉 (Jun 2026)
 
 - Official launch
 - Complete feature set with polished performance and UX
@@ -184,26 +184,40 @@ Compete against the community on a single position each day while tracking your 
 
 
 
-### 🌍v1.05- User experience & Community Results update
+### 🌍v1.05- User experience & Community Results update(Jul 2026)
  - Better Transitions in UI
  - Dark mode/light mode toggle
  - Community results after each puzzle showing how others faired against this puzzle. 
  - Improved settings UI
 
-#### V1.08 - Adaptive + Manual Difficulty Update
+#### V1.08 - Adaptive + Manual Difficulty Update(jul 206)
  - Difficulty override option in Settings, where players can choose which difficulty puzzles they want, for specialized training rather than adaptive PR-based difficulty
  - Adaptive option still available for long grinds
 
 
 
-### 🔜 Planned Updates
 
- #### v1.2 - AI-based Explanations & Reflections(2026-27) 🤖
-- Pre-cached explanations for each stored position in the database - after you solve a puzzle
-- Good for long-term learning and reflection,  leading to better opportunities for the user to hone positional skill.
-- Complete explanation, analysis, and positional plans given by the AI trainer after each puzzle 
 
-#### v1.3 - Achievements update(2026-27)
+#### v1.2 – AI-Based Explanations & UI Revamp (August 2026) 🤖
+
+- Added pre-cached AI-generated explanations for every stored position, displayed immediately after each puzzle.
+- Learn *why* one side is better through concise positional analysis rather than just seeing the engine evaluation.
+- AI highlights key positional themes (piece activity, space, pawn structure, king safety, initiative, etc.) to reinforce long-term pattern recognition.
+- Each explanation includes the best move, common mistakes, and strategic plans to help players improve their positional understanding beyond individual puzzles.
+- After a puzzle collapsable menu to save UI space
+- Improved Navbar
+
+### 🔜 Planned Updates ####
+
+#### v1.3 – Adaptive Puzzle Ratings (August 2026) 📈
+
+- Introduce adaptive ratings for every puzzle, allowing difficulty to evolve over time based on real player performance.
+- Initial puzzle ratings are estimated using AI positional analysis and engine-derived complexity, providing a strong starting point from day one.
+- As more users solve each puzzle, ratings automatically adjust to reflect actual solve rates, accuracy, and player strength.
+- Puzzles can naturally move between Easy, Medium, and Hard categories as the community calibrates their true difficulty, creating a continually improving training experience.
+
+
+#### v1.4 - Achievements update(2026)
    - Users collect achievements as they solve
    - All collected and notcollected achievements visible on a page
    - rewards player for Personal Best

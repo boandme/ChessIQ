@@ -489,8 +489,9 @@ window.nextPosition = function() {
     resultEl.innerHTML = '<p id="resultText">Click a piece to make your choice</p>';
     resultEl.classList.remove("correct", "incorrect");
     document.getElementById("evaluation-display").innerHTML = "";
-    const commEl = document.getElementById("community-results");
-    if (commEl) commEl.innerHTML = "";
+    // [COMMUNITY VOTES HIDDEN] const commEl = document.getElementById("community-results");
+    // [COMMUNITY VOTES HIDDEN] if (commEl) commEl.innerHTML = "";   // ← re-enable to restore community panel
+    hideAIExplanation();
     renderProvisionalNotice();
 };
 
@@ -530,10 +531,53 @@ function sendAnswer(guess) {
         }
     }
 
-    // Submit community vote and render results — async, never blocks the UI
-    submitCommunityVote(guess, correct_result);
+    // [COMMUNITY VOTES HIDDEN] Submit community vote and render results — async, never blocks the UI
+    // submitCommunityVote(guess, correct_result);   // ← re-enable to restore community panel
+
+    // Reveal AI explanation for this puzzle (why + themes only)
+    revealAIExplanation(currentPuzzle);
 }
 window.sendAnswer = sendAnswer;
+
+// ── AI Explanation helpers ────────────────────────────────────────────────────
+// Only `why` and `themes` are used in v1.0.
+// The section is pre-rendered but kept display:none until after a guess.
+function revealAIExplanation(puzzle) {
+    const container = document.getElementById('ai-explanation');
+    const whyEl     = document.getElementById('ai-exp-why');
+    const themesEl  = document.getElementById('ai-exp-themes');
+    if (!container || !whyEl || !themesEl) return;
+
+    const exp = puzzle && puzzle.AIExplanation;
+
+    // Populate "why" — fall back gracefully when field is absent
+    whyEl.textContent = (exp && exp.why) ? exp.why : '';
+
+    // Populate theme pills
+    themesEl.innerHTML = '';
+    const themes = (exp && Array.isArray(exp.themes)) ? exp.themes : [];
+    themes.forEach(theme => {
+        if (!theme || typeof theme !== 'string') return;
+        const pill = document.createElement('span');
+        pill.className   = 'ai-theme-tag';
+        pill.textContent = theme;
+        themesEl.appendChild(pill);
+    });
+
+    // Only show the block if there's at least something to display
+    if ((exp && exp.why) || themes.length) {
+        // Re-trigger the entry animation on each reveal
+        container.classList.remove('visible');
+        // Force reflow so the animation restarts cleanly
+        void container.offsetWidth;
+        container.classList.add('visible');
+    }
+}
+
+function hideAIExplanation() {
+    const container = document.getElementById('ai-explanation');
+    if (container) container.classList.remove('visible');
+}
 
 function showGuestGate() {
     const gate = document.getElementById('guest-gate');
@@ -990,181 +1034,183 @@ function renderPuzzleLog() {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  COMMUNITY RESULTS
+//  COMMUNITY RESULTS  [HIDDEN — data preserved in Firebase, UI disabled]
+//  To restore: uncomment this entire block and the submitCommunityVote() call
+//  in sendAnswer(), and the community-results clear in nextPosition().
 // ══════════════════════════════════════════════════════════════════════════════
 
-// Sanitise a Firebase key string — strip chars Firebase disallows in paths
-function safeVoteKey(k) {
-    return k ? String(k).replace(/[.#$/[\]\s]/g, '_') : null;
-}
-
-async function submitCommunityVote(userGuess, correctAnswer) {
-    const container = document.getElementById('community-results');
-    if (!container) return;
-
-    // Show skeleton immediately so there's no blank gap
-    container.innerHTML = buildCommSkeleton();
-
-    const rawKey    = currentPuzzle && currentPuzzle._key ? currentPuzzle._key : null;
-    const puzzleKey = safeVoteKey(rawKey);
-
-    if (!puzzleKey) {
-        // No stable key — can't store votes (shouldn't happen after Object.entries fix)
-        container.innerHTML = '';
-        return;
-    }
-
-    const voteRef  = ref(db, `puzzleVotes/${puzzleKey}`);
-    const voterRef = (!isGuest && currentUID)
-        ? ref(db, `puzzleVotes/${puzzleKey}/voters/${currentUID}`)
-        : null;
-
-    try {
-        // Check dupe vote (signed-in users only)
-        let alreadyVoted = false;
-        if (voterRef) {
-            const voterSnap = await get(voterRef);
-            alreadyVoted = voterSnap.exists();
-        }
-
-        // Fetch current counters
-        const snap  = await get(voteRef);
-        const raw   = snap.exists() ? snap.val() : {};
-        const votes = {
-            white: raw.white || 0,
-            equal: raw.equal || 0,
-            black: raw.black || 0,
-            total: raw.total || 0,
-        };
-
-        // Remember whether anyone had voted before this submission
-        const wasEmpty = votes.total === 0;
-
-        // Write only if signed in and haven't voted on this puzzle yet
-        if (!isGuest && !alreadyVoted && currentUID) {
-            const vk = userGuess === 'White Winning' ? 'white'
-                     : userGuess === 'Black Winning' ? 'black'
-                     : 'equal';
-            votes[vk]++;
-            votes.total++;
-
-            await update(voteRef, {
-                white: votes.white,
-                equal: votes.equal,
-                black: votes.black,
-                total: votes.total,
-            });
-            // Mark this user as having voted so re-opening won't double-count
-            await set(voterRef, { answer: userGuess, ts: Date.now() });
-        }
-
-        // Cache so reopening the result doesn't re-fetch
-        currentPuzzleVoteCache = { votes, userGuess, correctAnswer, wasEmpty };
-        renderCommunityCard(container, currentPuzzleVoteCache);
-
-    } catch (err) {
-        console.error('Community vote error:', err);
-        container.innerHTML = '';
-    }
-}
-
-function buildCommSkeleton() {
-    return `<div class="comm-card">
-        <div class="comm-header">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-            <span>Community Results</span>
-            <div class="comm-skel-chip"></div>
-        </div>
-        <div class="comm-skeleton">
-            <div class="comm-skel-row"><div class="comm-skel-label"></div><div class="comm-skel-bar"></div></div>
-            <div class="comm-skel-row"><div class="comm-skel-label"></div><div class="comm-skel-bar" style="width:65%"></div></div>
-            <div class="comm-skel-row"><div class="comm-skel-label"></div><div class="comm-skel-bar" style="width:45%"></div></div>
-        </div>
-    </div>`;
-}
-
-function renderCommunityCard(container, { votes, userGuess, correctAnswer, wasEmpty }) {
-    if (wasEmpty) {
-        // This user is the first — show friendly first-contributor message
-        container.innerHTML = `<div class="comm-card">
-            <div class="comm-header">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                    <circle cx="9" cy="7" r="4"/>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                </svg>
-                <span>Community Results</span>
-            </div>
-            <p class="comm-empty">No community data yet — you're the first to answer this position!</p>
-        </div>`;
-        return;
-    }
-
-    const total = votes.total || 1; // guard /0; total is always ≥1 here
-    const pct   = v => Math.round((v / total) * 100);
-    const pw = pct(votes.white);
-    const pe = pct(votes.equal);
-    const pb = pct(votes.black);
-
-    const rows = [
-        { key: 'White Winning', label: '♔ White', count: votes.white, p: pw, barCls: 'bar-white' },
-        { key: 'Equal',         label: '⚖ Equal', count: votes.equal, p: pe, barCls: 'bar-equal' },
-        { key: 'Black Winning', label: '♚ Black', count: votes.black, p: pb, barCls: 'bar-black' },
-    ];
-
-    const rowsHTML = rows.map(r => {
-        const isYou     = r.key === userGuess;
-        const isCorrect = r.key === correctAnswer;
-
-        const badge = (isYou && isCorrect) ? `<span class="comm-badge comm-badge--both">✓ You</span>`
-                    : isYou               ? `<span class="comm-badge comm-badge--you">You</span>`
-                    : isCorrect           ? `<span class="comm-badge comm-badge--correct">✓</span>`
-                    : '';
-
-        const rowMod = (isYou || isCorrect) ? ' comm-row--hl' : '';
-        const barMod = isCorrect ? ' bar-correct' : '';
-
-        return `<div class="comm-row${rowMod}">
-            <div class="comm-row-top">
-                <span class="comm-lbl">${r.label}</span>
-                <div class="comm-meta">${badge}<span class="comm-pct">${r.p}%</span><span class="comm-count">${r.count}</span></div>
-            </div>
-            <div class="comm-track">
-                <div class="comm-fill ${r.barCls}${barMod}" style="width:0" data-w="${r.p}%"></div>
-            </div>
-        </div>`;
-    }).join('');
-
-    container.innerHTML = `<div class="comm-card">
-        <div class="comm-header">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-            <span>Community Results</span>
-            <span class="comm-total">${total} vote${total !== 1 ? 's' : ''}</span>
-        </div>
-        ${rowsHTML}
-    </div>`;
-
-    // Animate bars — needs two rAF ticks so the browser registers the 0-width start
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-        container.querySelectorAll('.comm-fill[data-w]').forEach(bar => {
-            bar.style.width = bar.getAttribute('data-w');
-        });
-    }));
-}
+// // Sanitise a Firebase key string — strip chars Firebase disallows in paths
+// function safeVoteKey(k) {
+//     return k ? String(k).replace(/[.#$/[\]\s]/g, '_') : null;
+// }
+//
+// async function submitCommunityVote(userGuess, correctAnswer) {
+//     const container = document.getElementById('community-results');
+//     if (!container) return;
+//
+//     // Show skeleton immediately so there's no blank gap
+//     container.innerHTML = buildCommSkeleton();
+//
+//     const rawKey    = currentPuzzle && currentPuzzle._key ? currentPuzzle._key : null;
+//     const puzzleKey = safeVoteKey(rawKey);
+//
+//     if (!puzzleKey) {
+//         // No stable key — can't store votes (shouldn't happen after Object.entries fix)
+//         container.innerHTML = '';
+//         return;
+//     }
+//
+//     const voteRef  = ref(db, `puzzleVotes/${puzzleKey}`);
+//     const voterRef = (!isGuest && currentUID)
+//         ? ref(db, `puzzleVotes/${puzzleKey}/voters/${currentUID}`)
+//         : null;
+//
+//     try {
+//         // Check dupe vote (signed-in users only)
+//         let alreadyVoted = false;
+//         if (voterRef) {
+//             const voterSnap = await get(voterRef);
+//             alreadyVoted = voterSnap.exists();
+//         }
+//
+//         // Fetch current counters
+//         const snap  = await get(voteRef);
+//         const raw   = snap.exists() ? snap.val() : {};
+//         const votes = {
+//             white: raw.white || 0,
+//             equal: raw.equal || 0,
+//             black: raw.black || 0,
+//             total: raw.total || 0,
+//         };
+//
+//         // Remember whether anyone had voted before this submission
+//         const wasEmpty = votes.total === 0;
+//
+//         // Write only if signed in and haven't voted on this puzzle yet
+//         if (!isGuest && !alreadyVoted && currentUID) {
+//             const vk = userGuess === 'White Winning' ? 'white'
+//                      : userGuess === 'Black Winning' ? 'black'
+//                      : 'equal';
+//             votes[vk]++;
+//             votes.total++;
+//
+//             await update(voteRef, {
+//                 white: votes.white,
+//                 equal: votes.equal,
+//                 black: votes.black,
+//                 total: votes.total,
+//             });
+//             // Mark this user as having voted so re-opening won't double-count
+//             await set(voterRef, { answer: userGuess, ts: Date.now() });
+//         }
+//
+//         // Cache so reopening the result doesn't re-fetch
+//         currentPuzzleVoteCache = { votes, userGuess, correctAnswer, wasEmpty };
+//         renderCommunityCard(container, currentPuzzleVoteCache);
+//
+//     } catch (err) {
+//         console.error('Community vote error:', err);
+//         container.innerHTML = '';
+//     }
+// }
+//
+// function buildCommSkeleton() {
+//     return `<div class="comm-card">
+//         <div class="comm-header">
+//             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+//                  stroke-linecap="round" stroke-linejoin="round">
+//                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+//                 <circle cx="9" cy="7" r="4"/>
+//                 <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+//                 <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+//             </svg>
+//             <span>Community Results</span>
+//             <div class="comm-skel-chip"></div>
+//         </div>
+//         <div class="comm-skeleton">
+//             <div class="comm-skel-row"><div class="comm-skel-label"></div><div class="comm-skel-bar"></div></div>
+//             <div class="comm-skel-row"><div class="comm-skel-label"></div><div class="comm-skel-bar" style="width:65%"></div></div>
+//             <div class="comm-skel-row"><div class="comm-skel-label"></div><div class="comm-skel-bar" style="width:45%"></div></div>
+//         </div>
+//     </div>`;
+// }
+//
+// function renderCommunityCard(container, { votes, userGuess, correctAnswer, wasEmpty }) {
+//     if (wasEmpty) {
+//         // This user is the first — show friendly first-contributor message
+//         container.innerHTML = `<div class="comm-card">
+//             <div class="comm-header">
+//                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+//                      stroke-linecap="round" stroke-linejoin="round">
+//                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+//                     <circle cx="9" cy="7" r="4"/>
+//                     <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+//                     <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+//                 </svg>
+//                 <span>Community Results</span>
+//             </div>
+//             <p class="comm-empty">No community data yet — you're the first to answer this position!</p>
+//         </div>`;
+//         return;
+//     }
+//
+//     const total = votes.total || 1; // guard /0; total is always ≥1 here
+//     const pct   = v => Math.round((v / total) * 100);
+//     const pw = pct(votes.white);
+//     const pe = pct(votes.equal);
+//     const pb = pct(votes.black);
+//
+//     const rows = [
+//         { key: 'White Winning', label: '♔ White', count: votes.white, p: pw, barCls: 'bar-white' },
+//         { key: 'Equal',         label: '⚖ Equal', count: votes.equal, p: pe, barCls: 'bar-equal' },
+//         { key: 'Black Winning', label: '♚ Black', count: votes.black, p: pb, barCls: 'bar-black' },
+//     ];
+//
+//     const rowsHTML = rows.map(r => {
+//         const isYou     = r.key === userGuess;
+//         const isCorrect = r.key === correctAnswer;
+//
+//         const badge = (isYou && isCorrect) ? `<span class="comm-badge comm-badge--both">✓ You</span>`
+//                     : isYou               ? `<span class="comm-badge comm-badge--you">You</span>`
+//                     : isCorrect           ? `<span class="comm-badge comm-badge--correct">✓</span>`
+//                     : '';
+//
+//         const rowMod = (isYou || isCorrect) ? ' comm-row--hl' : '';
+//         const barMod = isCorrect ? ' bar-correct' : '';
+//
+//         return `<div class="comm-row${rowMod}">
+//             <div class="comm-row-top">
+//                 <span class="comm-lbl">${r.label}</span>
+//                 <div class="comm-meta">${badge}<span class="comm-pct">${r.p}%</span><span class="comm-count">${r.count}</span></div>
+//             </div>
+//             <div class="comm-track">
+//                 <div class="comm-fill ${r.barCls}${barMod}" style="width:0" data-w="${r.p}%"></div>
+//             </div>
+//         </div>`;
+//     }).join('');
+//
+//     container.innerHTML = `<div class="comm-card">
+//         <div class="comm-header">
+//             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+//                  stroke-linecap="round" stroke-linejoin="round">
+//                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+//                 <circle cx="9" cy="7" r="4"/>
+//                 <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+//                 <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+//             </svg>
+//             <span>Community Results</span>
+//             <span class="comm-total">${total} vote${total !== 1 ? 's' : ''}</span>
+//         </div>
+//         ${rowsHTML}
+//     </div>`;
+//
+//     // Animate bars — needs two rAF ticks so the browser registers the 0-width start
+//     requestAnimationFrame(() => requestAnimationFrame(() => {
+//         container.querySelectorAll('.comm-fill[data-w]').forEach(bar => {
+//             bar.style.width = bar.getAttribute('data-w');
+//         });
+//     }));
+// }
 
 window.openSidebar = function() {
     const sidebarEl = document.getElementById('sidebar');
@@ -1330,8 +1376,7 @@ function updatePOTDCard() {
     const sub   = document.getElementById('potd-card-sub');
     const badge = document.getElementById('potd-card-badge');
     const today = todayUTC();
-    const d     = new Date();
-    const label = today; // e.g. 2026-07-20
+    const label = today;
 
     if (!potdData) {
         if (sub) sub.textContent = 'Loading...';
@@ -1341,6 +1386,12 @@ function updatePOTDCard() {
     if (badge) {
         badge.textContent = potdAnswered ? 'DONE' : 'PLAY';
         badge.className   = 'potd-badge' + (potdAnswered ? ' done' : '');
+    }
+    // Sync navbar button
+    const navBtn = document.getElementById('potd-nav-btn');
+    if (navBtn) {
+        navBtn.classList.toggle('pending', !potdAnswered);
+        navBtn.classList.toggle('done',    potdAnswered);
     }
 }
 
@@ -1521,3 +1572,81 @@ function initPositions() {
             document.getElementById('board').innerHTML = '<p style="color:red;">Error loading positions</p>';
     });
 }
+// ══════════════════════════════════════════════════════════════════════════
+//  GUESS SECTION — COLLAPSE / EXPAND
+// ══════════════════════════════════════════════════════════════════════════
+
+var _guessSectionCollapsed = false;
+
+function _setToggleVisible(show) {
+    const wrap = document.getElementById('guess-toggle-wrap');
+    if (!wrap) return;
+    if (show) {
+        wrap.style.display = 'flex';
+        void wrap.offsetWidth; // force reflow for transition
+        wrap.classList.add('visible');
+    } else {
+        wrap.classList.remove('visible');
+        setTimeout(() => { wrap.style.display = 'none'; }, 260);
+    }
+}
+
+function _updateToggleArrow() {
+    const btn = document.getElementById('guess-toggle-btn');
+    if (!btn) return;
+    btn.classList.toggle('expanded', !_guessSectionCollapsed);
+}
+
+function collapseGuessSection() {
+    const section = document.getElementById('guess-section');
+    if (!section || _guessSectionCollapsed) return;
+    _guessSectionCollapsed = true;
+    section.classList.add('collapsing');
+    void section.offsetWidth;
+    section.classList.add('collapsed');
+    _setToggleVisible(true);
+    _updateToggleArrow();
+    setTimeout(() => section.classList.remove('collapsing'), 400);
+}
+
+function expandGuessSection(hideToggle) {
+    const section = document.getElementById('guess-section');
+    if (!section || !_guessSectionCollapsed) return;
+    _guessSectionCollapsed = false;
+    section.classList.add('expanding');
+    void section.offsetWidth;
+    section.classList.remove('collapsed');
+    setTimeout(() => {
+        section.classList.remove('expanding');
+        if (hideToggle) {
+            _setToggleVisible(false);
+        } else {
+            _updateToggleArrow();
+        }
+    }, 400);
+    if (!hideToggle) _updateToggleArrow();
+}
+
+window.toggleGuessSection = function() {
+    if (_guessSectionCollapsed) expandGuessSection(false);
+    else collapseGuessSection();
+};
+
+// Patch sendAnswer — auto-collapse after result renders
+var _origSendAnswer = window.sendAnswer;
+window.sendAnswer = function(guess) {
+    _origSendAnswer(guess);
+    setTimeout(collapseGuessSection, 55);
+};
+
+// Patch nextPosition — auto-expand for new puzzle
+var _origNextPosition = window.nextPosition;
+window.nextPosition = function() {
+    if (_guessSectionCollapsed) {
+        expandGuessSection(true);
+        setTimeout(() => _origNextPosition(), 35);
+    } else {
+        _setToggleVisible(false);
+        _origNextPosition();
+    }
+};
