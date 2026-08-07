@@ -75,6 +75,10 @@
             <a href="leaderboard.html">Leaderboard</a>
             <a href="credits.html">Credits</a>
             <a href="info.html">Information</a>
+            <button id="potd-nav-btn" class="potd-nav-btn" onclick="openPOTD()" aria-label="Puzzle of the Day" title="Puzzle of the Day">
+                <span class="potd-nav-icon">📅</span>
+                <span class="potd-nav-label">Daily</span>
+            </button>
         </nav>
 
         <div class="topbar-right">
@@ -131,19 +135,6 @@
         <button class="decay-dismiss" onclick="document.getElementById('decay-banner').style.display='none'" aria-label="Dismiss">×</button>
     </div>
 
-    <!-- ── Puzzle of the Day card ─────────────────────────────────────────── -->
-    <div class="potd-card reveal" onclick="openPOTD()" id="potd-card" role="button" tabindex="0" aria-label="Open Puzzle of the Day" onkeydown="if(event.key==='Enter'||event.key===' ')openPOTD()">
-        <div class="potd-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg>
-        </div>
-        <div class="potd-text">
-            <div class="potd-label">Daily Challenge</div>
-            <div class="potd-title">Puzzle of the Day</div>
-            <div class="potd-sub" id="potd-card-sub">Loading today's puzzle...</div>
-        </div>
-        <div class="potd-badge" id="potd-card-badge">PLAY</div>
-    </div>
-
     <!-- ── Main layout ─────────────────────────────────────────────────────── -->
     <main class="main-content" id="main-game">
         <section id="left-panel" class="reveal">
@@ -182,45 +173,62 @@
         </section>
 
         <section id="right-panel" class="reveal">
-            <div class="panel-heading">Make your call</div>
-            <h3 id="turn"></h3>
 
-            <div id="actionRow">
-                <div id="choiceButtons">
-                    <button class="choice-tile white" id="whiteWinning" onclick='sendAnswer("White Winning")'>
-                        <span class="choice-icon">
-                            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M24 5v8M20 9h8"/>
-                                <path d="M24 13c-7 3-9 8-5 12h10c4-4 2-9-5-12z"/>
-                                <path d="M17 25h14l-2 13H19z"/>
-                                <path d="M15 38h18"/>
-                            </svg>
-                        </span>
-                        <span class="choice-label">White</span>
-                    </button>
+            <!-- ── Collapsible guess section ───────────────────────────────── -->
+            <div id="guess-section">
+                <div id="guess-section-inner">
+                    <div class="panel-heading">Make your call</div>
+                    <h3 id="turn"></h3>
 
-                    <button class="choice-tile equal" id="equal" onclick='sendAnswer("Equal")'>
-                        <span class="choice-icon">
-                            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round">
-                                <line x1="13" y1="19" x2="35" y2="19"/>
-                                <line x1="13" y1="29" x2="35" y2="29"/>
-                            </svg>
-                        </span>
-                        <span class="choice-label">Equal</span>
-                    </button>
+                    <div id="actionRow">
+                        <div id="choiceButtons">
+                            <button class="choice-tile white" id="whiteWinning" onclick='sendAnswer("White Winning")'>
+                                <span class="choice-icon">
+                                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M24 5v8M20 9h8"/>
+                                        <path d="M24 13c-7 3-9 8-5 12h10c4-4 2-9-5-12z"/>
+                                        <path d="M17 25h14l-2 13H19z"/>
+                                        <path d="M15 38h18"/>
+                                    </svg>
+                                </span>
+                                <span class="choice-label">White</span>
+                            </button>
 
-                    <button class="choice-tile black" id="blackWinning" onclick='sendAnswer("Black Winning")'>
-                        <span class="choice-icon">
-                            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M24 5v8M20 9h8"/>
-                                <path d="M24 13c-7 3-9 8-5 12h10c4-4 2-9-5-12z"/>
-                                <path d="M17 25h14l-2 13H19z"/>
-                                <path d="M15 38h18"/>
-                            </svg>
-                        </span>
-                        <span class="choice-label">Black</span>
-                    </button>
+                            <button class="choice-tile equal" id="equal" onclick='sendAnswer("Equal")'>
+                                <span class="choice-icon">
+                                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round">
+                                        <line x1="13" y1="19" x2="35" y2="19"/>
+                                        <line x1="13" y1="29" x2="35" y2="29"/>
+                                    </svg>
+                                </span>
+                                <span class="choice-label">Equal</span>
+                            </button>
+
+                            <button class="choice-tile black" id="blackWinning" onclick='sendAnswer("Black Winning")'>
+                                <span class="choice-icon">
+                                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M24 5v8M20 9h8"/>
+                                        <path d="M24 13c-7 3-9 8-5 12h10c4-4 2-9-5-12z"/>
+                                        <path d="M17 25h14l-2 13H19z"/>
+                                        <path d="M15 38h18"/>
+                                    </svg>
+                                </span>
+                                <span class="choice-label">Black</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
+            </div>
+
+            <!-- ── Collapse toggle (visible after answering) ──────────────── -->
+            <div id="guess-toggle-wrap">
+                <button id="guess-toggle-btn" onclick="toggleGuessSection()" aria-label="Toggle guess controls" title="Show/hide guess controls">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"/>
+                        <polyline points="5 8 12 1 19 8"/>
+                        <polyline points="5 16 12 23 19 16"/>
+                    </svg>
+                </button>
             </div>
 
             <div id="result">
@@ -233,6 +241,21 @@
                 <span>Next Position</span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </button>
+
+            <!-- ── AI Explanation (revealed after guess) ────────────────────── -->
+            <div id="ai-explanation" aria-live="polite">
+                <div class="ai-exp-section">
+                    <div class="ai-exp-label">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
+                        Why
+                    </div>
+                    <p id="ai-exp-why" class="ai-exp-text"></p>
+                </div>
+                <div class="ai-exp-section">
+                    <div class="ai-exp-label">Themes</div>
+                    <div id="ai-exp-themes" class="ai-exp-themes"></div>
+                </div>
+            </div>
         </section>
     </main>
 
