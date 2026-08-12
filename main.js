@@ -4,7 +4,8 @@ var answered = false;
 var evaluation;
 
 // ── Positional Rating constants ───────────────────────────────────────────────
-const PR_MAX   = 3200;
+// No hard cap — growth above PR_ELITE is stunted by 50% globally instead.
+const PR_ELITE = 3200;   // threshold where growth halves
 const PR_START = 500;
 const PROVISIONAL_PUZZLES = 10;
 
@@ -29,17 +30,46 @@ var bestStreak    = 0;
 var peakPR        = PR_START;
 var prHistory     = [];   // array of { pr, ts } snapshots, capped at 50
 
+// Achievement-related state. Definitions live locally; only unlocks and the
+// few non-derivable activity counters are stored with the user record.
+var unlockedAchievements = {};
+var puzzleActivityDays = {};
+var playDayStreak = 0;
+var lastPuzzleDate = null;
+var totalPlaySeconds = 0;
+var dailyPuzzleHistory = {};
+var leaderboardRank = null;
+var lastLeaderboardRankCheck = 0;
+var achievementToastQueue = [];
+var achievementToastTimer = null;
+var sessionAnswers = 0;
+var sessionCorrect = 0;
+var sessionTrackedSeconds = 0;
+var sessionActivityStartedAt = document.hidden ? null : Date.now();
+
+// OG recognition applies to accounts created from August 1, 2025 through
+// August 1, 2026 inclusive. The end is exclusive at the following UTC day.
+const OG_ACCOUNT_START_AT = Date.UTC(2025, 7, 1);
+const OG_ACCOUNT_END_EXCLUSIVE = Date.UTC(2026, 7, 2);
+// Account-specific overrides take precedence over the fixed date window.
+const OG_MANUAL_EXCLUSIONS = new Set(['ronit', 'entyalt']);
+const OG_MANUAL_INCLUSIONS = new Set(['shaurya']);
+var accountCreatedAt = null;
+
 // ── PR formula helpers ────────────────────────────────────────────────────────
+// Easy:   low risk / low reward — gentle entry point
+// Medium: balanced risk / balanced reward
+// Hard:   high risk / high reward — big swings both ways
 const PR_BASE = {
-    Easy:   { correct: 45,  wrong: -70 },
-    Medium: { correct: 61,  wrong: -61 },
-    Hard:   { correct: 96,  wrong: -38 },
+    Easy:   { correct: 32,  wrong: -28  },
+    Medium: { correct: 61,  wrong: -61  },
+    Hard:   { correct: 110, wrong: -95  },
 };
 
 const PR_PROVISIONAL_BASE = {
-    Easy:   { correct: 220, wrong: -210 },
+    Easy:   { correct: 180, wrong: -160 },
     Medium: { correct: 285, wrong: -260 },
-    Hard:   { correct: 390, wrong: -190 },
+    Hard:   { correct: 420, wrong: -380 },
 };
 
 function isProvisionalMode() {
@@ -77,8 +107,8 @@ function updateStreak(correct) {
 }
 
 function getDifficultyFromPR() {
-    if (playerPR < 1066) return "Easy";
-    if (playerPR < 2132) return "Medium";
+    if (playerPR < 1000) return "Easy";
+    if (playerPR < 1600) return "Medium";
     return "Hard";
 }
 
@@ -105,8 +135,8 @@ window.setDifficultyOverride = function(value) {
         difficultyOverride = value;
         localStorage.setItem('chessiq-difficulty', value);
     }
-    renderDifficultyOverrideBadge();
     updateSettingsDifficultyUI();
+    updateDifficultyPanelUI();   // sync the new inline panel
 };
 
 // ── Firebase imports ──────────────────────────────────────────────────────────
@@ -162,6 +192,38 @@ function showGuestUI() {
     renderProvisionalNotice();
 }
 
+function hydratePlayerState(data) {
+    playerPR      = data.pr           ?? PR_START;
+    totalPuzzles  = data.totalPuzzles ?? 0;
+    currentStreak = data.streak       ?? 0;
+    correctCount  = data.correctCount ?? 0;
+    wrongCount    = data.wrongCount   ?? 0;
+    bestStreak    = data.bestStreak   ?? 0;
+    peakPR        = data.peakPR       ?? playerPR;
+    prHistory     = Array.isArray(data.prHistory) ? data.prHistory : [];
+    lastActiveDate = data.lastActiveDate ?? null;
+    const createdAt = Number(data.createdAt);
+    accountCreatedAt = Number.isFinite(createdAt) && createdAt > 0 ? createdAt : null;
+
+    const achievementData = data.achievements && typeof data.achievements === 'object'
+        ? data.achievements
+        : {};
+    const activity = achievementData.activity && typeof achievementData.activity === 'object'
+        ? achievementData.activity
+        : {};
+
+    unlockedAchievements = achievementData.unlocked && typeof achievementData.unlocked === 'object'
+        ? achievementData.unlocked
+        : {};
+    puzzleActivityDays = activity.puzzleDays && typeof activity.puzzleDays === 'object'
+        ? activity.puzzleDays
+        : {};
+    playDayStreak = Number(activity.playDayStreak) || 0;
+    lastPuzzleDate = activity.lastPuzzleDate || null;
+    totalPlaySeconds = Number(activity.totalPlaySeconds) || 0;
+    dailyPuzzleHistory = data.potd && typeof data.potd === 'object' ? data.potd : {};
+}
+
 // ── Auth gate ─────────────────────────────────────────────────────────────────
 // No longer force-redirects to login.html — guests can browse and play a
 // limited number of free puzzles. Only Firebase-backed features (saved PR,
@@ -169,7 +231,7 @@ function showGuestUI() {
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
         showGuestUI();
-        renderDifficultyOverrideBadge();
+        updateDifficultyPanelUI();
         renderPR();
         initPositions();
         return;
@@ -189,16 +251,8 @@ onAuthStateChanged(auth, async (user) => {
     console.log("AUTH uid:", user.uid);
 
     if (snap.exists()) {
-        const data    = snap.val();
-        playerPR      = data.pr           ?? PR_START;
-        totalPuzzles  = data.totalPuzzles ?? 0;
-        currentStreak = data.streak       ?? 0;
-        correctCount  = data.correctCount ?? 0;
-        wrongCount    = data.wrongCount   ?? 0;
-        bestStreak    = data.bestStreak   ?? 0;
-        peakPR        = data.peakPR       ?? playerPR;
-        prHistory     = Array.isArray(data.prHistory) ? data.prHistory : [];
-        lastActiveDate = data.lastActiveDate ?? null;
+        const data = snap.val();
+        hydratePlayerState(data);
 
         // DB username is ground truth — fall back to displayName only if DB has none
        profileUsername =
@@ -224,16 +278,9 @@ onAuthStateChanged(auth, async (user) => {
         }
 
         if (retry && retry.exists()) {
-            const data    = retry.val();
-            playerPR      = data.pr           ?? PR_START;
-            totalPuzzles  = data.totalPuzzles ?? 0;
-            currentStreak = data.streak       ?? 0;
-            correctCount  = data.correctCount ?? 0;
-            wrongCount    = data.wrongCount   ?? 0;
-            bestStreak    = data.bestStreak   ?? 0;
-            peakPR        = data.peakPR       ?? PR_START;
-            prHistory     = Array.isArray(data.prHistory) ? data.prHistory : [];
-            lastActiveDate = data.lastActiveDate ?? null;
+                        const data = retry.val();
+            hydratePlayerState(data);
+
             profileUsername = (typeof data.username === 'string' && data.username.trim() !== '')
                              ? data.username.trim()
                              : (user.displayName || 'Player');
@@ -241,6 +288,8 @@ onAuthStateChanged(auth, async (user) => {
             // Fallback: login.js write hasn't landed — create a minimal record.
             // Use displayName which MAY be set by the signup flow; otherwise 'Player'.
             profileUsername = user.displayName || 'Player';
+            const createdAt = Date.now();
+            accountCreatedAt = createdAt;
             await set(ref(db, `users/${currentUID}`), {
                 username:     profileUsername,
                 email:        user.email,
@@ -250,9 +299,14 @@ onAuthStateChanged(auth, async (user) => {
                 correctCount: 0,
                 wrongCount:   0,
                 bestStreak:   0,
-                peakPR:       PR_START,
+                                peakPR:       PR_START,
                 prHistory:    [],
-                createdAt:    Date.now(),
+                achievements: {
+                    unlocked: {},
+                    activity: { puzzleDays: {}, playDayStreak: 0, lastPuzzleDate: null, totalPlaySeconds: 0 },
+                },
+                createdAt,
+
             });
         }
     }
@@ -271,9 +325,17 @@ onAuthStateChanged(auth, async (user) => {
     currentUsername = profileUsername || 'Player';
     showSignedInUI(profileUsername);
 
-    renderDifficultyOverrideBadge();
+    updateDifficultyPanelUI();
     renderPR();
     initPositions();
+    // Clear any OG achievement made ineligible by an account-specific exception
+    // before reconciling unlocks. The OG account achievement is then the one
+    // account-based milestone that should announce itself.
+    await reconcileOGAchievement();
+    void checkAchievements({ refreshRank: true, silent: true }).then(newUnlocks => {
+        const ogUnlock = newUnlocks.find(achievement => achievement.id === 'og_early_member');
+        if (ogUnlock) enqueueAchievementToast(ogUnlock);
+    });
 });
 
 // ── Date helper (UTC) ─────────────────────────────────────────────────────────
@@ -331,6 +393,32 @@ function showDecayBanner(daysSince, lost) {
 }
 
 // ── Save to Firebase ──────────────────────────────────────────────────────────
+function getCurrentTotalPlaySeconds() {
+    const activeSeconds = sessionActivityStartedAt
+        ? Math.max(0, Math.floor((Date.now() - sessionActivityStartedAt) / 1000))
+        : 0;
+    return totalPlaySeconds + sessionTrackedSeconds + activeSeconds;
+}
+
+function settleSessionClock() {
+    if (!sessionActivityStartedAt) return;
+    sessionTrackedSeconds += Math.max(0, Math.floor((Date.now() - sessionActivityStartedAt) / 1000));
+    sessionActivityStartedAt = Date.now();
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        settleSessionClock();
+        sessionActivityStartedAt = null;
+    } else {
+        sessionActivityStartedAt = Date.now();
+    }
+});
+
+window.addEventListener('pagehide', () => {
+    settleSessionClock();
+});
+
 async function saveStatsToFirebase() {
     if (!currentUID || isGuest) return;
     await update(ref(db, `users/${currentUID}`), {
@@ -343,7 +431,368 @@ async function saveStatsToFirebase() {
         peakPR:         peakPR,
         prHistory:      prHistory,
         lastActiveDate: todayUTCDate(),
+        achievements: {
+            unlocked: unlockedAchievements,
+            activity: {
+                puzzleDays: puzzleActivityDays,
+                playDayStreak,
+                lastPuzzleDate,
+                totalPlaySeconds: getCurrentTotalPlaySeconds(),
+            },
+        },
     });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  ACHIEVEMENTS — definitions are local; user state remains compact in Firebase
+// ══════════════════════════════════════════════════════════════════════════════
+const ACHIEVEMENT_RARITIES = {
+    Common:    '#a5a5b2',
+    Rare:      '#78bfff',
+    Epic:      '#c995ff',
+    Legendary: '#ffd400',
+};
+
+const ACHIEVEMENTS = [
+    // Performance
+    { id: 'session_accuracy_90', category: 'Performance', name: 'Clean Session', description: 'Reach 90% accuracy across 10 session puzzles.', rarity: 'Common', icon: '◎', progressType: 'sessionAccuracy', threshold: 90 },
+    { id: 'correct_streak_20', category: 'Performance', name: 'Unbroken Focus', description: 'Get 20 positions correct in a row.', rarity: 'Epic', icon: '↗', progressType: 'correctStreak', threshold: 20 },
+    { id: 'puzzles_50', category: 'Performance', name: 'First File', description: 'Solve 50 positions.', rarity: 'Common', icon: '◇', progressType: 'puzzles', threshold: 50 },
+    { id: 'puzzles_100', category: 'Performance', name: 'Pattern Builder', description: 'Solve 100 positions.', rarity: 'Rare', icon: '◇', progressType: 'puzzles', threshold: 100 },
+    { id: 'puzzles_250', category: 'Performance', name: 'Positional Student', description: 'Solve 250 positions.', rarity: 'Epic', icon: '◇', progressType: 'puzzles', threshold: 250 },
+    { id: 'puzzles_500', category: 'Performance', name: 'Board Vision', description: 'Solve 500 positions.', rarity: 'Legendary', icon: '◇', progressType: 'puzzles', threshold: 500 },
+
+    // Leaderboard
+    { id: 'leaderboard_top_100', category: 'Leaderboard', name: 'On the Board', description: 'Reach the global Top 100.', rarity: 'Rare', icon: '#', progressType: 'rank', threshold: 100 },
+    { id: 'leaderboard_top_25', category: 'Leaderboard', name: 'Contender', description: 'Reach the global Top 25.', rarity: 'Epic', icon: '#', progressType: 'rank', threshold: 25 },
+    { id: 'leaderboard_top_10', category: 'Leaderboard', name: 'Elite Table', description: 'Reach the global Top 10.', rarity: 'Epic', icon: '#', progressType: 'rank', threshold: 10 },
+    { id: 'leaderboard_rank_1', category: 'Leaderboard', name: 'Number One', description: 'Claim the #1 global rank.', rarity: 'Legendary', icon: '#', progressType: 'rank', threshold: 1 },
+
+    // Account
+    { id: 'og_early_member', category: 'Account', name: 'ChessIQ OG', description: 'Created a ChessIQ account between August 2025 and August 1, 2026.', rarity: 'Legendary', icon: '★', progressType: 'ogAccount', threshold: 1 },
+
+    // Dedication
+    { id: 'return_7_days', category: 'Dedication', name: 'Steady Return', description: 'Train for 7 consecutive days.', rarity: 'Common', icon: '◌', progressType: 'playDayStreak', threshold: 7 },
+    { id: 'return_30_days', category: 'Dedication', name: 'Training Habit', description: 'Train for 30 consecutive days.', rarity: 'Epic', icon: '◌', progressType: 'playDayStreak', threshold: 30 },
+    { id: 'play_100_minutes', category: 'Dedication', name: 'Clockwork', description: 'Spend 100 minutes training.', rarity: 'Rare', icon: '◷', progressType: 'playTime', threshold: 6000 },
+    { id: 'solve_10_days', category: 'Dedication', name: 'Regular Study', description: 'Solve positions on 10 different days.', rarity: 'Rare', icon: '◐', progressType: 'puzzleDays', threshold: 10 },
+    { id: 'solve_50_days', category: 'Dedication', name: 'Long Game', description: 'Solve positions on 50 different days.', rarity: 'Epic', icon: '◐', progressType: 'puzzleDays', threshold: 50 },
+
+    // Position Rating / Progress
+    { id: 'pr_1200', category: 'Position Rating', name: 'Club Eye', description: 'Reach 1,200 PR.', rarity: 'Common', icon: '↗', progressType: 'pr', threshold: 1200 },
+    { id: 'pr_1500', category: 'Position Rating', name: 'Positional Reader', description: 'Reach 1,500 PR.', rarity: 'Rare', icon: '↗', progressType: 'pr', threshold: 1500 },
+    { id: 'pr_1800', category: 'Position Rating', name: 'Strategic Vision', description: 'Reach 1,800 PR.', rarity: 'Epic', icon: '↗', progressType: 'pr', threshold: 1800 },
+    { id: 'pr_2000', category: 'Position Rating', name: 'Expert Judgment', description: 'Reach 2,000 PR.', rarity: 'Epic', icon: '↗', progressType: 'pr', threshold: 2000 },
+    { id: 'pr_2500', category: 'Position Rating', name: 'Master of Imbalances', description: 'Reach 2,500 PR.', rarity: 'Legendary', icon: '↗', progressType: 'pr', threshold: 2500 },
+
+    // Daily / Consistency
+    { id: 'daily_first', category: 'Daily / Consistency', name: 'Daily Debut', description: 'Complete your first Daily Puzzle.', rarity: 'Common', icon: '□', progressType: 'dailyCount', threshold: 1 },
+    { id: 'daily_7', category: 'Daily / Consistency', name: 'Weekly Habit', description: 'Complete 7 Daily Puzzles.', rarity: 'Rare', icon: '□', progressType: 'dailyCount', threshold: 7 },
+    { id: 'daily_30', category: 'Daily / Consistency', name: 'Monthly Routine', description: 'Complete 30 Daily Puzzles.', rarity: 'Epic', icon: '□', progressType: 'dailyCount', threshold: 30 },
+    { id: 'daily_streak_7', category: 'Daily / Consistency', name: 'Seven-Day Streak', description: 'Maintain a 7-day Daily Puzzle streak.', rarity: 'Rare', icon: '⌁', progressType: 'dailyStreak', threshold: 7 },
+    { id: 'daily_streak_30', category: 'Daily / Consistency', name: 'Unwavering', description: 'Maintain a 30-day Daily Puzzle streak.', rarity: 'Legendary', icon: '⌁', progressType: 'dailyStreak', threshold: 30 },
+];
+
+function dateDistance(first, second) {
+    const firstMs = Date.parse(`${first}T00:00:00Z`);
+    const secondMs = Date.parse(`${second}T00:00:00Z`);
+    return Math.round((secondMs - firstMs) / 86400000);
+}
+
+function recordPuzzleActivity() {
+    if (isGuest) return;
+    const today = todayUTCDate();
+    puzzleActivityDays[today] = true;
+
+    if (lastPuzzleDate !== today) {
+        playDayStreak = lastPuzzleDate && dateDistance(lastPuzzleDate, today) === 1
+            ? playDayStreak + 1
+            : 1;
+        lastPuzzleDate = today;
+    }
+}
+
+function getCurrentPlayDayStreak() {
+    if (!lastPuzzleDate) return 0;
+    return dateDistance(lastPuzzleDate, todayUTCDate()) <= 1 ? playDayStreak : 0;
+}
+
+function getDailyPuzzleStreak() {
+    const dates = Object.keys(dailyPuzzleHistory || {}).sort().reverse();
+    if (!dates.length) return 0;
+    let streak = 1;
+    for (let i = 1; i < dates.length; i++) {
+        if (dateDistance(dates[i], dates[i - 1]) === 1) streak++;
+        else break;
+    }
+    return streak;
+}
+
+function getAchievementMetric(definition) {
+    switch (definition.progressType) {
+        case 'puzzles':       return totalPuzzles;
+        case 'correctStreak': return Math.max(0, currentStreak);
+        case 'puzzleDays':    return Object.keys(puzzleActivityDays).length;
+        case 'playDayStreak': return getCurrentPlayDayStreak();
+        case 'playTime':      return getCurrentTotalPlaySeconds();
+        case 'pr':            return playerPR;
+        case 'dailyCount':    return Object.keys(dailyPuzzleHistory || {}).length;
+        case 'dailyStreak':   return getDailyPuzzleStreak();
+        case 'rank':          return leaderboardRank;
+        case 'sessionAccuracy': return sessionAnswers;
+        case 'ogAccount':     return isOGAccount() ? 1 : 0;
+        default: return 0;
+    }
+}
+
+function getAchievementProgress(definition) {
+    const metric = getAchievementMetric(definition);
+    if (definition.progressType === 'rank') {
+        const rankKnown = Number.isFinite(metric) && metric > 0;
+        const percentage = rankKnown ? Math.min(100, Math.round((definition.threshold / metric) * 100)) : 0;
+        return {
+            percentage,
+            label: rankKnown ? `Rank #${metric} / Top ${definition.threshold}` : `Rank pending / Top ${definition.threshold}`,
+        };
+    }
+
+    if (definition.progressType === 'playTime') {
+        const minutes = Math.floor(metric / 60);
+        return {
+            percentage: Math.min(100, Math.round((metric / definition.threshold) * 100)),
+            label: `${minutes} / ${Math.ceil(definition.threshold / 60)} minutes`,
+        };
+    }
+
+    if (definition.progressType === 'sessionAccuracy') {
+        const accuracy = sessionAnswers ? Math.round((sessionCorrect / sessionAnswers) * 100) : 0;
+        return {
+            percentage: Math.min(100, Math.round(Math.min(1, sessionAnswers / 10) * (accuracy / definition.threshold) * 100)),
+            label: `${sessionCorrect} / ${Math.max(10, sessionAnswers)} correct · ${accuracy}%`,
+        };
+    }
+
+    if (definition.progressType === 'ogAccount') {
+        const eligible = metric >= definition.threshold;
+        return {
+            percentage: eligible ? 100 : 0,
+            label: eligible ? 'Aug 2025 – Aug 1, 2026 account window' : 'Aug 2025 – Aug 1, 2026 accounts only',
+        };
+    }
+
+    return {
+        percentage: Math.min(100, Math.round((metric / definition.threshold) * 100)),
+        label: `${Math.min(metric, definition.threshold).toLocaleString()} / ${definition.threshold.toLocaleString()}${definition.progressType === 'pr' ? ' PR' : ''}`,
+    };
+}
+
+function isAchievementComplete(definition) {
+    if (definition.progressType === 'rank') {
+        return Number.isFinite(leaderboardRank) && leaderboardRank <= definition.threshold;
+    }
+    if (definition.progressType === 'sessionAccuracy') {
+        return sessionAnswers >= 10 && (sessionCorrect / sessionAnswers) * 100 >= definition.threshold;
+    }
+    return getAchievementMetric(definition) >= definition.threshold;
+}
+
+function getOGAccountKey(username = currentUsername) {
+    return String(username || '').trim().toLowerCase();
+}
+
+function isOGAccount(username = currentUsername) {
+    const accountKey = getOGAccountKey(username);
+    if (OG_MANUAL_INCLUSIONS.has(accountKey)) return true;
+    if (OG_MANUAL_EXCLUSIONS.has(accountKey)) return false;
+    return Number.isFinite(accountCreatedAt)
+        && accountCreatedAt >= OG_ACCOUNT_START_AT
+        && accountCreatedAt < OG_ACCOUNT_END_EXCLUSIVE;
+}
+
+async function reconcileOGAchievement() {
+    if (isGuest || !currentUID || isOGAccount() || !unlockedAchievements.og_early_member) return;
+    delete unlockedAchievements.og_early_member;
+    try {
+        await update(ref(db, `users/${currentUID}/achievements/unlocked`), { og_early_member: null });
+    } catch (error) {
+        console.error('OG achievement reconciliation failed:', error);
+    }
+}
+
+async function refreshLeaderboardRank() {
+    if (isGuest || !currentUID) return null;
+    const now = Date.now();
+    if (leaderboardRank !== null && now - lastLeaderboardRankCheck < 45000) return leaderboardRank;
+
+    try {
+        const snapshot = await get(ref(db, 'users'));
+        if (!snapshot.exists()) return null;
+        const users = snapshot.val();
+        const players = Object.entries(users).map(([uid, data]) => ({
+            uid,
+            pr: data.pr ?? PR_START,
+            totalPuzzles: data.totalPuzzles ?? 0,
+        }));
+        players.sort((a, b) => b.pr - a.pr || b.totalPuzzles - a.totalPuzzles);
+        const index = players.findIndex(player => player.uid === currentUID);
+        leaderboardRank = index >= 0 ? index + 1 : null;
+        lastLeaderboardRankCheck = now;
+        return leaderboardRank;
+    } catch (error) {
+        console.warn('Achievement rank check failed:', error);
+        return leaderboardRank;
+    }
+}
+
+function enqueueAchievementToast(achievement) {
+    achievementToastQueue.push(achievement);
+    if (achievementToastTimer) return;
+    showNextAchievementToast();
+}
+
+function showNextAchievementToast() {
+    const achievement = achievementToastQueue.shift();
+    if (!achievement) {
+        achievementToastTimer = null;
+        return;
+    }
+
+    const toast = document.getElementById('achievement-toast');
+    if (!toast) return;
+    const color = ACHIEVEMENT_RARITIES[achievement.rarity] || ACHIEVEMENT_RARITIES.Common;
+    const icon = document.getElementById('achievement-toast-icon');
+    const rarity = document.getElementById('achievement-toast-rarity');
+    const title = document.getElementById('achievement-toast-title');
+    const desc = document.getElementById('achievement-toast-desc');
+
+    toast.style.setProperty('--toast-color', color);
+    if (icon) icon.textContent = achievement.icon;
+    if (rarity) rarity.textContent = `${achievement.rarity} achievement unlocked`;
+    if (title) title.textContent = achievement.name;
+    if (desc) desc.textContent = achievement.description;
+
+    toast.classList.remove('show');
+    void toast.offsetWidth;
+    toast.classList.add('show');
+    achievementToastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+        achievementToastTimer = setTimeout(showNextAchievementToast, 380);
+    }, 4500);
+}
+
+window.dismissAchievementToast = function() {
+    const toast = document.getElementById('achievement-toast');
+    if (toast) toast.classList.remove('show');
+    clearTimeout(achievementToastTimer);
+    achievementToastTimer = setTimeout(showNextAchievementToast, 180);
+};
+
+function renderAchievementsModal() {
+    const countEl = document.getElementById('achievements-count');
+    const fillEl = document.getElementById('achievements-overview-fill');
+    const pctEl = document.getElementById('achievements-overview-pct');
+    const listEl = document.getElementById('achievements-list');
+    const signinNote = document.getElementById('achievements-signin-note');
+    if (!listEl) return;
+
+    const unlockedCount = ACHIEVEMENTS.filter(achievement => Boolean(unlockedAchievements[achievement.id])).length;
+    const overallPercentage = Math.round((unlockedCount / ACHIEVEMENTS.length) * 100);
+    if (countEl) countEl.textContent = `${unlockedCount} / ${ACHIEVEMENTS.length}`;
+    if (pctEl) pctEl.textContent = `${overallPercentage}%`;
+    if (fillEl) {
+        fillEl.style.width = '0%';
+        fillEl.dataset.progress = String(overallPercentage);
+    }
+    if (signinNote) signinNote.style.display = isGuest ? 'block' : 'none';
+
+    const categories = [...new Set(ACHIEVEMENTS.map(achievement => achievement.category))];
+    listEl.innerHTML = categories.map(category => {
+        const achievements = ACHIEVEMENTS.filter(achievement => achievement.category === category);
+        const complete = achievements.filter(achievement => Boolean(unlockedAchievements[achievement.id])).length;
+        const cards = achievements.map(achievement => {
+            const isUnlocked = Boolean(unlockedAchievements[achievement.id]);
+            const progress = getAchievementProgress(achievement);
+            const color = ACHIEVEMENT_RARITIES[achievement.rarity] || ACHIEVEMENT_RARITIES.Common;
+            const cardClasses = [
+                'achievement-card',
+                isUnlocked ? 'is-unlocked' : 'is-locked',
+                achievement.rarity === 'Legendary' ? 'is-legendary' : '',
+            ].filter(Boolean).join(' ');
+
+            return `
+                <article class="${cardClasses}" style="--rarity-color:${color}">
+                    <div class="achievement-icon" aria-hidden="true">${isUnlocked ? achievement.icon : '◇'}</div>
+                    <div class="achievement-name">${achievement.name}</div>
+                    <div class="achievement-description">${achievement.description}</div>
+                    <div class="achievement-meta">
+                        <span class="achievement-rarity">${achievement.rarity}</span>
+                        <span class="achievement-status">${isUnlocked ? 'Unlocked' : 'Locked'}</span>
+                    </div>
+                    <div class="achievement-progress">
+                        <div class="achievement-progress-top"><span>Progress</span><span class="achievement-progress-value">${progress.label}</span></div>
+                        <div class="achievement-progress-track"><span class="achievement-progress-fill" style="width:0%" data-progress="${progress.percentage}"></span></div>
+                    </div>
+                </article>`;
+        }).join('');
+
+        return `
+            <section class="achievement-category">
+                <div class="achievement-category-header">
+                    <div class="achievement-category-title">${category}</div>
+                    <div class="achievement-category-count">${complete} / ${achievements.length} unlocked</div>
+                </div>
+                <div class="achievement-grid">${cards}</div>
+            </section>`;
+    }).join('');
+
+    requestAnimationFrame(() => {
+        if (fillEl) fillEl.style.width = `${fillEl.dataset.progress || 0}%`;
+        listEl.querySelectorAll('.achievement-progress-fill[data-progress]').forEach(fill => {
+            fill.style.width = `${fill.dataset.progress || 0}%`;
+        });
+    });
+}
+
+window.openAchievements = function() {
+    const modal = document.getElementById('achievements-modal');
+    if (!modal) return;
+    renderAchievementsModal();
+    modal.style.display = 'flex';
+};
+
+window.closeAchievements = function() {
+    const modal = document.getElementById('achievements-modal');
+    if (modal) modal.style.display = 'none';
+};
+
+async function checkAchievements({ refreshRank = false, silent = false } = {}) {
+    if (isGuest || !currentUID) return [];
+    if (refreshRank) await refreshLeaderboardRank();
+
+    const newUnlocks = ACHIEVEMENTS.filter(achievement =>
+        !unlockedAchievements[achievement.id] && isAchievementComplete(achievement)
+    );
+    if (!newUnlocks.length) {
+        const modal = document.getElementById('achievements-modal');
+        if (modal && modal.style.display === 'flex') renderAchievementsModal();
+        return [];
+    }
+
+    const unlockedAt = Date.now();
+    newUnlocks.forEach(achievement => {
+        unlockedAchievements[achievement.id] = { unlockedAt };
+    });
+
+    try {
+        await update(ref(db, `users/${currentUID}/achievements/unlocked`), unlockedAchievements);
+    } catch (error) {
+        console.error('Achievement unlock save failed:', error);
+    }
+
+    const modal = document.getElementById('achievements-modal');
+    if (modal && modal.style.display === 'flex') renderAchievementsModal();
+    if (!silent) newUnlocks.forEach(enqueueAchievementToast);
+    return newUnlocks;
 }
 
 // ── PR update ─────────────────────────────────────────────────────────────────
@@ -356,13 +805,19 @@ function updatePR(difficulty, correct) {
     const ratingFactor = 1 - (playerPR / 4480);
     const confMult     = provisional ? 1 : confidenceMultiplier();
     const streakMult   = streakMultiplier(correct);
-    const delta        = Math.round(baseValue * ratingFactor * confMult * streakMult);
+    let   delta        = Math.round(baseValue * ratingFactor * confMult * streakMult);
+
+    // Above PR_ELITE (3200), growth — gains AND losses — is stunted by 50%.
+    // There is no longer a hard cap; the rating can climb indefinitely, just slower.
+    if (playerPR >= PR_ELITE) {
+        delta = Math.round(delta * 0.5);
+    }
 
     if (correct) { correctCount++; } else { wrongCount++; }
     updateStreak(correct);
     totalPuzzles++;
 
-    playerPR = Math.min(PR_MAX, Math.max(0, playerPR + delta));
+    playerPR = Math.max(0, playerPR + delta);
 
     if (playerPR > peakPR) peakPR = playerPR;
     if (currentStreak > bestStreak) bestStreak = currentStreak;
@@ -377,8 +832,6 @@ function updatePR(difficulty, correct) {
         ts:         Date.now(),
     });
     if (prHistory.length > 50) prHistory = prHistory.slice(prHistory.length - 50);
-
-    saveStatsToFirebase();
 
     if (provisional) {
         const sign = delta >= 0 ? '+' : '';
@@ -516,12 +969,28 @@ function sendAnswer(guess) {
     const evaluationRaw = parseFloat(currentPuzzle.Eval) / 100;
     const displayEval   = evaluationRaw > 0 ? `+${evaluationRaw}` : `${evaluationRaw}`;
     document.getElementById("evaluation-display").innerHTML = `Evaluation&nbsp;&nbsp;${displayEval}`;
-    updatePR(difficulty, guess === correct_result);
+    const wasCorrect = guess === correct_result;
+    updatePR(difficulty, wasCorrect);
 
-    // Patch posEval into the history entry that updatePR just pushed
+    // Patch posEval into the history entry that updatePR just pushed.
     if (prHistory.length > 0) {
         prHistory[prHistory.length - 1].posEval = evaluationRaw;
-        saveStatsToFirebase();
+    }
+
+    // Achievements are checked only after a completed puzzle can change relevant
+    // progress. Definitions are local; this persists just the compact user state.
+    if (!isGuest) {
+        sessionAnswers++;
+        if (wasCorrect) sessionCorrect++;
+        recordPuzzleActivity();
+        void (async () => {
+            try {
+                await saveStatsToFirebase();
+                await checkAchievements({ refreshRank: true });
+            } catch (error) {
+                console.error('Could not save achievement progress:', error);
+            }
+        })();
     }
 
     if (isGuest) {
@@ -623,18 +1092,7 @@ function openModal() {
 window.openModal = openModal;
 
 // ── Settings modal ────────────────────────────────────────────────────────────
-// ── Difficulty override UI helpers ────────────────────────────────────────────
-function renderDifficultyOverrideBadge() {
-    const badge = document.getElementById('difficulty-override-badge');
-    if (!badge) return;
-    if (difficultyOverride) {
-        badge.textContent = `Override: ${difficultyOverride}`;
-        badge.style.display = 'inline-flex';
-    } else {
-        badge.style.display = 'none';
-    }
-}
-
+// ── Difficulty selection UI helpers ───────────────────────────────────────────
 function updateSettingsDifficultyUI() {
     const active = difficultyOverride || 'Adaptive';
     document.querySelectorAll('.diff-option-btn').forEach(btn => {
@@ -644,13 +1102,34 @@ function updateSettingsDifficultyUI() {
     const desc = document.getElementById('diff-override-desc');
     if (!desc) return;
     const descriptions = {
-        Adaptive: 'Puzzles automatically match your current PR. Recommended for most players.',
-        Easy:     'Always serves Easy puzzles — great for counting material and beginner fundamentals.',
-        Medium:   'Always serves Medium puzzles — balanced positional challenges.',
-        Hard:     'Always serves Hard puzzles — advanced positional and imbalance evaluation.',
+        Adaptive: 'Puzzles adjust to your current PR, balancing attainable evaluations with positions that stretch your judgment. Recommended for most training sessions.',
+        Easy:     'Uses clearer advantages and easier-to-spot imbalances. Ideal for building confidence in the fundamental positional signals that should stand out quickly.',
+        Medium:   'Uses strategically richer positions where activity, space, structure, and king safety must be weighed together before making your call.',
+        Hard:     'Uses quieter, competing imbalances where the evaluation may depend on long-term coordination, initiative, and recognizing the more durable plan.',
     };
     desc.textContent = descriptions[active] || '';
 }
+
+// ── Difficulty panel (wide left training column) ───────────────────────────
+function updateDifficultyPanelUI() {
+    const active = difficultyOverride || 'Adaptive';
+    document.querySelectorAll('.diff-panel-btn').forEach(btn => {
+        const isActive = btn.dataset.diff === active;
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-pressed', String(isActive));
+    });
+    const desc = document.getElementById('diff-panel-desc');
+    if (desc) {
+        const descriptions = {
+            Adaptive: 'Adaptive selects positions around your current Positional Rating, giving you a steady mix of attainable and stretching evaluations. It is the recommended default for most training sessions.',
+            Easy:     'Easy positions usually offer clearer structural or material clues. Use this mode to reinforce the basic positional signals that should be visible in your first impression.',
+            Medium:   'Medium positions ask you to compare several meaningful factors—activity, space, pawn structure, and king safety—before deciding which side has the better game.',
+            Hard:     'Hard positions contain quieter, competing imbalances. Your judgment may depend on long-term coordination, initiative, and recognizing which side has the more durable strategic plan.',
+        };
+        desc.textContent = descriptions[active] || '';
+    }
+}
+window.updateDifficultyPanelUI = updateDifficultyPanelUI;
 
 window.openSettings = function() {
     const modal = document.getElementById('settings-modal');
@@ -801,7 +1280,7 @@ function populateStatsModal() {
     const diffDisplay = isProvisionalMode()
         ? `Provisional ${Math.min(totalPuzzles + 1, PROVISIONAL_PUZZLES)}/${PROVISIONAL_PUZZLES}`
         : difficultyOverride
-        ? `${difficultyOverride} (Override)`
+        ? difficultyOverride
         : activeDiff;
     setText('stat-difficulty', diffDisplay);
     setText('stat-best-streak', bestStreak > 0 ? `${bestStreak} ✓` : '—');
@@ -1235,6 +1714,8 @@ document.addEventListener('keydown', function(event) {
         closeSidebar();
         window.closeSettings && window.closeSettings();
         window.closeStats    && window.closeStats();
+        window.closeAchievements && window.closeAchievements();
+        window.closePOTD && window.closePOTD();
     }
 });
 
@@ -1456,12 +1937,20 @@ window.submitPOTD = async function(answer) {
     await set(votesRef, votes);
     potdData.votes = votes;
 
-    // Save user's answer
-    await set(ref(db, `users/${currentUID}/potd/${today}`), {
+    // Save user's answer.
+    const dailyResult = {
         answer:  answer,
         correct: answer === potdData.correctAnswer,
         ts:      Date.now(),
-    });
+    };
+    await set(ref(db, `users/${currentUID}/potd/${today}`), dailyResult);
+    dailyPuzzleHistory[today] = dailyResult;
+
+    // A Daily Puzzle also represents a genuine training day, so update the
+    // compact activity counters before checking Daily / Consistency milestones.
+    recordPuzzleActivity();
+    await saveStatsToFirebase();
+    await checkAchievements({ refreshRank: false });
 
     potdAnswered   = true;
     potdUserAnswer = answer;

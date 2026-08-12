@@ -205,6 +205,25 @@
             letter-spacing: 0.01em;
         }
         .lb-row.rank-1 .lb-username { color: var(--yellow); }
+        .lb-username { min-width: 0; }
+        .lb-og-banner {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+            padding: 3px 7px;
+            border: 1px solid var(--yellow-line);
+            background: linear-gradient(135deg, rgba(255,212,0,0.18), rgba(255,212,0,0.05));
+            color: var(--yellow);
+            font-family: var(--font-mono);
+            font-size: 0.56rem;
+            font-weight: 900;
+            letter-spacing: 0.12em;
+            line-height: 1;
+            text-transform: uppercase;
+            box-shadow: 0 0 14px rgba(255,212,0,0.12);
+        }
+        .lb-og-banner::before { content: '★'; font-size: 0.64rem; line-height: 1; }
 
         /* ── PR cell ─────────────────────────────────────────────────────────── */
         .lb-pr {
@@ -351,6 +370,10 @@
             <a href="leaderboard.html" class="active">Leaderboard</a>
             <a href="credits.html">Credits</a>
             <a href="info.html">Information</a>
+            <button id="potd-nav-btn" class="potd-nav-btn" onclick="openPOTD()" aria-label="Puzzle of the Day" title="Puzzle of the Day">
+                <span class="potd-nav-icon">📅</span>
+                <span class="potd-nav-label">Daily</span>
+            </button>
         </nav>
         <div class="topbar-right">
             <div id="user-badge" style="display:none;">
@@ -417,7 +440,7 @@
     </div>
 
     <script type="module">
-        import { initializeApp }                       from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+        import { initializeApp, getApp, getApps }      from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
         import { getDatabase, ref, get, onValue }      from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
@@ -432,11 +455,27 @@
             measurementId:     "G-M63L8MVR6Z"
         };
 
-        const app  = initializeApp(firebaseConfig);
+        const app  = getApps().length ? getApp() : initializeApp(firebaseConfig);
         const db   = getDatabase(app);
         const auth = getAuth(app);
 
         let currentUID = null;
+        // OG recognition is reserved for accounts created from August 1, 2025
+        // through August 1, 2026 inclusive.
+        const OG_ACCOUNT_START_AT = Date.UTC(2025, 7, 1);
+        const OG_ACCOUNT_END_EXCLUSIVE = Date.UTC(2026, 7, 2);
+        // Account-specific overrides take precedence over the fixed date window.
+        const OG_MANUAL_EXCLUSIONS = new Set(['ronit', 'entyalt']);
+        const OG_MANUAL_INCLUSIONS = new Set(['shaurya']);
+
+        function isOGAccount(createdAt, username) {
+            const accountKey = String(username || '').trim().toLowerCase();
+            if (OG_MANUAL_INCLUSIONS.has(accountKey)) return true;
+            if (OG_MANUAL_EXCLUSIONS.has(accountKey)) return false;
+            return Number.isFinite(createdAt)
+                && createdAt >= OG_ACCOUNT_START_AT
+                && createdAt < OG_ACCOUNT_END_EXCLUSIVE;
+        }
 
         // ── Auth gate ─────────────────────────────────────────────────────────
         // Guests can view the public leaderboard without signing in — only
@@ -479,16 +518,21 @@
                     return;
                 }
 
-                // Build array from Firebase snapshot
+                // Build array from Firebase snapshot. OG recognition is awarded
+                // to accounts created within the fixed August 2025–August 1, 2026 window.
                 const raw = snapshot.val();
-                const players = Object.entries(raw).map(([uid, data]) => ({
-                    uid,
-                    username:     data.username    || 'Anonymous',
-                    pr:           data.pr          ?? 500,
-                    totalPuzzles: data.totalPuzzles ?? 0,
-                    correctCount: data.correctCount ?? 0,
-                    wrongCount:   data.wrongCount   ?? 0,
-                }));
+                const players = Object.entries(raw).map(([uid, data]) => {
+                    const createdAt = Number(data.createdAt);
+                    return {
+                        uid,
+                        username:     data.username    || 'Anonymous',
+                        pr:           data.pr          ?? 500,
+                        totalPuzzles: data.totalPuzzles ?? 0,
+                        correctCount: data.correctCount ?? 0,
+                        wrongCount:   data.wrongCount   ?? 0,
+                        isOG:         isOGAccount(createdAt, data.username),
+                    };
+                });
 
                 // Sort highest PR first; tie-break by most puzzles played
                 players.sort((a, b) => b.pr - a.pr || b.totalPuzzles - a.totalPuzzles);
@@ -535,8 +579,9 @@
                     <div class="lb-name-cell">
                         <div class="lb-avatar">${initial}</div>
                         <div class="lb-username">${escHtml(p.username)}</div>
+                        ${p.isOG ? '<span class="lb-og-banner" title="Created a ChessIQ account between August 2025 and August 1, 2026" aria-label="ChessIQ OG">OG</span>' : ''}
                     </div>
-                    <div class="lb-pr">${p.pr.toLocaleString()}</div>
+                    <div class="lb-pr">${p.pr}</div>
                     <div class="lb-puzzles">${p.totalPuzzles.toLocaleString()}</div>
                     <div class="lb-accuracy ${accClass}">${accDisplay}</div>
                 </div>`;

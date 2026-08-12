@@ -25,6 +25,18 @@
         <div class="toast-progress"></div>
     </div>
 
+    <!-- ── Achievement unlock toast ─────────────────────────────────────────── -->
+    <div id="achievement-toast" role="status" aria-live="polite" aria-atomic="true">
+        <div class="achievement-toast-icon" id="achievement-toast-icon" aria-hidden="true"></div>
+        <div class="achievement-toast-body">
+            <div class="achievement-toast-kicker" id="achievement-toast-rarity">Achievement unlocked</div>
+            <div class="achievement-toast-title" id="achievement-toast-title">New Achievement</div>
+            <div class="achievement-toast-desc" id="achievement-toast-desc">Your training progress has been recognized.</div>
+        </div>
+        <button class="achievement-toast-close" onclick="dismissAchievementToast()" aria-label="Dismiss achievement notification">×</button>
+        <div class="achievement-toast-progress"></div>
+    </div>
+
     <!-- ── 3D ambient scene (three.js) ─────────────────────────────────────── -->
     <canvas id="bg-canvas" aria-hidden="true"></canvas>
     <div id="bg-vignette" aria-hidden="true"></div>
@@ -100,6 +112,9 @@
             <button id="stats-btn" class="icon-btn" onclick="openStats()" aria-label="Statistics" title="Statistics">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
             </button>
+            <button id="achievements-btn" class="icon-btn" onclick="openAchievements()" aria-label="Achievements" title="Achievements">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0V4Z"/><path d="M8 6H4v1a4 4 0 0 0 4 4M16 6h4v1a4 4 0 0 1-4 4"/><path d="M12 13v4M9 20h6M10 17h4"/></svg>
+            </button>
             <button id="settings-btn" class="icon-btn" onclick="openSettings()" aria-label="Settings" title="Settings">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.56V21a2 2 0 0 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.56V3a2 2 0 0 1 4 0v.09a1.7 1.7 0 0 0 1 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9v0a1.7 1.7 0 0 0 1.56 1H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
             </button>
@@ -137,6 +152,65 @@
 
     <!-- ── Main layout ─────────────────────────────────────────────────────── -->
     <main class="main-content" id="main-game">
+
+        <!-- ── Difficulty Panel (leftmost column) ─────────────────────────── -->
+        <section id="difficulty-panel" class="reveal">
+            <div class="diff-panel-header">
+                <div class="diff-panel-eyebrow">Training mode</div>
+                <h3 class="diff-panel-title">Choose your challenge</h3>
+            </div>
+
+            <div class="diff-panel-cards">
+
+                <button class="diff-panel-btn active" data-diff="Adaptive" onclick="setDifficultyOverride('Adaptive')">
+                    <span class="diff-panel-btn-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </span>
+                    <span class="diff-panel-btn-body">
+                        <span class="diff-panel-btn-name">Adaptive</span>
+                        <span class="diff-panel-btn-sub">Automatically follows your Positional Rating</span>
+                    </span>
+                    <span class="diff-panel-btn-tag diff-panel-tag-adaptive">AUTO</span>
+                </button>
+
+                <button class="diff-panel-btn" data-diff="Easy" onclick="setDifficultyOverride('Easy')">
+                    <span class="diff-panel-btn-icon diff-panel-icon-easy">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                    </span>
+                    <span class="diff-panel-btn-body">
+                        <span class="diff-panel-btn-name">Easy</span>
+                        <span class="diff-panel-btn-sub">Clearer imbalances · 0–1,000 Rating</span>
+                    </span>
+                    <span class="diff-panel-btn-tag diff-panel-tag-easy">LOW RISK</span>
+                </button>
+
+                <button class="diff-panel-btn" data-diff="Medium" onclick="setDifficultyOverride('Medium')">
+                    <span class="diff-panel-btn-icon diff-panel-icon-medium">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    </span>
+                    <span class="diff-panel-btn-body">
+                        <span class="diff-panel-btn-name">Medium</span>
+                        <span class="diff-panel-btn-sub">Deeper judgment · 1,000–1,600 Rating</span>
+                    </span>
+                    <span class="diff-panel-btn-tag diff-panel-tag-medium">BALANCED</span>
+                </button>
+
+                <button class="diff-panel-btn" data-diff="Hard" onclick="setDifficultyOverride('Hard')">
+                    <span class="diff-panel-btn-icon diff-panel-icon-hard">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
+                    </span>
+                    <span class="diff-panel-btn-body">
+                        <span class="diff-panel-btn-name">Hard</span>
+                        <span class="diff-panel-btn-sub">Subtle trade-offs · 1,600+ Rating</span>
+                    </span>
+                    <span class="diff-panel-btn-tag diff-panel-tag-hard">HIGH RISK</span>
+                </button>
+
+            </div>
+
+            <p class="diff-panel-desc" id="diff-panel-desc">Adaptive selects positions around your current Positional Rating, giving you a steady mix of attainable and stretching evaluations. Recommended for most training sessions.</p>
+        </section>
+
         <section id="left-panel" class="reveal">
             <div id="pr-display">
                 <div class="pr-top">
@@ -147,7 +221,6 @@
                 </div>
                 <div class="pr-value" id="pr-value">—</div>
                 <div class="pr-sub" id="pr-puzzles">0 puzzles played</div>
-                <div id="difficulty-override-badge" class="difficulty-override-badge" style="display:none;"></div>
                 <div id="pr-delta" class="pr-delta"></div>
                 <div class="pr-scanline"></div>
             </div>
@@ -322,50 +395,6 @@
 
             </div>
 
-            <!-- ── Difficulty Mode — full width ────────────────────────────── -->
-            <div class="modal-section">
-                <div class="settings-diff-header">
-                    <h3>Difficulty Mode</h3>
-                    <span class="settings-diff-subhead">Adaptive matches your PR automatically. Override to target a fixed level.</span>
-                </div>
-
-                <div class="diff-option-grid diff-option-grid--wide">
-                    <button class="diff-option-btn active" data-diff="Adaptive" onclick="setDifficultyOverride('Adaptive')">
-                        <span class="diff-option-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
-                        </span>
-                        <span class="diff-option-name">Adaptive</span>
-                        <span class="diff-option-tag">Default</span>
-                        <span class="diff-option-desc">Difficulty scales with your rating. Keeps puzzles consistently challenging as you improve.</span>
-                    </button>
-                    <button class="diff-option-btn" data-diff="Easy" onclick="setDifficultyOverride('Easy')">
-                        <span class="diff-option-icon diff-easy">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-                        </span>
-                        <span class="diff-option-name">Easy</span>
-                        <span class="diff-option-tag diff-easy-tag">Beginner</span>
-                        <span class="diff-option-desc">Positions decided by clear material imbalances. Trains the basics of piece counting and simple advantages.</span>
-                    </button>
-                    <button class="diff-option-btn" data-diff="Medium" onclick="setDifficultyOverride('Medium')">
-                        <span class="diff-option-icon diff-medium">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                        </span>
-                        <span class="diff-option-name">Medium</span>
-                        <span class="diff-option-tag diff-medium-tag">Intermediate</span>
-                        <span class="diff-option-desc">Material is closer to equal. Requires reading space, king safety, and piece coordination to judge the position.</span>
-                    </button>
-                    <button class="diff-option-btn" data-diff="Hard" onclick="setDifficultyOverride('Hard')">
-                        <span class="diff-option-icon diff-hard">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
-                        </span>
-                        <span class="diff-option-name">Hard</span>
-                        <span class="diff-option-tag diff-hard-tag">Advanced</span>
-                        <span class="diff-option-desc">Material is equal. The advantage lies in subtle positional factors — outposts, pawn structure, initiative, and long-term piece activity.</span>
-                    </button>
-                </div>
-                <p class="diff-override-desc" id="diff-override-desc">Puzzles automatically match your current PR. Recommended for most players.</p>
-            </div>
-
             <!-- ── Bottom 2-col row: Display + About ────────────────────────── -->
             <div class="settings-col-row settings-col-row--last">
 
@@ -380,7 +409,7 @@
                 <div class="modal-section settings-col-half">
                     <h3>About</h3>
                     <ul class="modal-list">
-                        <li><strong>Version</strong> — ChessIQ v1.05</li>
+                        <li><strong>Version</strong> — ChessIQ v1.3</li>
                         <li><strong>Status</strong> — Beta, active development</li>
                     </ul>
                 </div>
@@ -514,6 +543,39 @@
 
             <button class="got-it-btn" onclick="closeStats()">Close</button>
         </div>
+    </div>
+
+    <!-- ── Achievements Modal ───────────────────────────────────────────────── -->
+    <div id="achievements-modal" onclick="if(event.target===this) closeAchievements()" role="presentation">
+        <section class="modal-content achievements-modal-content" role="dialog" aria-modal="true" aria-labelledby="achievements-title">
+            <button class="modal-close-btn" onclick="closeAchievements()" aria-label="Close achievements">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+            </button>
+
+            <div class="achievements-heading">
+                <div class="achievements-heading-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0V4Z"/><path d="M8 6H4v1a4 4 0 0 0 4 4M16 6h4v1a4 4 0 0 1-4 4"/><path d="M12 13v4M9 20h6M10 17h4"/></svg>
+                </div>
+                <div>
+                    <div class="achievements-eyebrow">Training milestones</div>
+                    <h2 id="achievements-title">Achievements</h2>
+                </div>
+            </div>
+
+            <div class="achievements-overview">
+                <div>
+                    <div class="achievements-count" id="achievements-count">0 / 25</div>
+                    <div class="achievements-count-label">Unlocked</div>
+                </div>
+                <div class="achievements-overview-progress" aria-label="Overall achievement progress">
+                    <div class="achievements-overview-track"><span id="achievements-overview-fill"></span></div>
+                    <span id="achievements-overview-pct">0%</span>
+                </div>
+            </div>
+
+            <p id="achievements-signin-note" class="achievements-signin-note" style="display:none;">Sign in to save achievement progress across devices.</p>
+            <div id="achievements-list" class="achievements-list" aria-live="polite"></div>
+        </section>
     </div>
 
     <!-- ── Puzzle of the Day Modal ────────────────────────────────────────── -->

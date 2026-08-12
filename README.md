@@ -1,4 +1,4 @@
-# ♟️ ChessIQ
+♟️ ChessIQ
 
 ChessIQ is a positional training tool designed for intermediate and advanced chess players who want to improve their ability to visualize, evaluate, and understand chess positions beyond tactics.
 
@@ -6,266 +6,377 @@ Instead of finding a forced move like in traditional tactical puzzles, ChessIQ c
 
 Think of ChessIQ as tactical puzzles for positional thinking.
 
-## ChessIQ's multiple uses ##
- - ChessIQ scales with your level. Beginners start by counting material — learning which side simply has more pieces — and that alone builds a foundation for reading positions. As your rating climbs, the puzzles shift toward what ChessIQ was originally built for: recognizing positional imbalances, space, piece activity, and structural advantages that don't show up in a piece count. One tool, two very different kinds of chess thinking, on a single continuous ladder.
+ChessIQ's multiple uses
 
-**Status:** ✅ v1.0 Official Release — actively developed with planned updates through v1.5 and beyond.
----
+ChessIQ scales with your level. Beginners start by counting material — learning which side simply has more pieces — and that alone builds a foundation for reading positions. As your rating climbs, the puzzles shift toward what ChessIQ was originally built for: recognizing positional imbalances, space, piece activity, and structural advantages that don't show up in a piece count. One tool, two very different kinds of chess thinking, on a single continuous ladder.
 
-## 🧠 Core Concept
+Status: ✅ v1.0 Official Release — actively developed with planned updates through v1.5 and beyond.
 
-- Analyze real chess positions without engine assistance
-- Evaluate the position using strategic concepts instead of tactical calculation
-- Decide whether White, Black, or neither holds the advantage
-- Receive instant Stockfish feedback
-- Learn from concise AI-generated explanations tailored to every position
-- Review the engine's best move and strategic plan
-- Compare your answer with the ChessIQ community
-- Improve your positional intuition through repeated practice
+🧠 Core Concept
 
--- 
-## 🚀 Main Features
+Analyze real chess positions without engine assistance
 
-### 🎯 Position Puzzler(Core Product)
+Evaluate the position using strategic concepts instead of tactical calculation
 
-- Hundreds of real-game positions imported from Lichess
-- Evaluate whether White is better, Black is better, or the position is equal
-- Train positional understanding rather than tactical calculation
-- Position Rating (PR) matchmaking that scales puzzle difficulty to your playing strength
-- Instant Stockfish-powered evaluation after every guess
-- Randomized puzzle selection for endless practice
+Decide whether White, Black, or neither holds the advantage
 
-### 📊 Personalized Training
+Receive instant Stockfish feedback
 
-- Personal Position Rating (PR)
-- Detailed statistics dashboard
-- Puzzle history and training log
-- Rating progression tracking
-- Global leaderboard
+Learn from concise AI-generated explanations tailored to every position
 
-### 🤖 AI Position Explanations
+Review the engine's best move and strategic plan
 
-Every puzzle includes a pre-generated AI explanation, allowing you to immediately understand *why* one side is better—not just what Stockfish says.
+Compare your answer with the ChessIQ community
+
+Improve your positional intuition through repeated practice
+
+--
+
+🚀 Main Features
+
+🎯 Position Puzzler(Core Product)
+
+Hundreds of real-game positions imported from Lichess
+
+Evaluate whether White is better, Black is better, or the position is equal
+
+Train positional understanding rather than tactical calculation
+
+Position Rating (PR) matchmaking that scales puzzle difficulty to your playing strength
+
+Instant Stockfish-powered evaluation after every guess
+
+Randomized puzzle selection for endless practice
+
+📊 Personalized Training
+
+Personal Position Rating (PR)
+
+Detailed statistics dashboard
+
+Puzzle history and training log
+
+Rating progression tracking
+
+Global leaderboard
+
+🤖 AI Position Explanations
+
+Every puzzle includes a pre-generated AI explanation, allowing you to immediately understand why one side is better—not just what Stockfish says.
 
 Each explanation includes:
 
-- Why the evaluation favors one side
-- Key positional themes involved
-- A common mistake intermediate players often make
-- The engine's best move with a short explanation
-- A concise strategic plan for converting the advantage
+Why the evaluation favors one side
 
+Key positional themes involved
 
-### 🌍 Community Results
+A common mistake intermediate players often make
+
+The engine's best move with a short explanation
+
+A concise strategic plan for converting the advantage
+
+🌍 Community Results
 
 After completing a puzzle, compare your answer with the rest of the ChessIQ community.
 
-See exactly what percentage of players selected **White**, **Equal**, or **Black**, allowing you to compare your positional intuition against other players around the world. Challenging positions often reveal surprisingly split opinions, making every puzzle feel like part of a larger community experiment.
+See exactly what percentage of players selected White, Equal, or Black, allowing you to compare your positional intuition against other players around the world. Challenging positions often reveal surprisingly split opinions, making every puzzle feel like part of a larger community experiment.
 
-### 🧩 Daily Puzzle
+🧩 Daily Puzzle
 
 Every day, all players receive the same featured positional challenge.
 
 Compete against the community on a single position each day while tracking your daily progress and comparing your evaluation with everyone else's.
 
-## 🕹️ How to Play
+🕹️ How to Play
 
-1. Analyze the given chess position.
-2. Evaluate the position using positional concepts such as:
-   - Material
-   - Piece activity
-   - Pawn structure
-   - Space
-   - King safety
-   - Initiative
-3. Submit your evaluation:
-   - ♔ White Advantage
-   - ⚖️ Equal Position
-   - ♚ Black Advantage
-4. Review the engine evaluation and community responses.
-5. Continue improving your Position Rating.
+Analyze the given chess position.
 
+Evaluate the position using positional concepts such as:
 
+Material
 
-## 🗂️ Version History and Roadmap
+Piece activity
 
-### ✅ Released Versions
+Pawn structure
 
-#### v0.1 – Initial HTML Update 📱
+Space
 
-- Added SVG chess positions
-- Python-based evaluation preprocessing
+King safety
 
-#### v0.2 – Database Update 💻
+Initiative
 
-- Connected evaluations and positions to Firebase
-- Removed the need for continuous Python execution
-- Frontend dynamically loads data using JavaScript, CSS, and HTML
+Submit your evaluation:
 
-#### v0.25 – Gamification Update 🎮
+♔ White Advantage
 
-- Introduced the guessing mechanic
-- Implemented Stockfish-based evaluation thresholds
+⚖️ Equal Position
 
-#### v0.3 – First Fully Working Version 🥇
+♚ Black Advantage
 
-- Integrated real Lichess game data using Python’s berserk library
-- Positions exported to Firebase
-- Added a side-to-move indicator for realistic training
+Review the engine evaluation and community responses.
 
-#### v0.35 – Accessibility Update ❓
+Continue improving your Position Rating.
 
-- Added a help menu and startup guide
-- Improved onboarding and usability
 
-#### v0.4 – First Public Release 🌍
 
-- Published the application
-- Upgraded UI and UX across the entire app
-- Added credits and information pages
+🗂️ Version History and Roadmap
 
-#### v0.43 - UI fixes, Evaluation display 
- - Added a display of the exact evaluation after the user makes their guess, allowing for more reflection and learning opportunities of positional thinking
- - Upgraded UI across the whole app, including credits, info, and home pages all syncing in similar styles
- - Added a sidebar menu for future other products under ChessIQ
-<<<<<<< HEAD
+✅ Released Versions
 
+v0.1 – Initial HTML Update 📱
 
-#### v0.45 – Larger Dataset 📈
-- Expand the position database by almost 10x, from 100 to over 900. 
-- Increase positional diversity and coverage
+Added SVG chess positions
 
-#### v0.5 – Difficulty Modes Update 🧩
-- Introduce Easy, Medium, and Hard modes
-- Backend filtering by positional complexity using an [algorithm]
+Python-based evaluation preprocessing
 
+v0.2 – Database Update 💻
 
-### v0.6 - Primitive Point System 🥇
-- Localstorage-based primitive elo system
-- Complex mechanics and equations for computing elo based on streaks, confidence intervals, etc
+Connected evaluations and positions to Firebase
 
+Removed the need for continuous Python execution
 
+Frontend dynamically loads data using JavaScript, CSS, and HTML
 
+v0.2.5 – Gamification Update 🎮
 
+Introduced the guessing mechanic
 
-#### v0.8 - Full glow up of main play page
- - matches a vibrant theme - change-up from green theme to yellow/black blend of modern look. 
+Implemented Stockfish-based evaluation thresholds
 
+v0.3 – First Fully Working Version 🥇
 
-#### v0.85 - login-free play  + UI updates
- - players can play a bit of puzzles onload before hacing to login/create acc
- -smoother transitions of main pages
+Integrated real Lichess game data using Python’s berserk library
 
+Positions exported to Firebase
 
+Added a side-to-move indicator for realistic training
 
-#### v0.9 – Accounts and Leaderboards Full release👤 (June 2026) 
-- User accounts and authentication - [done]
-- Score tracking and long-term progress analytics[done]
-- Global leaderboards of PR(Positional Rating) already instated above in earlier updates[done]
-- Google integrations for logins[done]
-- Full statistics overview page[done]
+v0.3.5 – Accessibility Update ❓
 
+Added a help menu and startup guide
 
+Improved onboarding and usability
 
-## v0.95 - Time-based and point system upgrades, Stats page upgrade
- - More synced multiplayer point systems reliant on what difficulty puzzles, as well as time
- - Formula-based puzzle calculations
- - upgrade stats page to have specific logistics/trends based on time OR last 'x' puzzles completed, more specification for training purposes. 
-#### v1.0 – Full Release 🎉 (Jun 2026)
+v0.4 – First Public Release 🌍
 
-- Official launch
-- Complete feature set with polished performance and UX
-- MAJOR UI POLISH all around, transitios upgrade
-- security terms & privacy terms -
-- Lichess & Devpost & Chess.com Release
-- Last 'x' puzzles training log w/ details in stats page
-- Puzzle review log
-- Updated PR(Positional Rating Calculations) out based on relative puzzle difficulty and accuracy
+Published the application
 
+Upgraded UI and UX across the entire app
 
+Added credits and information pages
 
-### 🌍v1.05- User experience & Community Results update(Jul 2026)
- - Better Transitions in UI
- - Dark mode/light mode toggle
- - Community results after each puzzle showing how others faired against this puzzle. 
- - Improved settings UI
+v0.4.3 - UI fixes, Evaluation display
 
-#### V1.08 - Adaptive + Manual Difficulty Update(jul 206)
- - Difficulty override option in Settings, where players can choose which difficulty puzzles they want, for specialized training rather than adaptive PR-based difficulty
- - Adaptive option still available for long grinds
+Added a display of the exact evaluation after the user makes their guess, allowing for more reflection and learning opportunities of positional thinking
 
+Upgraded UI across the whole app, including credits, info, and home pages all syncing in similar styles
 
+Added a sidebar menu for future other products under ChessIQ<<<<<<< HEAD
 
+v0.4.5 – Larger Dataset 📈
 
+Expand the position database by almost 10x, from 100 to over 900.
 
-#### v1.2 – AI-Based Explanations & UI Revamp (August 2026) 🤖
+Increase positional diversity and coverage
 
-- Added pre-cached AI-generated explanations for every stored position, displayed immediately after each puzzle.
-- Learn *why* one side is better through concise positional analysis rather than just seeing the engine evaluation.
-- AI highlights key positional themes (piece activity, space, pawn structure, king safety, initiative, etc.) to reinforce long-term pattern recognition.
-- Each explanation includes the best move, common mistakes, and strategic plans to help players improve their positional understanding beyond individual puzzles.
-- After a puzzle collapsable menu to save UI space
-- Improved Navbar
+v0.5 – Difficulty Modes Update 🧩
 
-### 🔜 Planned Updates ####
+Introduce Easy, Medium, and Hard modes
 
-#### v1.3 – Adaptive Puzzle Ratings (August 2026) 📈
+Backend filtering by positional complexity using an [algorithm]
 
-- Introduce adaptive ratings for every puzzle, allowing difficulty to evolve over time based on real player performance.
-- Initial puzzle ratings are estimated using AI positional analysis and engine-derived complexity, providing a strong starting point from day one.
-- As more users solve each puzzle, ratings automatically adjust to reflect actual solve rates, accuracy, and player strength.
-- Puzzles can naturally move between Easy, Medium, and Hard categories as the community calibrates their true difficulty, creating a continually improving training experience.
+v0.6 - Primitive Point System 🥇
 
+Localstorage-based primitive elo system
 
-#### v1.4 - Achievements update(2026)
-   - Users collect achievements as they solve
-   - All collected and notcollected achievements visible on a page
-   - rewards player for Personal Best
+Complex mechanics and equations for computing elo based on streaks, confidence intervals, etc
 
-#### v1.5 - New gamemode: Regular & blitz-paced modes update
- - On homescreen, ability to switch between regular, rated play
- - OR a new gamemode: Rush(3 or 5 min), where you try to get the most amt of puzzles correct in the limited time as possible. 
- - Integrations with global leaderboard - seperate leaderboard for Rush
 
 
 
-#### v1.6 - Friends & Personalization Update(2026) 👱
- - Ability to add friends
- - Leaderboards within friends
- - Personalization such as dark/light mode, super beginner mode
- - Daily rewards, streaks, etc
 
+v0.8 - Full glow up of main play page
 
+matches a vibrant theme - change-up from green theme to yellow/black blend of modern look.
 
-### IN THE NEAR FUTURE: COMING TO MOBILE DEVICES!!! --> Both Android & Apple
+v0.8.5 - login-free play  + UI updates
 
-## 💡 Future Ideas
+players can play a bit of puzzles onload before hacing to login/create acc-smoother transitions of main pages
 
-- Position Accuracy heatmap after user guessed; shows the percent of people that put white equal or black after guessing --> good for user retainment
-- Player recognition + reward for getting a personal best!
-- Crowdsourcing: Randomly after a certain amount of puzzles completed, survey the player on what convinced them of the answer - material, position, etc --> not for ALL though
-- Two main modes of the game: Normal rating play, unrated puzzle streak timed(3min, 5min )- see how much you can get 
-- 📚 Positional theme tagging (isolated pawns, bishop pair, space advantage)
-- 🎓 Beginner mode with post-guess explanations
-- 🔁 Daily challenge positions → revealed at midnight, distributions also revealed
-- (1.5+) Evaluation Bar Guesser instead of white/black/equal
-- Positional theme tagging on puzzles in the model; Will take a while to pre-train
-- 
-- 🧠 Optional engine explanation after each guess
-- 🌙 Dark mode and board theme customization
-- 🏆 Add a friend system after multiplayer: →  Global or friends-only leaderboards
-- 📱 (2027) → Mobile-first UI optimizations
 
 
+v0.9 – Accounts and Leaderboards Full release👤 (June 2026)
 
+User accounts and authentication - [done]
 
+Score tracking and long-term progress analytics[done]
 
----
+Global leaderboards of PR(Positional Rating) already instated above in earlier updates[done]
 
-## 🙏 Credits
+Google integrations for logins[done]
 
-- Idea and Development: Boandme
-- Testing: EntyXD
-- Icons and Symbols: UXWing
-- Data: Lichess API
+Full statistics overview page[done]
+
+
+
+v0.9.5 - Time-based and point system upgrades, Stats page upgrade
+
+More synced multiplayer point systems reliant on what difficulty puzzles, as well as time
+
+Formula-based puzzle calculations
+
+upgrade stats page to have specific logistics/trends based on time OR last 'x' puzzles completed, more specification for training purposes.
+
+v1.0 – Full Release 🎉 (Jun 2026)
+
+Official launch
+
+Complete feature set with polished performance and UX
+
+MAJOR UI POLISH all around, transitios upgrade
+
+security terms & privacy terms -
+
+Lichess & Devpost & Chess.com Release
+
+Last 'x' puzzles training log w/ details in stats page
+
+Puzzle review log
+
+Updated PR(Positional Rating Calculations) out based on relative puzzle difficulty and accuracy
+
+
+
+🌍v1.0.5- User experience & Community Results update(Jul 2026)
+
+Better Transitions in UI
+
+Dark mode/light mode toggle
+
+Community results after each puzzle showing how others faired against this puzzle.
+
+Improved settings UI
+
+V1.08 - Adaptive + Manual Difficulty Update(jul 206)
+
+Difficulty override option in Settings, where players can choose which difficulty puzzles they want, for specialized training rather than adaptive PR-based difficulty
+
+Adaptive option still available for long grinds
+
+
+
+
+
+v1.2 – AI-Based Explanations & UI Revamp (August 2026) 🤖
+
+Added pre-cached AI-generated explanations for every stored position, displayed immediately after each puzzle.
+
+Learn why one side is better through concise positional analysis rather than just seeing the engine evaluation.
+
+AI highlights key positional themes (piece activity, space, pawn structure, king safety, initiative, etc.) to reinforce long-term pattern recognition.
+
+Each explanation includes the best move, common mistakes, and strategic plans to help players improve their positional understanding beyond individual puzzles.
+
+After a puzzle collapsable menu to save UI space
+
+Improved Navbar
+
+v1.3 - Achievements update(Aug 2026)
+
+Users collect achievements as they solve
+
+All collected and notcollected achievements visible on a page
+
+rewards player for Personal Best
+
+v1.3.5 - PR upgrate + Difficulty Selection re-iteration
+
+Bringing back difficulty selection in the main menu as a third column
+
+Allowing advanced users to calibrate to their difficulty early on without requiring PR grinding
+
+Improving PR algoriths
+
+🔜 Planned Updates
+
+v1.4 – Adaptive Puzzle Ratings (August 2026) 📈
+
+Introduce adaptive ratings for every puzzle, allowing difficulty to evolve over time based on real player performance.
+
+Initial puzzle ratings are estimated using AI positional analysis and engine-derived complexity, providing a strong starting point from day one.
+
+As more users solve each puzzle, ratings automatically adjust to reflect actual solve rates, accuracy, and player strength.
+
+Puzzles can naturally move between Easy, Medium, and Hard categories as the community calibrates their true difficulty, creating a continually improving training experience.
+
+
+
+v1.5 - New gamemode: Regular & blitz-paced modes update - ChessIQ RANKED!
+
+On homescreen, ability to switch between regular, rated play
+
+OR a new gamemode: Rush(3 or 5 min), where you try to get the most amt of puzzles correct in the limited time as possible.
+
+Integrations with global leaderboard - seperate leaderboard for Rush
+
+
+
+v1.6 - Friends & Personalization Update(2026) 👱
+
+Ability to add friends
+
+Leaderboards within friends
+
+Personalization such as dark/light mode, super beginner mode
+
+Daily rewards, streaks, etc
+
+
+
+IN THE NEAR FUTURE: COMING TO MOBILE DEVICES!!! --> Both Android & Apple
+
+💡 Future Ideas
+
+Position Accuracy heatmap after user guessed; shows the percent of people that put white equal or black after guessing --> good for user retainment
+
+Player recognition + reward for getting a personal best!
+
+Crowdsourcing: Randomly after a certain amount of puzzles completed, survey the player on what convinced them of the answer - material, position, etc --> not for ALL though
+
+Two main modes of the game: Normal rating play, unrated puzzle streak timed(3min, 5min )- see how much you can get
+
+📚 Positional theme tagging (isolated pawns, bishop pair, space advantage)
+
+🎓 Beginner mode with post-guess explanations
+
+🔁 Daily challenge positions → revealed at midnight, distributions also revealed
+
+(1.5+) Evaluation Bar Guesser instead of white/black/equal
+
+Positional theme tagging on puzzles in the model; Will take a while to pre-train
+
+
+
+🧠 Optional engine explanation after each guess
+
+🌙 Dark mode and board theme customization
+
+🏆 Add a friend system after multiplayer: →  Global or friends-only leaderboards
+
+📱 (2027) → Mobile-first UI optimizations
+
+
+
+
+
+🙏 Credits
+
+Idea and Development: Boandme
+
+Testing: EntyXD
+
+Icons and Symbols: UXWing
+
+Data: Lichess API
 
