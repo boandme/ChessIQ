@@ -517,7 +517,7 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
 .game-instruction {
     display: flex; align-items: center; gap: 16px;
     padding: 12px 26px;
-    width: 100%; max-width: 1120px;
+    width: 100%; max-width: 1380px;
     margin-bottom: 18px;
     background: linear-gradient(90deg, var(--surface) 0%, var(--surface-2) 100%);
     border: 1px solid var(--line);
@@ -553,10 +553,10 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    align-items: stretch;
+    align-items: flex-start;
     gap: 22px;
     width: 100%;
-    max-width: 1120px;
+    max-width: 1380px;
 }
 
 #left-panel, #right-panel {
@@ -1680,7 +1680,7 @@ svg.board, #board svg {
    ══════════════════════════════════════════════════════════════════════════ */
 /* POTD card on homepage */
 .potd-card {
-    width: 100%; max-width: 1120px;
+    width: 100%; max-width: 1380px;
     background: var(--surface);
     border: 1px solid var(--line-bright);
     border-left: 4px solid var(--yellow);
@@ -1835,28 +1835,6 @@ svg.board, #board svg {
 /* ══════════════════════════════════════════════════════════════════════════
    DIFFICULTY OVERRIDE
    ══════════════════════════════════════════════════════════════════════════ */
-
-/* Badge on PR card */
-.difficulty-override-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-family: var(--font-mono);
-    font-size: 0.62rem;
-    font-weight: 800;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    padding: 3px 9px;
-    background: var(--yellow-soft);
-    border: 1px solid var(--yellow-line);
-    color: var(--yellow);
-    margin-top: 4px;
-    animation: badge-in 0.25s var(--ease-out);
-}
-@keyframes badge-in {
-    from { opacity: 0; transform: translateY(-4px); }
-    to   { opacity: 1; transform: none; }
-}
 
 /* Settings: difficulty option grid */
 .diff-option-grid {
@@ -2051,4 +2029,734 @@ svg.board, #board svg {
 }
 @media (max-width: 420px) {
     .diff-option-grid--wide { grid-template-columns: 1fr; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ACHIEVEMENTS
+   ══════════════════════════════════════════════════════════════════════════ */
+#achievements-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 2010;
+    padding: 38px 20px;
+    background: rgba(4,4,6,0.74);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    justify-content: center;
+    align-items: center;
+}
+
+.achievements-modal-content {
+    width: 760px;
+    max-width: 96vw;
+    max-height: calc(100vh - 76px);
+    overflow-y: auto;
+    padding: 32px 32px 28px;
+    scrollbar-color: var(--yellow-deep) var(--surface-2);
+    scrollbar-width: thin;
+}
+.achievements-modal-content::-webkit-scrollbar { width: 8px; }
+.achievements-modal-content::-webkit-scrollbar-track { background: var(--surface-2); }
+.achievements-modal-content::-webkit-scrollbar-thumb { background: var(--yellow-deep); border: 2px solid var(--surface-2); }
+
+.achievements-heading {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-right: 44px;
+    margin-bottom: 18px;
+}
+.achievements-heading-icon {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    color: var(--yellow);
+    background: var(--yellow-soft);
+    border: 1px solid var(--yellow-line);
+    box-shadow: 0 0 18px rgba(255,212,0,0.12);
+    clip-path: polygon(16% 0, 100% 0, 100% 84%, 84% 100%, 0 100%, 0 16%);
+}
+.achievements-heading-icon svg { width: 24px; height: 24px; }
+.achievements-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--yellow);
+    margin-bottom: 2px;
+}
+.achievements-heading h2 {
+    text-align: left !important;
+    margin: 0;
+    font-size: 1.55rem;
+}
+
+.achievements-overview {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 22px;
+    padding: 18px 20px;
+    margin-bottom: 18px;
+    background: radial-gradient(120% 170% at 0% 0%, var(--surface-3), var(--bg-2) 75%);
+    border: 1px solid var(--line-bright);
+    border-left: 3px solid var(--yellow);
+}
+.achievements-count {
+    font-family: var(--font-mono);
+    font-size: 1.7rem;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.04em;
+    line-height: 1;
+}
+.achievements-count-label {
+    margin-top: 5px;
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    font-weight: 800;
+    color: var(--yellow);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+.achievements-overview-progress {
+    min-width: 205px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--yellow);
+}
+.achievements-overview-track {
+    flex: 1;
+    height: 8px;
+    overflow: hidden;
+    background: var(--bg);
+    border: 1px solid var(--line-bright);
+}
+.achievements-overview-track span {
+    display: block;
+    width: 0;
+    height: 100%;
+    background: var(--yellow);
+    box-shadow: 0 0 12px rgba(255,212,0,0.55);
+    transition: width 0.55s var(--ease-out);
+}
+.achievements-signin-note {
+    margin: -4px 0 18px;
+    padding: 10px 13px;
+    color: var(--text-dim);
+    background: var(--yellow-soft);
+    border: 1px solid var(--yellow-line);
+    font-size: 0.84rem;
+}
+
+.achievements-list { display: flex; flex-direction: column; gap: 24px; }
+.achievement-category { display: flex; flex-direction: column; gap: 10px; }
+.achievement-category-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+}
+.achievement-category-title {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+}
+.achievement-category-count {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-weight: 800;
+    color: var(--text-faint);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+.achievement-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+.achievement-card {
+    position: relative;
+    min-height: 148px;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr auto;
+    column-gap: 12px;
+    padding: 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    transition: transform 0.2s var(--ease-snap), border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.achievement-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    background: linear-gradient(105deg, transparent 43%, rgba(255,255,255,0.1) 50%, transparent 57%);
+    transform: translateX(-100%);
+}
+.achievement-card:hover { transform: translateY(-2px); border-color: var(--line-bright); background: var(--surface-3); }
+.achievement-card.is-unlocked { border-color: var(--rarity-color, var(--yellow-line)); }
+.achievement-card.is-unlocked:hover { box-shadow: 0 10px 24px rgba(0,0,0,0.22); }
+.achievement-card.is-locked { opacity: 0.7; }
+.achievement-card.is-legendary {
+    border-color: var(--yellow);
+    box-shadow: inset 0 0 0 1px rgba(255,212,0,0.14), 0 0 18px rgba(255,212,0,0.12);
+}
+.achievement-card.is-legendary.is-unlocked::after { opacity: 1; animation: achievement-sheen 4.6s ease-in-out infinite; }
+@keyframes achievement-sheen { 0%, 60%, 100% { transform: translateX(-120%); } 82% { transform: translateX(120%); } }
+
+.achievement-icon {
+    width: 40px;
+    height: 40px;
+    grid-row: span 2;
+    display: grid;
+    place-items: center;
+    color: var(--rarity-color, var(--text-faint));
+    background: var(--surface-3);
+    border: 1px solid var(--line-bright);
+    font-size: 1.18rem;
+    line-height: 1;
+    clip-path: polygon(17% 0, 100% 0, 100% 83%, 83% 100%, 0 100%, 0 17%);
+}
+.achievement-card.is-unlocked .achievement-icon {
+    background: color-mix(in srgb, var(--rarity-color, var(--yellow)) 16%, var(--surface-3));
+    border-color: color-mix(in srgb, var(--rarity-color, var(--yellow)) 45%, var(--line-bright));
+}
+.achievement-card.is-locked .achievement-icon { filter: grayscale(1); }
+.achievement-name {
+    min-width: 0;
+    padding-right: 4px;
+    font-family: var(--font-display);
+    font-size: 0.93rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.18;
+}
+.achievement-card.is-locked .achievement-name { color: var(--text-dim); }
+.achievement-description {
+    grid-column: 2;
+    margin-top: 4px;
+    color: var(--text-dim);
+    font-size: 0.76rem;
+    line-height: 1.35;
+}
+.achievement-card.is-locked .achievement-description { color: var(--text-faint); }
+.achievement-meta {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    align-self: end;
+    margin-top: 10px;
+}
+.achievement-rarity,
+.achievement-status {
+    font-family: var(--font-mono);
+    font-size: 0.61rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+}
+.achievement-rarity { color: var(--rarity-color, var(--text-faint)); }
+.achievement-status { color: var(--text-faint); }
+.achievement-card.is-unlocked .achievement-status { color: var(--ok); }
+.achievement-progress { grid-column: 1 / -1; margin-top: 10px; }
+.achievement-progress-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 5px;
+    color: var(--text-faint);
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-weight: 700;
+}
+.achievement-progress-value { color: var(--text-dim); }
+.achievement-card.is-unlocked .achievement-progress-value { color: var(--ok); }
+.achievement-progress-track {
+    height: 5px;
+    overflow: hidden;
+    background: var(--bg);
+    border: 1px solid var(--line);
+}
+.achievement-progress-fill {
+    display: block;
+    width: 0;
+    height: 100%;
+    background: var(--rarity-color, var(--yellow));
+    box-shadow: 0 0 8px var(--rarity-color, var(--yellow));
+    transition: width 0.65s var(--ease-out);
+}
+.achievement-card.is-locked .achievement-progress-fill { opacity: 0.55; }
+
+#achievement-toast {
+    position: fixed;
+    top: 168px;
+    left: 50%;
+    z-index: 3001;
+    width: 370px;
+    max-width: calc(100vw - 32px);
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+    padding: 15px 42px 14px 15px;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--toast-color, var(--yellow-line));
+    border-left: 3px solid var(--toast-color, var(--yellow));
+    box-shadow: 0 18px 48px rgba(0,0,0,0.48);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-50%) translateY(-18px);
+    transition: opacity 0.35s var(--ease-out), transform 0.35s var(--ease-out);
+}
+#achievement-toast.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+.achievement-toast-icon {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    display: grid;
+    place-items: center;
+    color: var(--toast-color, var(--yellow));
+    background: var(--yellow-soft);
+    border: 1px solid var(--toast-color, var(--yellow-line));
+    font-size: 1.1rem;
+    clip-path: polygon(18% 0, 100% 0, 100% 82%, 82% 100%, 0 100%, 0 18%);
+}
+.achievement-toast-body { min-width: 0; flex: 1; }
+.achievement-toast-kicker {
+    margin-bottom: 3px;
+    color: var(--toast-color, var(--yellow));
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+.achievement-toast-title { color: var(--text); font-family: var(--font-display); font-size: 0.96rem; font-weight: 700; line-height: 1.2; }
+.achievement-toast-desc { margin-top: 4px; color: var(--text-dim); font-size: 0.76rem; line-height: 1.35; }
+.achievement-toast-close {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    padding: 3px 6px;
+    border: 0;
+    background: transparent;
+    color: var(--text-faint);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}
+.achievement-toast-close:hover { color: var(--text); }
+.achievement-toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    width: 100%;
+    background: var(--toast-color, var(--yellow));
+}
+#achievement-toast.show .achievement-toast-progress { animation: achievement-toast-progress 4.5s linear forwards; }
+@keyframes achievement-toast-progress { from { width: 100%; } to { width: 0; } }
+
+@media (max-width: 560px) {
+    #achievements-modal { padding: 18px 10px; align-items: flex-start; overflow-y: auto; }
+    .achievements-modal-content { max-width: 100%; max-height: none; min-height: calc(100vh - 36px); padding: 28px 18px 22px; }
+    .achievements-overview { align-items: flex-start; flex-direction: column; gap: 14px; }
+    .achievements-overview-progress { width: 100%; min-width: 0; }
+    .achievement-grid { grid-template-columns: 1fr; }
+    #achievement-toast { top: 82px; }
+}
+@media (max-width: 420px) {
+    .achievements-heading-icon { width: 38px; height: 38px; }
+    .achievements-heading h2 { font-size: 1.34rem; }
+    .achievement-card { min-height: 142px; }
+    .achievement-category-header { align-items: flex-start; flex-direction: column; gap: 3px; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   DIFFICULTY PANEL — leftmost third column
+   ══════════════════════════════════════════════════════════════════════════ */
+
+#difficulty-panel {
+    flex: 0 0 220px;
+    min-width: 200px;
+    max-width: 240px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 20px 16px 18px;
+    position: relative;
+    align-self: flex-start;   /* don't stretch to full height of row */
+}
+
+/* Corner accents — match the existing panel style */
+#difficulty-panel::before {
+    content: ''; position: absolute; top: -1px; left: -1px;
+    width: 22px; height: 22px;
+    border-top: 2px solid var(--yellow); border-left: 2px solid var(--yellow);
+    pointer-events: none;
+}
+#difficulty-panel::after {
+    content: ''; position: absolute; bottom: -1px; right: -1px;
+    width: 22px; height: 22px;
+    border-bottom: 2px solid var(--yellow); border-right: 2px solid var(--yellow);
+    pointer-events: none;
+}
+
+/* ── Panel header ────────────────────────────────────────────────────────── */
+.diff-panel-header {
+    margin-bottom: 14px;
+}
+.diff-panel-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--yellow);
+    margin-bottom: 2px;
+}
+.diff-panel-title {
+    font-family: var(--font-display);
+    font-size: 1.0rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+/* ── Button stack ────────────────────────────────────────────────────────── */
+.diff-panel-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.diff-panel-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 11px;
+    background: var(--surface-2);
+    border: 1.5px solid var(--line);
+    color: var(--text-dim);
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.18s ease, border-color 0.18s ease, transform 0.15s var(--ease-snap);
+    clip-path: polygon(7% 0, 100% 0, 93% 100%, 0 100%);
+    width: 100%;
+    position: relative;
+}
+.diff-panel-btn:hover {
+    background: var(--surface-3);
+    border-color: var(--line-bright);
+    transform: translateX(3px);
+    color: var(--text);
+}
+.diff-panel-btn.active {
+    background: var(--yellow-soft);
+    border-color: var(--yellow-line);
+    color: var(--text);
+    box-shadow: inset 3px 0 0 var(--yellow);
+}
+
+/* Icon */
+.diff-panel-btn-icon {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    color: var(--text-faint);
+    transition: color 0.18s ease;
+}
+.diff-panel-btn-icon svg { width: 14px; height: 14px; }
+.diff-panel-btn.active .diff-panel-btn-icon { color: var(--yellow); }
+
+.diff-panel-icon-easy   { color: var(--ok) !important; }
+.diff-panel-icon-medium { color: var(--yellow) !important; }
+.diff-panel-icon-hard   { color: var(--bad) !important; }
+
+/* Text body */
+.diff-panel-btn-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    flex: 1;
+    min-width: 0;
+}
+.diff-panel-btn-name {
+    font-family: var(--font-display);
+    font-size: 0.84rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    line-height: 1;
+}
+.diff-panel-btn-sub {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--text-faint);
+    line-height: 1;
+}
+.diff-panel-btn.active .diff-panel-btn-sub { color: var(--yellow-deep); }
+
+/* Right-side tag chip */
+.diff-panel-btn-tag {
+    font-family: var(--font-mono);
+    font-size: 0.52rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border: 1px solid;
+    flex-shrink: 0;
+    opacity: 0.75;
+}
+.diff-panel-btn.active .diff-panel-btn-tag { opacity: 1; }
+
+.diff-panel-tag-adaptive { color: var(--text-faint);  border-color: var(--line-bright); }
+.diff-panel-tag-easy     { color: var(--ok);           border-color: rgba(198,255,66,0.3); }
+.diff-panel-tag-medium   { color: var(--yellow);       border-color: var(--yellow-line); }
+.diff-panel-tag-hard     { color: var(--bad);          border-color: rgba(255,77,77,0.35); }
+
+.diff-panel-btn.active.diff-panel-tag-adaptive { color: var(--text-dim); }
+
+/* ── Description line ────────────────────────────────────────────────────── */
+.diff-panel-desc {
+    font-family: var(--font-body);
+    font-size: 0.76rem;
+    color: var(--text-faint);
+    line-height: 1.45;
+    margin: 0 0 16px;
+    padding: 9px 10px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-left: 2px solid var(--yellow-line);
+    min-height: 3.6em;
+    transition: color 0.2s ease;
+}
+
+/* ── Lower placeholder (future themes area) ──────────────────────────────── */
+.diff-panel-lower-placeholder {
+    flex: 1;
+    min-height: 60px;
+    border: 1px dashed var(--line);
+    opacity: 0.35;
+    margin-top: 4px;
+}
+
+/* ── Three-column layout: reorder so difficulty comes first ──────────────── */
+.main-content {
+    justify-content: center;
+    align-items: flex-start;  /* all columns top-aligned */
+}
+#difficulty-panel { order: -1; }   /* always leftmost */
+#left-panel       { order: 0; }
+#right-panel      { order: 1; }
+
+/* ── Responsive: hide difficulty panel on small screens (falls to modal) ── */
+@media (max-width: 900px) {
+    #difficulty-panel {
+        /* Stack below the main panels on mid-sized screens */
+        flex: 1 1 100%;
+        max-width: 100%;
+        order: 2;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 16px;
+    }
+    .diff-panel-header { width: 100%; margin-bottom: 8px; }
+    .diff-panel-cards {
+        flex-direction: row;
+        flex-wrap: wrap;
+        flex: 1;
+        min-width: 0;
+        margin-bottom: 0;
+    }
+    .diff-panel-btn {
+        flex: 1 1 140px;
+        clip-path: polygon(5% 0, 100% 0, 95% 100%, 0 100%);
+    }
+    .diff-panel-desc {
+        width: 100%;
+        margin-bottom: 0;
+        min-height: auto;
+    }
+    .diff-panel-lower-placeholder { display: none; }
+}
+@media (max-width: 600px) {
+    .diff-panel-btn { flex: 1 1 100%; }
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   DIFFICULTY MODE — WIDE DESKTOP LAYOUT REFINEMENT
+   The difficulty selector is a first-class training panel, not a small
+   status control beside the board. On wide screens it balances the game
+   area with the decision panel and uses the full available horizontal space.
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 1241px) {
+    .main-content {
+        display: grid;
+        grid-template-columns: minmax(330px, 0.9fr) minmax(500px, 1.25fr) minmax(330px, 0.9fr);
+        gap: 24px;
+        width: min(100%, 1680px);
+        max-width: 1680px;
+        margin-inline: auto;
+        align-items: start;
+    }
+
+    #difficulty-panel,
+    #left-panel,
+    #right-panel {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+        box-sizing: border-box;
+    }
+
+    #difficulty-panel { grid-column: 1; order: initial; }
+    #left-panel       { grid-column: 2; order: initial; }
+    #right-panel      { grid-column: 3; order: initial; align-self: start; }
+}
+
+@media (min-width: 901px) {
+    #difficulty-panel {
+        padding: 26px 24px 24px;
+        align-self: start;
+    }
+
+    .diff-panel-header {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 18px;
+    }
+
+    .diff-panel-title { font-size: 1.2rem; }
+
+    .diff-panel-cards {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 9px;
+        margin-bottom: 14px;
+    }
+
+    .diff-panel-btn {
+        min-height: 84px;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 14px 16px;
+        clip-path: polygon(3% 0, 100% 0, 97% 100%, 0 100%);
+    }
+
+    .diff-panel-btn:hover { transform: translateY(-2px); }
+
+    .diff-panel-btn-icon {
+        width: 28px;
+        height: 28px;
+        margin-top: 1px;
+    }
+    .diff-panel-btn-icon svg { width: 18px; height: 18px; }
+
+    .diff-panel-btn-body { gap: 5px; padding: 1px 58px 1px 0; }
+    .diff-panel-btn-name { font-size: 0.96rem; line-height: 1.1; }
+    .diff-panel-btn-sub {
+        font-size: 0.66rem;
+        line-height: 1.38;
+        letter-spacing: 0.035em;
+        white-space: normal;
+    }
+
+    .diff-panel-btn-tag {
+        position: absolute;
+        top: 14px;
+        right: 16px;
+        font-size: 0.5rem;
+        padding: 3px 6px;
+    }
+
+    .diff-panel-desc {
+        min-height: 0;
+        margin: 0;
+        padding: 14px 15px;
+        font-size: 0.86rem;
+        line-height: 1.55;
+        border-left-width: 3px;
+        background: linear-gradient(90deg, var(--yellow-soft), var(--surface-2) 55%);
+    }
+}
+
+/* Keep the board and decision controls comfortably proportioned when the
+   viewport cannot accommodate all three wide columns. */
+@media (min-width: 901px) and (max-width: 1240px) {
+    .main-content {
+        display: grid;
+        grid-template-columns: minmax(0, 1.12fr) minmax(320px, 0.88fr);
+        gap: 22px;
+        max-width: 1120px;
+        margin-inline: auto;
+    }
+
+    #difficulty-panel {
+        grid-column: 1 / -1;
+        width: 100%;
+        max-width: none;
+        order: initial;
+    }
+    #left-panel { grid-column: 1; width: 100%; max-width: none; order: initial; }
+    #right-panel { grid-column: 2; width: 100%; max-width: none; order: initial; }
+
+    .diff-panel-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .diff-panel-btn { min-height: 96px; }
+}
+
+@media (max-width: 900px) {
+    .main-content {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        max-width: 600px;
+        margin-inline: auto;
+    }
+
+    #difficulty-panel,
+    #left-panel,
+    #right-panel {
+        width: 100%;
+        max-width: none;
+        box-sizing: border-box;
+    }
+
+    #difficulty-panel { order: -1; }
+    .diff-panel-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .diff-panel-lower-placeholder { display: none; }
+}
+
+@media (max-width: 600px) {
+    .diff-panel-cards { grid-template-columns: 1fr; }
 }

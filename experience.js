@@ -3,7 +3,7 @@
 //  • three.js ambient scene: matte 3D chess pieces with yellow rim lighting
 //  • page-to-page transition wipe
 //  • on-load entrance reveals
-//  This file is purely presentational and never touches game logic in main.js.
+//  • shared Daily Puzzle access for non-home pages (kept separate from main.js)
 // ════════════════════════════════════════════════════════════════════════════
 
 // ── Theme: apply IMMEDIATELY before any paint so there's no flash ─────────────
@@ -19,6 +19,9 @@
 })();
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js';
+import { getDatabase, ref, get, set, onValue } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js';
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -241,4 +244,287 @@ const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').match
         renderer.render(scene, camera);
     }
     animate();
+})();
+
+
+/* ────────────────────────────────────────────────────────────────────────────
+   4. SHARED DAILY PUZZLE
+   Loaded on Information, Credits, and Leaderboard. The home page keeps its
+   dedicated implementation in main.js, so this never runs where #main-game is
+   present. Keeping this here removes a fragile dependency on an extra script
+   file when deploying the existing page set.
+   ──────────────────────────────────────────────────────────────────────────── */
+(function sharedDailyPuzzle() {
+    if (document.getElementById('main-game') || !document.getElementById('potd-nav-btn')) return;
+
+    const firebaseConfig = {
+        apiKey:            'AIzaSyDtGbU8BN06Y_GNDmhV1FJFRhTvD603DN0',
+        authDomain:        'positionguessr.firebaseapp.com',
+        databaseURL:       'https://positionguessr-default-rtdb.firebaseio.com',
+        projectId:         'positionguessr',
+        storageBucket:     'positionguessr.firebasestorage.app',
+        messagingSenderId: '954415790631',
+        appId:             '1:954415790631:web:0a5381589df51fc3abec02',
+        measurementId:     'G-M63L8MVR6Z'
+    };
+
+    const dailyApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    const dailyDb = getDatabase(dailyApp);
+    const dailyAuth = getAuth(dailyApp);
+    let dailyUID = null;
+    let dailyData = null;
+    let dailyAnswered = false;
+    let dailyUserAnswer = null;
+    let unsubscribeVotes = null;
+
+    const todayUTC = () => new Date().toISOString().slice(0, 10);
+    const answerForEvaluation = value => {
+        const centipawns = parseFloat(value);
+        if (!Number.isFinite(centipawns) || Math.abs(centipawns) <= 100) return 'Equal';
+        return centipawns > 0 ? 'White Winning' : 'Black Winning';
+    };
+
+    function ensureDailyModal() {
+        if (document.getElementById('potd-modal')) return;
+        document.body.insertAdjacentHTML('beforeend', `
+            <div id="potd-modal" onclick="if(event.target===this)closePOTD()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1010;justify-content:center;align-items:flex-start;padding-top:60px;overflow-y:auto;">
+                <div class="modal-content" style="max-width:520px;">
+                    <button class="modal-close-btn" onclick="closePOTD()" aria-label="Close Daily Puzzle">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+                    </button>
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                        <div class="potd-icon" style="width:36px;height:36px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        </div>
+                        <div><div class="potd-label">Daily Challenge</div><h2 style="margin:0;font-size:1.3rem;" id="potd-modal-date">Puzzle of the Day</h2></div>
+                    </div>
+                    <div class="potd-modal-board" id="potd-modal-board"><p style="color:var(--text-faint);font-family:var(--font-mono);font-size:0.8rem;letter-spacing:0.06em;">LOADING...</p></div>
+                    <div class="potd-turn-badge" id="potd-modal-turn"></div>
+                    <div class="potd-choices" id="potd-choices">
+                        <button class="potd-choice-btn" onclick="submitPOTD('White Winning')" id="potd-btn-white">♔ White</button>
+                        <button class="potd-choice-btn" onclick="submitPOTD('Equal')" id="potd-btn-equal">⚖ Equal</button>
+                        <button class="potd-choice-btn" onclick="submitPOTD('Black Winning')" id="potd-btn-black">♚ Black</button>
+                    </div>
+                    <div class="potd-not-answered" id="potd-signin-notice" style="display:none;"><a href="login.html" style="color:var(--yellow);font-weight:700;">Sign in</a> to submit your answer and see community results.</div>
+                    <div class="potd-result-box" id="potd-result-box">
+                        <div class="potd-result-title" id="potd-result-title"></div>
+                        <div class="potd-eval-line" id="potd-eval-line"></div>
+                        <div class="potd-community" id="potd-community">
+                            <div class="potd-community-label">Community Answers</div>
+                            <div class="potd-bar-row"><span class="potd-bar-row-label">♔ White</span><div class="potd-bar-track"><div class="potd-bar-fill white" id="bar-white" style="width:0%"></div></div><span class="potd-bar-pct" id="pct-white">0%</span></div>
+                            <div class="potd-bar-row"><span class="potd-bar-row-label">⚖ Equal</span><div class="potd-bar-track"><div class="potd-bar-fill equal" id="bar-equal" style="width:0%"></div></div><span class="potd-bar-pct" id="pct-equal">0%</span></div>
+                            <div class="potd-bar-row"><span class="potd-bar-row-label">♚ Black</span><div class="potd-bar-track"><div class="potd-bar-fill black" id="bar-black" style="width:0%"></div></div><span class="potd-bar-pct" id="pct-black">0%</span></div>
+                        </div>
+                    </div>
+                    <div class="potd-countdown" id="potd-countdown"></div>
+                    <button class="got-it-btn" onclick="closePOTD()" style="margin-top:16px;">Close</button>
+                </div>
+            </div>`);
+    }
+
+    function updateDailyNav() {
+        const button = document.getElementById('potd-nav-btn');
+        if (!button) return;
+        button.classList.toggle('pending', Boolean(dailyData) && !dailyAnswered);
+        button.classList.toggle('done', dailyAnswered);
+        button.setAttribute('aria-label', dailyAnswered ? 'Puzzle of the Day — answered' : 'Puzzle of the Day');
+    }
+
+    function updateVoteBars(votes = {}) {
+        const total = (votes.White || 0) + (votes.Equal || 0) + (votes.Black || 0);
+        const values = { white: votes.White || 0, equal: votes.Equal || 0, black: votes.Black || 0 };
+        Object.entries(values).forEach(([name, value]) => {
+            const percent = total ? Math.round((value / total) * 100) : 0;
+            const bar = document.getElementById(`bar-${name}`);
+            const label = document.getElementById(`pct-${name}`);
+            if (bar) bar.style.width = `${percent}%`;
+            if (label) label.textContent = `${percent}%`;
+        });
+    }
+
+    function disableChoices(userAnswer, correctAnswer) {
+        const ids = { 'White Winning': 'potd-btn-white', Equal: 'potd-btn-equal', 'Black Winning': 'potd-btn-black' };
+        Object.entries(ids).forEach(([answer, id]) => {
+            const button = document.getElementById(id);
+            if (!button) return;
+            button.disabled = true;
+            if (answer === userAnswer) button.className = `potd-choice-btn ${answer === correctAnswer ? 'selected-correct' : 'selected-wrong'}`;
+            else if (answer === correctAnswer) button.className = 'potd-choice-btn reveal-correct';
+            else button.className = 'potd-choice-btn';
+        });
+    }
+
+    function showDailyResult(userAnswer, correctAnswer, evaluation, votes) {
+        const result = document.getElementById('potd-result-box');
+        const title = document.getElementById('potd-result-title');
+        const evalLine = document.getElementById('potd-eval-line');
+        if (!result || !title || !evalLine) return;
+        const correct = userAnswer === correctAnswer;
+        title.textContent = correct ? '✓ Correct!' : `✗ Incorrect — the answer was ${correctAnswer}`;
+        title.className = `potd-result-title ${correct ? 'correct' : 'wrong'}`;
+        const centipawns = parseFloat(evaluation);
+        evalLine.innerHTML = Number.isFinite(centipawns)
+            ? `Engine eval: <span>${centipawns > 0 ? '+' : ''}${(centipawns / 100).toFixed(2)}</span>`
+            : 'Engine evaluation unavailable.';
+        updateVoteBars(votes);
+        result.classList.add('visible');
+    }
+
+    function renderCountdown() {
+        const element = document.getElementById('potd-countdown');
+        if (!element) return;
+        const now = new Date();
+        const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+        const remaining = next - now;
+        const hours = Math.floor(remaining / 3600000);
+        const minutes = Math.floor((remaining % 3600000) / 60000);
+        const seconds = Math.floor((remaining % 60000) / 1000);
+        element.innerHTML = `Next puzzle in <span>${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}</span>`;
+    }
+
+    function listenForVotes() {
+        if (unsubscribeVotes || !dailyData) return;
+        unsubscribeVotes = onValue(ref(dailyDb, `potd/${dailyData.date}/votes`), snapshot => {
+            if (!snapshot.exists()) return;
+            dailyData.votes = snapshot.val();
+            updateVoteBars(dailyData.votes);
+        });
+    }
+
+    function renderDailyModal() {
+        if (!dailyData) return;
+        const board = document.getElementById('potd-modal-board');
+        const turn = document.getElementById('potd-modal-turn');
+        const date = document.getElementById('potd-modal-date');
+        const choices = document.getElementById('potd-choices');
+        const signIn = document.getElementById('potd-signin-notice');
+        const result = document.getElementById('potd-result-box');
+        if (board) board.innerHTML = dailyData.svg || '<p>Position unavailable.</p>';
+        if (turn) turn.textContent = dailyData.turn || '';
+        if (date) date.textContent = `Puzzle of the Day — ${dailyData.date}`;
+        renderCountdown();
+
+        if (!dailyUID) {
+            if (signIn) signIn.style.display = 'block';
+            if (choices) choices.style.display = 'none';
+            if (result) result.classList.remove('visible');
+            return;
+        }
+        if (signIn) signIn.style.display = 'none';
+        if (choices) choices.style.display = 'grid';
+        if (dailyAnswered) {
+            disableChoices(dailyUserAnswer, dailyData.correctAnswer);
+            showDailyResult(dailyUserAnswer, dailyData.correctAnswer, dailyData.eval, dailyData.votes || {});
+            listenForVotes();
+        } else {
+            ['potd-btn-white', 'potd-btn-equal', 'potd-btn-black'].forEach(id => {
+                const button = document.getElementById(id);
+                if (button) { button.disabled = false; button.className = 'potd-choice-btn'; }
+            });
+            if (result) result.classList.remove('visible');
+        }
+    }
+
+    async function loadDailyPuzzle() {
+        const today = todayUTC();
+        try {
+            const dailyRef = ref(dailyDb, `potd/${today}`);
+            const existing = await get(dailyRef);
+            if (existing.exists()) {
+                dailyData = existing.val();
+            } else {
+                const positionsSnapshot = await get(ref(dailyDb, 'positions'));
+                if (!positionsSnapshot.exists()) throw new Error('No positions available.');
+                const positions = Object.entries(positionsSnapshot.val()).map(([key, value]) => ({ ...value, _key: key }));
+                const pick = positions[Math.floor(Math.random() * positions.length)];
+                dailyData = {
+                    date: today,
+                    positionKey: pick.id || pick.key || pick._key,
+                    svg: pick.SVG,
+                    turn: pick.Turn,
+                    eval: pick.Eval,
+                    correctAnswer: answerForEvaluation(pick.Eval),
+                    votes: { White: 0, Equal: 0, Black: 0 },
+                };
+                if (dailyUID) await set(dailyRef, dailyData);
+            }
+
+            dailyAnswered = false;
+            dailyUserAnswer = null;
+            if (dailyUID) {
+                const response = await get(ref(dailyDb, `users/${dailyUID}/potd/${today}`));
+                if (response.exists()) {
+                    dailyAnswered = true;
+                    dailyUserAnswer = response.val().answer;
+                }
+            }
+            updateDailyNav();
+            if (document.getElementById('potd-modal')?.style.display === 'flex') renderDailyModal();
+        } catch (error) {
+            console.error('Daily Puzzle could not be loaded:', error);
+            const board = document.getElementById('potd-modal-board');
+            if (board) board.innerHTML = '<p style="color:var(--bad);">Unable to load today\'s puzzle. Please try again.</p>';
+        }
+    }
+
+    window.openPOTD = function() {
+        ensureDailyModal();
+        const modal = document.getElementById('potd-modal');
+        if (!modal) return;
+        modal.style.display = 'flex';
+        if (dailyData) renderDailyModal();
+        else loadDailyPuzzle();
+    };
+
+    window.closePOTD = function() {
+        const modal = document.getElementById('potd-modal');
+        if (modal) modal.style.display = 'none';
+    };
+
+    window.submitPOTD = async function(answer) {
+        if (!dailyUID || dailyAnswered || !dailyData) return;
+        const voteKey = answer === 'White Winning' ? 'White' : answer === 'Black Winning' ? 'Black' : 'Equal';
+        try {
+            disableChoices(answer, dailyData.correctAnswer);
+            const votesRef = ref(dailyDb, `potd/${todayUTC()}/votes`);
+            const existingVotes = await get(votesRef);
+            const votes = existingVotes.exists() ? existingVotes.val() : { White: 0, Equal: 0, Black: 0 };
+            votes[voteKey] = (votes[voteKey] || 0) + 1;
+            await set(votesRef, votes);
+            dailyData.votes = votes;
+            await set(ref(dailyDb, `users/${dailyUID}/potd/${todayUTC()}`), {
+                answer,
+                correct: answer === dailyData.correctAnswer,
+                ts: Date.now(),
+            });
+            dailyAnswered = true;
+            dailyUserAnswer = answer;
+            showDailyResult(answer, dailyData.correctAnswer, dailyData.eval, votes);
+            updateDailyNav();
+            listenForVotes();
+        } catch (error) {
+            console.error('Daily Puzzle answer could not be saved:', error);
+            const title = document.getElementById('potd-result-title');
+            const result = document.getElementById('potd-result-box');
+            if (title && result) {
+                title.textContent = 'Your answer could not be saved. Please try again.';
+                title.className = 'potd-result-title wrong';
+                result.classList.add('visible');
+            }
+        }
+    };
+
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') window.closePOTD();
+    });
+
+    ensureDailyModal();
+    // Load immediately for guests as well. Auth resolution can be deferred on
+    // some pages, and should never leave the Daily modal waiting indefinitely.
+    loadDailyPuzzle();
+    onAuthStateChanged(dailyAuth, user => {
+        dailyUID = user?.uid || null;
+        loadDailyPuzzle();
+    });
+    setInterval(renderCountdown, 1000);
 })();

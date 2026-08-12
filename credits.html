@@ -1,8 +1,9 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Credits and acknowledgments for ChessIQ, the positional chess-training application.">
     <title>ChessIQ — Credits</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,7 +22,7 @@
 
     <aside id="sidebar" class="sidebar">
         <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
         </button>
         <div class="sidebar-brand">CHESS<span>IQ</span></div>
         <nav class="sidebar-nav">
@@ -52,6 +53,10 @@
             <a href="leaderboard.html">Leaderboard</a>
             <a href="credits.html" class="active">Credits</a>
             <a href="info.html">Information</a>
+            <button id="potd-nav-btn" class="potd-nav-btn" onclick="openPOTD()" aria-label="Puzzle of the Day" title="Puzzle of the Day">
+                <span class="potd-nav-icon">📅</span>
+                <span class="potd-nav-label">Daily</span>
+            </button>
         </nav>
         <div class="topbar-right">
             <button id="help-btn" class="icon-btn" onclick="openModal()" aria-label="Help" title="How to play">
@@ -65,33 +70,44 @@
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
             <span>ChessIQ</span>
         </div>
-        <h1>Credits</h1>
+        <h1>Credits &amp; Acknowledgments</h1>
 
         <section>
             <h2>Project</h2>
-            <p><strong>ChessIQ</strong> is currently in beta / development. This project and idea was almost fully created and designed by <em>Boandme</em>.</p>
+            <p><strong>ChessIQ</strong> is an independent student-built chess-training project created and designed by <em>Boandme</em>. The app was built to make positional evaluation practice more accessible, turning real chess positions into short, reflective training rounds.</p>
         </section>
 
         <section>
-            <h2>Assets &amp; Design</h2>
-            <p>Images acquired from <a href="https://uxwing.com" target="_blank" rel="noopener">UXwing.com</a>.</p>
-            <p>Image editing and some UI design by <a href="https://www.etsy.com/shop/plumpalettecreations/?etsrc=sdt" target="_blank" rel="noopener">PlumPaletteCreations</a>.</p>
-            <p>Data - Lichess API </p>
+            <h2>Chess review &amp; quality</h2>
+            <p>ChessIQ is peer reviewed by an <strong>International Master</strong> and <strong>two National Masters</strong>. Their feedback helps keep the project connected to practical, high-level chess thinking and supports the app’s commitment to a high-quality training experience.</p>
         </section>
 
         <section>
-            <h2>Contributors</h2>
+            <h2>Data &amp; technology</h2>
+            <p>Real-game position data is sourced through the <a href="https://lichess.org" target="_blank" rel="noopener noreferrer">Lichess</a> ecosystem. ChessIQ uses chess-engine evaluation and position-processing tools to prepare puzzles, organize difficulty, and support the feedback shown after each answer.</p>
+            <p>Thank you to the open chess and developer communities whose tools, game data, and ideas make ambitious student projects possible.</p>
+        </section>
+
+        <section>
+            <h2>Design &amp; contributors</h2>
             <ul>
-                <li>Testing — <a href="https://entyx.github.io/entyprojects/" target="_blank" rel="noopener">EntyXD</a></li>
-                
+                <li><strong>Testing</strong> — <a href="https://entyx.github.io/entyprojects/" target="_blank" rel="noopener noreferrer">EntyXD</a></li>
+                <li><strong>Icons and visual assets</strong> — <a href="https://uxwing.com" target="_blank" rel="noopener noreferrer">UXWing</a></li>
+                <li><strong>Image editing and selected UI design</strong> — <a href="https://www.etsy.com/shop/plumpalettecreations/?etsrc=sdt" target="_blank" rel="noopener noreferrer">PlumPaletteCreations</a></li>
             </ul>
         </section>
+
         <section>
-            <h2>Privacy, Security &amp; Ownership</h2>
+            <h2>Community &amp; feedback</h2>
+            <p>ChessIQ grows through the players who use it, test it, and share what would make their training better. Feedback, feature ideas, and thoughtful criticism are always welcome. You can read the project introduction and join the conversation in the <a href="https://www.chess.com/blog/boandme/train-smarter-introducing-chessiq-the-positional-puzzle-trainer" target="_blank" rel="noopener noreferrer">Chess.com feature on ChessIQ</a>.</p>
+        </section>
+
+        <section>
+            <h2>Privacy, security &amp; ownership</h2>
             <p><strong>Privacy:</strong> ChessIQ only asks for the account information needed to run the site, save progress, display leaderboard data, and keep the experience working. Do not share sensitive personal information through the website. Account, rating, puzzle, and leaderboard data may be stored by the services used to operate ChessIQ.</p>
-            <p><strong>Security:</strong> Users are responsible for keeping their login information private. ChessIQ is in beta, so features may change, data may be corrected or removed, and suspicious activity, abuse, cheating, scraping, or attempts to disrupt the service may lead to account limits or removal.</p>
+            <p><strong>Security:</strong> Users are responsible for keeping their login information private. As ChessIQ continues to develop, features may change, data may be corrected or removed, and suspicious activity, abuse, cheating, scraping, or attempts to disrupt the service may lead to account limits or removal.</p>
             <p><strong>Ownership:</strong> ChessIQ, PositionGuesser, the PR system, interface design, gameplay flow, original text, custom code, and related concepts belong to their creator unless otherwise credited. Please do not copy, clone, resell, redistribute, or present this project or its core idea as your own without written permission.</p>
-            <p><strong>Disclaimer:</strong> ChessIQ is provided as an educational chess-training project in beta. It is offered as-is, without guarantees of uninterrupted service, perfect accuracy, saved data availability, or fitness for a particular purpose. Third-party assets and services belong to their respective owners. This notice is not legal advice.</p>
+            <p><strong>Disclaimer:</strong> ChessIQ is an educational chess-training project. It is offered as-is, without guarantees of uninterrupted service, perfect accuracy, saved-data availability, or fitness for a particular purpose. Third-party assets and services belong to their respective owners. This notice is not legal advice.</p>
         </section>
     </main>
 
@@ -99,7 +115,7 @@
     <div id="modal">
         <div class="modal-content">
             <button class="modal-close-btn" onclick="closeModal()" aria-label="Close">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
             </button>
             <h2>Welcome to ChessIQ</h2>
             <p class="modal-intro">Train your positional knowledge and master the art of self-analysis — a skill invaluable for chess players of every level.</p>
