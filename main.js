@@ -59,17 +59,17 @@ var accountCreatedAt = null;
 // ── PR formula helpers ────────────────────────────────────────────────────────
 // Easy:   low risk / low reward — gentle entry point
 // Medium: balanced risk / balanced reward
-// Hard:   high risk / high reward — big swings both ways
+// Hard:   high risk / high reward — meaningful swing, not a PR printer
 const PR_BASE = {
     Easy:   { correct: 32,  wrong: -28  },
     Medium: { correct: 61,  wrong: -61  },
-    Hard:   { correct: 110, wrong: -95  },
+    Hard:   { correct: 70,  wrong: -70  },   // fix 1: was 110/-95 — too large, caused 800pt/session exploits
 };
 
 const PR_PROVISIONAL_BASE = {
     Easy:   { correct: 180, wrong: -160 },
     Medium: { correct: 285, wrong: -260 },
-    Hard:   { correct: 420, wrong: -380 },
+    Hard:   { correct: 250, wrong: -230 },   // fix 5: was 420/-380 — a perfect provisional Hard run hit PR=3000+
 };
 
 function isProvisionalMode() {
@@ -89,12 +89,17 @@ function renderProvisionalNotice() {
 }
 
 function confidenceMultiplier() {
-    return 1 + 1.5 * Math.exp(-totalPuzzles / 15);
+    // fix 3: was 1 + 1.5·exp(-n/15) — peaked at 1.77 on puzzle 10 and stayed
+    // elevated (1.20) well into puzzle 30+, invisibly compounding with Hard+streak.
+    // New curve peaks at 1.60 on puzzle 10 and reaches ~1.02 by puzzle 60.
+    return 1 + 0.6 * Math.exp(-totalPuzzles / 20);
 }
 
 function streakMultiplier(correct) {
-    if (correct && currentStreak > 0)  return 1 + Math.min(currentStreak, 5) * 0.10;
-    if (!correct && currentStreak < 0) return 1 + Math.min(Math.abs(currentStreak), 5) * 0.10;
+    // fix 2: was min(streak,5)*0.10 → max 1.50x. Too punishing/rewarding.
+    // Now min(streak,5)*0.05 → max 1.25x. Still meaningful, no longer dominant.
+    if (correct && currentStreak > 0)  return 1 + Math.min(currentStreak, 5) * 0.05;
+    if (!correct && currentStreak < 0) return 1 + Math.min(Math.abs(currentStreak), 5) * 0.05;
     return 1.0;
 }
 
