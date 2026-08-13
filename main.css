@@ -2759,4 +2759,6 @@ svg.board, #board svg {
 
 @media (max-width: 600px) {
     .diff-panel-cards { grid-template-columns: 1fr; }
+    
 }
+
