@@ -1,16 +1,16 @@
 ♟️ ChessIQ
 
-ChessIQ is a positional training tool designed for intermediate and advanced chess players who want to improve their ability to visualize, evaluate, and understand chess positions beyond tactics.
+ChessIQ is a Firebase-backed positional training tool for intermediate and advanced chess players who want to improve their ability to visualize, evaluate, and understand chess positions beyond tactics.
 
-Instead of finding a forced move like in traditional tactical puzzles, ChessIQ challenges players to judge the position itself using strategic concepts such as material balance, space, initiative, king safety, and piece activity. After every guess, ChessIQ provides an engine evaluation alongside an AI-generated explanation that highlights the key positional ideas, common mistakes, strategic plans, and the reasoning behind the best move, turning every puzzle into a learning opportunity rather than just another rating gain
+Instead of finding a forced move like in traditional tactical puzzles, ChessIQ asks players to judge the position itself using strategic concepts such as material balance, space, initiative, king safety, pawn structure, and piece activity. After every guess, players receive an engine evaluation alongside a pre-generated AI explanation that highlights the key positional ideas, common mistakes, strategic plans, and best-move reasoning—turning every puzzle into a learning opportunity rather than just another rating gain.
 
-Think of ChessIQ as tactical puzzles for positional thinking.
+Think of ChessIQ as tactical puzzles for positional thinking. The homepage supports adaptive or manual difficulty training, while the Thematic Focus picker lets players combine two or more high-frequency positional themes for targeted practice.
 
 ChessIQ's multiple uses
 
 ChessIQ scales with your level. Beginners start by counting material — learning which side simply has more pieces — and that alone builds a foundation for reading positions. As your rating climbs, the puzzles shift toward what ChessIQ was originally built for: recognizing positional imbalances, space, piece activity, and structural advantages that don't show up in a piece count. One tool, two very different kinds of chess thinking, on a single continuous ladder.
 
-Status: ✅ v1.0 Official Release — actively developed with planned updates through v1.5 and beyond.
+Status: ✅ v1.4 Official Release — actively developed with planned updates through v1.5 and beyond.
 
 🧠 Core Concept
 
@@ -48,15 +48,23 @@ Instant Stockfish-powered evaluation after every guess
 
 Randomized puzzle selection for endless practice
 
+Thematic Focus training: select two or more of the ten most common positional themes to draw from positions matching any selected theme
+
+Thematic pools respect the selected difficulty and cycle through every matching position before repeating
+
 📊 Personalized Training
 
 Personal Position Rating (PR)
+
+Standalone Analytics page with a theme-accuracy radar, recent PR trend, puzzle log, and a normalized 73-theme training taxonomy
 
 Detailed statistics dashboard
 
 Puzzle history and training log
 
 Rating progression tracking
+
+26 unlockable achievements across performance, progress, consistency, daily-play, leaderboard, and account milestones
 
 Global leaderboard
 
@@ -84,7 +92,7 @@ See exactly what percentage of players selected White, Equal, or Black, allowing
 
 🧩 Daily Puzzle
 
-Every day, all players receive the same featured positional challenge.
+Every day, all players receive the same featured positional challenge, accessible from every main ChessIQ page.
 
 Compete against the community on a single position each day while tracking your daily progress and comparing your evaluation with everyone else's.
 
@@ -117,8 +125,6 @@ Submit your evaluation:
 Review the engine evaluation and community responses.
 
 Continue improving your Position Rating.
-
-
 
 🗂️ Version History and Roadmap
 
@@ -192,19 +198,13 @@ Localstorage-based primitive elo system
 
 Complex mechanics and equations for computing elo based on streaks, confidence intervals, etc
 
-
-
-
-
 v0.8 - Full glow up of main play page
 
 matches a vibrant theme - change-up from green theme to yellow/black blend of modern look.
 
-v0.8.5 - login-free play  + UI updates
+v0.8.5 - login-free play + UI updates
 
 players can play a bit of puzzles onload before hacing to login/create acc-smoother transitions of main pages
-
-
 
 v0.9 – Accounts and Leaderboards Full release👤 (June 2026)
 
@@ -217,8 +217,6 @@ Global leaderboards of PR(Positional Rating) already instated above in earlier u
 Google integrations for logins[done]
 
 Full statistics overview page[done]
-
-
 
 v0.9.5 - Time-based and point system upgrades, Stats page upgrade
 
@@ -246,8 +244,6 @@ Puzzle review log
 
 Updated PR(Positional Rating Calculations) out based on relative puzzle difficulty and accuracy
 
-
-
 🌍v1.0.5- User experience & Community Results update(Jul 2026)
 
 Better Transitions in UI
@@ -263,10 +259,6 @@ V1.08 - Adaptive + Manual Difficulty Update(jul 206)
 Difficulty override option in Settings, where players can choose which difficulty puzzles they want, for specialized training rather than adaptive PR-based difficulty
 
 Adaptive option still available for long grinds
-
-
-
-
 
 v1.2 – AI-Based Explanations & UI Revamp (August 2026) 🤖
 
@@ -292,15 +284,19 @@ rewards player for Personal Best
 
 v1.3.5 - PR upgrate + Difficulty Selection re-iteration
 
-Bringing back difficulty selection in the main menu as a third column
+- Bringing back difficulty selection in the main menu as a third column
 
-Allowing advanced users to calibrate to their difficulty early on without requiring PR grinding
+- Allowing advanced users to calibrate to their difficulty early on without requiring PR grinding
 
-Improving PR algoriths
+Improving PR algorithms
+
+v1.4 - Thematic analysis & training update
+- allowing users to filter puzzles by positional theme for training
+- brand new analytics page with state-of-the-art radar map highlighting user's thematic strengths and weaknesses
 
 🔜 Planned Updates
 
-v1.4 – Adaptive Puzzle Ratings (August 2026) 📈
+v1.5 – Adaptive Puzzle Ratings (August 2026) 📈
 
 Introduce adaptive ratings for every puzzle, allowing difficulty to evolve over time based on real player performance.
 
@@ -310,9 +306,7 @@ As more users solve each puzzle, ratings automatically adjust to reflect actual 
 
 Puzzles can naturally move between Easy, Medium, and Hard categories as the community calibrates their true difficulty, creating a continually improving training experience.
 
-
-
-v1.5 - New gamemode: Regular & blitz-paced modes update - ChessIQ RANKED!
+v1.6 - New gamemode: Regular & blitz-paced modes update - ChessIQ RANKED!
 
 On homescreen, ability to switch between regular, rated play
 
@@ -320,9 +314,7 @@ OR a new gamemode: Rush(3 or 5 min), where you try to get the most amt of puzzle
 
 Integrations with global leaderboard - seperate leaderboard for Rush
 
-
-
-v1.6 - Friends & Personalization Update(2026) 👱
+v1.7 - Friends & Personalization Update(2026) 👱
 
 Ability to add friends
 
@@ -331,8 +323,6 @@ Leaderboards within friends
 Personalization such as dark/light mode, super beginner mode
 
 Daily rewards, streaks, etc
-
-
 
 IN THE NEAR FUTURE: COMING TO MOBILE DEVICES!!! --> Both Android & Apple
 
@@ -356,19 +346,13 @@ Two main modes of the game: Normal rating play, unrated puzzle streak timed(3min
 
 Positional theme tagging on puzzles in the model; Will take a while to pre-train
 
-
-
 🧠 Optional engine explanation after each guess
 
 🌙 Dark mode and board theme customization
 
-🏆 Add a friend system after multiplayer: →  Global or friends-only leaderboards
+🏆 Add a friend system after multiplayer: → Global or friends-only leaderboards
 
 📱 (2027) → Mobile-first UI optimizations
-
-
-
-
 
 🙏 Credits
 
