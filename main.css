@@ -2762,3 +2762,457 @@ svg.board, #board svg {
     
 }
 
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THEMATIC TRAINING SELECTOR — homepage left training column
+   ══════════════════════════════════════════════════════════════════════════ */
+#theme-training-selector {
+    border-top: 1px solid var(--line);
+    margin-top: 0;
+    padding-top: 14px;
+}
+
+.theme-training-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 5px;
+}
+
+.theme-training-eyebrow {
+    color: var(--yellow);
+    font-family: var(--font-mono);
+    font-size: 0.56rem;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+#theme-training-title {
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: 0.92rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+    margin: 3px 0 0;
+}
+
+.theme-selection-count {
+    align-self: center;
+    border: 1px solid var(--line-bright);
+    color: var(--text-faint);
+    font-family: var(--font-mono);
+    font-size: 0.54rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    line-height: 1;
+    padding: 5px 6px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.theme-selection-count.is-focused {
+    border-color: var(--yellow-line);
+    color: var(--yellow);
+}
+
+.theme-training-help {
+    color: var(--text-faint);
+    font-family: var(--font-body);
+    font-size: 0.68rem;
+    line-height: 1.35;
+    margin: 0 0 9px;
+}
+
+.theme-training-help.is-warning { color: var(--bad); }
+
+.theme-all-btn {
+    align-items: center;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    color: var(--text-dim);
+    cursor: pointer;
+    display: flex;
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    font-weight: 700;
+    justify-content: space-between;
+    margin: 0 0 8px;
+    min-height: 32px;
+    padding: 7px 9px;
+    text-align: left;
+    transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+    width: 100%;
+}
+
+.theme-all-btn:hover {
+    background: var(--surface-3);
+    border-color: var(--line-bright);
+    color: var(--text);
+}
+
+.theme-all-btn.active {
+    background: var(--yellow-soft);
+    border-color: var(--yellow-line);
+    box-shadow: inset 2px 0 0 var(--yellow);
+    color: var(--text);
+}
+
+.theme-all-btn-note {
+    color: var(--text-faint);
+    font-family: var(--font-mono);
+    font-size: 0.52rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.theme-all-btn.active .theme-all-btn-note { color: var(--yellow-deep); }
+
+.theme-option-grid {
+    display: grid;
+    gap: 5px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.theme-option-btn {
+    align-items: center;
+    background: color-mix(in srgb, var(--surface-2) 92%, transparent);
+    border: 1px solid var(--line);
+    color: var(--text-faint);
+    cursor: pointer;
+    display: flex;
+    font-family: var(--font-mono);
+    font-size: 0.57rem;
+    font-weight: 800;
+    justify-content: flex-start;
+    letter-spacing: 0.025em;
+    line-height: 1.1;
+    min-height: 31px;
+    overflow: hidden;
+    padding: 6px 7px;
+    position: relative;
+    text-align: left;
+    transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.16s var(--ease-snap);
+}
+
+.theme-option-btn::before {
+    background: var(--yellow);
+    content: '';
+    height: 5px;
+    margin-right: 6px;
+    opacity: 0;
+    transition: opacity 0.16s ease;
+    width: 5px;
+}
+
+.theme-option-btn:hover {
+    background: var(--surface-3);
+    border-color: var(--line-bright);
+    color: var(--text);
+    transform: translateY(-1px);
+}
+
+.theme-option-btn.active {
+    background: var(--yellow-soft);
+    border-color: var(--yellow-line);
+    color: var(--text);
+}
+
+.theme-option-btn.active::before { opacity: 1; }
+
+.theme-option-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.theme-loading-note {
+    color: var(--text-faint);
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    grid-column: 1 / -1;
+    padding: 6px 0;
+}
+
+@media (min-width: 901px) {
+    /* The difficulty selector becomes a concise 2×2 matrix so the thematic
+       picker is fully visible in the same desktop left column. */
+    #difficulty-panel { padding: 20px 20px 18px; }
+    .diff-panel-header { margin-bottom: 12px; }
+    .diff-panel-title { font-size: 1.08rem; }
+    .diff-panel-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+        margin-bottom: 10px;
+    }
+    .diff-panel-btn {
+        align-items: center;
+        gap: 7px;
+        min-height: 44px;
+        padding: 9px 8px;
+    }
+    .diff-panel-btn:first-child { grid-column: 1 / -1; }
+    .diff-panel-btn-icon {
+        height: 19px;
+        margin-top: 0;
+        width: 19px;
+    }
+    .diff-panel-btn-icon svg { height: 14px; width: 14px; }
+    .diff-panel-btn-name { font-size: 0.74rem; }
+    .diff-panel-btn-sub { display: none; }
+    .diff-panel-btn-tag {
+        font-size: 0.44rem;
+        letter-spacing: 0.06em;
+        padding: 2px 4px;
+    }
+    .diff-panel-desc {
+        font-size: 0.68rem;
+        line-height: 1.32;
+        margin: 0 0 13px;
+        min-height: 0;
+        padding: 7px 8px;
+    }
+}
+
+@media (max-width: 900px) {
+    #theme-training-selector { width: 100%; }
+    .theme-option-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+
+@media (max-width: 600px) {
+    .theme-option-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 420px) {
+    .theme-option-grid { grid-template-columns: 1fr; }
+}
+
+[data-theme="light"] .theme-option-btn {
+    background: color-mix(in srgb, var(--surface-2) 94%, transparent);
+}
+
+/* A selected-but-not-yet-active focus theme remains visibly intentional while
+   the player chooses the required second category. */
+.theme-option-btn.pending {
+    background: color-mix(in srgb, var(--yellow-soft) 62%, var(--surface-2));
+    border-color: color-mix(in srgb, var(--yellow-line) 72%, var(--line));
+    color: var(--text-dim);
+}
+.theme-option-btn.pending::before { opacity: 0.5; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   LEFT TRAINING PANEL — SPATIAL / HIERARCHY REFINEMENT
+   Difficulty and thematic focus are distinct training steps, presented as
+   compact internal cards rather than one continuous cluster of controls.
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 901px) {
+    #difficulty-panel {
+        background:
+            radial-gradient(130% 52% at 0% 0%, color-mix(in srgb, var(--yellow-soft) 45%, transparent), transparent 63%),
+            var(--surface);
+        gap: 0;
+        padding: 19px 18px 17px;
+    }
+
+    .diff-panel-header {
+        border-left: 3px solid var(--yellow);
+        margin: 0 0 12px;
+        padding: 2px 0 2px 10px;
+    }
+
+    .diff-panel-eyebrow {
+        font-size: 0.54rem;
+        letter-spacing: 0.22em;
+        margin-bottom: 4px;
+    }
+
+    .diff-panel-title {
+        font-size: 1.02rem;
+        letter-spacing: -0.015em;
+    }
+
+    .diff-panel-cards {
+        background: color-mix(in srgb, var(--surface-2) 76%, transparent);
+        border: 1px solid var(--line);
+        gap: 7px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin: 0 0 10px;
+        padding: 7px;
+    }
+
+    .diff-panel-btn {
+        background: color-mix(in srgb, var(--surface) 80%, transparent);
+        border-color: color-mix(in srgb, var(--line) 88%, transparent);
+        min-height: 42px;
+        padding: 8px 8px;
+    }
+
+    .diff-panel-btn:first-child {
+        background: linear-gradient(90deg, color-mix(in srgb, var(--surface-3) 76%, transparent), var(--surface));
+        min-height: 45px;
+    }
+
+    .diff-panel-btn.active {
+        background: linear-gradient(100deg, var(--yellow-soft), color-mix(in srgb, var(--surface-2) 72%, transparent));
+        box-shadow: inset 3px 0 0 var(--yellow), 0 4px 14px rgba(0, 0, 0, 0.11);
+    }
+
+    .diff-panel-btn:hover { transform: translateY(-1px); }
+
+    .diff-panel-btn-name {
+        font-size: 0.72rem;
+        letter-spacing: 0.025em;
+    }
+
+    .diff-panel-btn-tag {
+        border-color: transparent;
+        font-size: 0.42rem;
+        padding: 2px 3px;
+    }
+
+    .diff-panel-desc {
+        background: color-mix(in srgb, var(--surface-2) 82%, transparent);
+        border-left-color: color-mix(in srgb, var(--yellow) 65%, var(--line));
+        color: var(--text-faint);
+        font-size: 0.66rem;
+        line-height: 1.36;
+        margin: 0 0 12px;
+        padding: 8px 9px;
+    }
+
+    #theme-training-selector {
+        background:
+            linear-gradient(145deg, color-mix(in srgb, var(--surface-2) 90%, transparent), color-mix(in srgb, var(--surface) 92%, transparent));
+        border: 1px solid var(--line);
+        border-top: 2px solid color-mix(in srgb, var(--yellow) 65%, var(--line));
+        box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 6%, transparent);
+        margin: 0;
+        padding: 11px 9px 9px;
+        position: relative;
+    }
+
+    #theme-training-selector::before {
+        color: var(--yellow-deep);
+        content: '02';
+        font-family: var(--font-mono);
+        font-size: 0.52rem;
+        font-weight: 800;
+        letter-spacing: 0.11em;
+        position: absolute;
+        right: 9px;
+        top: 11px;
+    }
+
+    .theme-training-heading {
+        align-items: center;
+        border-left: 2px solid var(--yellow);
+        margin: 0 30px 7px 0;
+        padding-left: 8px;
+    }
+
+    .theme-training-eyebrow {
+        font-size: 0.5rem;
+        letter-spacing: 0.2em;
+    }
+
+    #theme-training-title {
+        font-size: 0.84rem;
+        margin-top: 2px;
+    }
+
+    .theme-selection-count {
+        background: color-mix(in srgb, var(--surface) 68%, transparent);
+        font-size: 0.48rem;
+        padding: 4px 5px;
+    }
+
+    .theme-training-help {
+        font-size: 0.62rem;
+        line-height: 1.33;
+        margin: 0 0 8px;
+    }
+
+    .theme-all-btn {
+        background: color-mix(in srgb, var(--surface) 76%, transparent);
+        font-size: 0.68rem;
+        margin-bottom: 7px;
+        min-height: 29px;
+        padding: 6px 8px;
+    }
+
+    .theme-all-btn.active {
+        background: linear-gradient(90deg, var(--yellow-soft), color-mix(in srgb, var(--surface) 82%, transparent));
+    }
+
+    .theme-option-grid { gap: 6px; }
+
+    .theme-option-btn {
+        background: color-mix(in srgb, var(--surface) 84%, transparent);
+        font-size: 0.55rem;
+        min-height: 29px;
+        padding: 6px 7px;
+    }
+
+    .theme-option-btn::before {
+        height: 4px;
+        margin-right: 5px;
+        width: 4px;
+    }
+}
+
+@media (max-width: 900px) {
+    #theme-training-selector {
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-top: 2px solid var(--yellow-line);
+        margin-top: 4px;
+        padding: 13px;
+    }
+}
+
+/* Slightly roomier thematic-focus card: gives the instructional copy and all
+   ten focus buttons a calmer rhythm without requiring a scrollable panel. */
+@media (min-width: 901px) {
+    #theme-training-selector {
+        min-height: 308px;
+        padding: 14px 11px 12px;
+    }
+
+    .theme-training-heading {
+        margin-bottom: 9px;
+        padding: 2px 0 2px 9px;
+    }
+
+    .theme-training-eyebrow { font-size: 0.53rem; }
+    #theme-training-title { font-size: 0.9rem; }
+
+    .theme-training-help {
+        font-size: 0.66rem;
+        line-height: 1.42;
+        margin-bottom: 10px;
+        min-height: 2.84em;
+    }
+
+    .theme-all-btn {
+        font-size: 0.7rem;
+        margin-bottom: 9px;
+        min-height: 35px;
+        padding: 7px 9px;
+    }
+
+    .theme-option-grid {
+        flex: 1;
+        gap: 7px;
+        grid-auto-rows: minmax(35px, 1fr);
+    }
+
+    .theme-option-btn {
+        font-size: 0.58rem;
+        min-height: 35px;
+        padding: 7px 8px;
+    }
+}

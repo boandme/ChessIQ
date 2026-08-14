@@ -207,6 +207,24 @@
             </div>
 
             <p class="diff-panel-desc" id="diff-panel-desc">Adaptive selects positions around your current Positional Rating, giving you a steady mix of attainable and stretching evaluations. Recommended for most training sessions.</p>
+
+            <section id="theme-training-selector" aria-labelledby="theme-training-title">
+                <div class="theme-training-heading">
+                    <div>
+                        <div class="theme-training-eyebrow">Thematic focus</div>
+                        <h4 id="theme-training-title">Choose your themes</h4>
+                    </div>
+                    <span id="theme-selection-count" class="theme-selection-count">All themes</span>
+                </div>
+                <p id="theme-training-help" class="theme-training-help">Train from every positional theme, or choose at least two focus areas.</p>
+                <button id="theme-all-btn" class="theme-all-btn active" type="button" onclick="setThemeTrainingAll()" aria-pressed="true">
+                    <span>All themes</span>
+                    <span class="theme-all-btn-note">No filter</span>
+                </button>
+                <div id="theme-option-grid" class="theme-option-grid" aria-live="polite">
+                    <span class="theme-loading-note">Loading theme options…</span>
+                </div>
+            </section>
         </section>
 
         <section id="left-panel" class="reveal">

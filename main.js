@@ -140,8 +140,10 @@ window.setDifficultyOverride = function(value) {
         difficultyOverride = value;
         localStorage.setItem('chessiq-difficulty', value);
     }
+    resetThemedPuzzleCycle();
     updateSettingsDifficultyUI();
     updateDifficultyPanelUI();   // sync the new inline panel
+    updateThemeTrainingUI();
 };
 
 // ── Firebase imports ──────────────────────────────────────────────────────────
@@ -894,7 +896,7 @@ window.logoutUser = async function() {
     window.location.href = 'login.html';
 };
 
-// ── Positions ─────────────────────────────────────────────────────────────────
+// ── Positions and thematic training ───────────────────────────────────────────
 var positions = [];
 var positionsByDiff = { Easy: [], Medium: [], Hard: [] };
 var current_position = 0;
@@ -902,24 +904,112 @@ var currentPuzzle = null;
 var currentPuzzleDifficulty = null;
 var currentPuzzleVoteCache = null;  // cached after answer, cleared on next puzzle
 
-function loadPuzzleForPR() {
+// Theme selection remains local to the browser. "All themes" is the no-filter
+// default; a thematic pool activates only after the player selects two or more
+// of the ten most common universal theme labels.
+const THEME_SELECTION_MINIMUM = 2;
+const THEME_SELECTION_LIMIT = 10;
+var topThemeOptions = [];
+var selectedThemeKeys = new Set();
+var themedCycleSignature = null;
+var themedCycleRemainingKeys = [];
+
+function getThemeKey(theme) {
+    if (typeof theme !== 'string') return '';
+    return theme.normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
+}
+
+function getPositionThemeKeys(position) {
+    const themes = position?.AIExplanation?.themes;
+    if (!Array.isArray(themes)) return [];
+    return themes.map(getThemeKey).filter(Boolean);
+}
+
+function isThemeFilterActive() {
+    return selectedThemeKeys.size >= THEME_SELECTION_MINIMUM;
+}
+
+function resetThemedPuzzleCycle() {
+    themedCycleSignature = null;
+    themedCycleRemainingKeys = [];
+}
+
+function getBaseDifficultyPool() {
     const difficulty = isProvisionalMode() ? null : getActiveDifficulty();
-    const pool = isProvisionalMode() ? positions : (positionsByDiff[difficulty] || []);
-    if (pool.length) {
-        current_position = Math.floor(Math.random() * pool.length);
-        const pos = pool[current_position];
-        currentPuzzle = pos;
-        currentPuzzleDifficulty = pos.Difficulty || difficulty;
-        renderSVG(pos.SVG);
-        correct_result = findResult(pos.Eval);
-        const turnEl = document.getElementById('turn');
-        if (turnEl) turnEl.innerHTML = pos.Turn;
-    } else {
-        const boardEl = document.getElementById('board');
-        const turnEl  = document.getElementById('turn');
-        if (boardEl) boardEl.innerHTML = '<p>No positions available</p>';
-        if (turnEl)  turnEl.innerHTML  = '';
+    return isProvisionalMode() ? positions : (positionsByDiff[difficulty] || []);
+}
+
+function getActivePuzzlePool() {
+    const basePool = getBaseDifficultyPool();
+    if (!isThemeFilterActive()) return basePool;
+
+    return basePool.filter(position => {
+        const positionThemes = getPositionThemeKeys(position);
+        return positionThemes.some(themeKey => selectedThemeKeys.has(themeKey));
+    });
+}
+
+function getThemedCycleSignature() {
+    const difficultyLabel = isProvisionalMode() ? 'provisional-all-difficulties' : (getActiveDifficulty() || 'adaptive');
+    return `${difficultyLabel}|${[...selectedThemeKeys].sort().join('|')}`;
+}
+
+function choosePuzzleFromPool(pool) {
+    if (!pool.length) return null;
+
+    // Keep the existing random behavior for All Themes. A thematic pool instead
+    // presents each matching puzzle once, then refills and repeats naturally.
+    if (!isThemeFilterActive()) {
+        return pool[Math.floor(Math.random() * pool.length)];
     }
+
+    const signature = getThemedCycleSignature();
+    const activeKeys = new Set(pool.map(position => position._key));
+    if (signature !== themedCycleSignature) {
+        themedCycleSignature = signature;
+        themedCycleRemainingKeys = [...activeKeys];
+    } else {
+        themedCycleRemainingKeys = themedCycleRemainingKeys.filter(key => activeKeys.has(key));
+    }
+
+    if (!themedCycleRemainingKeys.length) {
+        themedCycleRemainingKeys = [...activeKeys];
+    }
+
+    const choiceIndex = Math.floor(Math.random() * themedCycleRemainingKeys.length);
+    const [positionKey] = themedCycleRemainingKeys.splice(choiceIndex, 1);
+    return pool.find(position => position._key === positionKey) || pool[0];
+}
+
+function renderPuzzle(pos) {
+    if (!pos) return false;
+    current_position = positions.indexOf(pos);
+    currentPuzzle = pos;
+    currentPuzzleDifficulty = pos.Difficulty || getActiveDifficulty();
+    renderSVG(pos.SVG);
+    correct_result = findResult(pos.Eval);
+    const turnEl = document.getElementById('turn');
+    if (turnEl) turnEl.innerHTML = pos.Turn;
+    return true;
+}
+
+function renderNoMatchingPuzzleState() {
+    const boardEl = document.getElementById('board');
+    const turnEl = document.getElementById('turn');
+    const activeThemeNames = topThemeOptions
+        .filter(option => selectedThemeKeys.has(option.key))
+        .map(option => option.label);
+    const message = isThemeFilterActive()
+        ? `No ${getActiveDifficulty() || 'available'} positions match the selected themes. Try another difficulty or theme pair.`
+        : 'No positions available';
+    if (boardEl) boardEl.innerHTML = `<p style="padding:40px;text-align:center;">${message}</p>`;
+    if (turnEl) turnEl.innerHTML = activeThemeNames.length ? activeThemeNames.join(' · ') : '';
+}
+
+function loadPuzzleForPR() {
+    const pos = choosePuzzleFromPool(getActivePuzzlePool());
+    if (!renderPuzzle(pos)) renderNoMatchingPuzzleState();
+    updateThemeTrainingUI();
 }
 
 window.nextPosition = function() {
@@ -927,30 +1017,135 @@ window.nextPosition = function() {
         showGuestGate();
         return;
     }
-    const difficulty = isProvisionalMode() ? null : getActiveDifficulty();
-    const pool = isProvisionalMode() ? positions : (positionsByDiff[difficulty] || []);
-    if (!pool.length) {
-        document.getElementById('board').innerHTML = '<p>No positions available</p>';
-        document.getElementById('turn').innerHTML  = '';
+
+    const pos = choosePuzzleFromPool(getActivePuzzlePool());
+    if (!renderPuzzle(pos)) {
+        renderNoMatchingPuzzleState();
         return;
     }
-    current_position = Math.floor(Math.random() * pool.length);
-    const pos = pool[current_position];
-    currentPuzzle = pos;
-    currentPuzzleDifficulty = pos.Difficulty || difficulty;
-    renderSVG(pos.SVG);
-    correct_result = findResult(pos.Eval);
-    document.getElementById("turn").innerHTML = pos.Turn;
+
     answered = false;
     currentPuzzleVoteCache = null;
-    const resultEl = document.getElementById("result");
-    resultEl.innerHTML = '<p id="resultText">Click a piece to make your choice</p>';
-    resultEl.classList.remove("correct", "incorrect");
-    document.getElementById("evaluation-display").innerHTML = "";
-    // [COMMUNITY VOTES HIDDEN] const commEl = document.getElementById("community-results");
-    // [COMMUNITY VOTES HIDDEN] if (commEl) commEl.innerHTML = "";   // ← re-enable to restore community panel
+    const resultEl = document.getElementById('result');
+    if (resultEl) {
+        resultEl.innerHTML = '<p id="resultText">Click a piece to make your choice</p>';
+        resultEl.classList.remove('correct', 'incorrect');
+    }
+    const evaluationEl = document.getElementById('evaluation-display');
+    if (evaluationEl) evaluationEl.innerHTML = '';
+    // [COMMUNITY VOTES HIDDEN] const commEl = document.getElementById('community-results');
+    // [COMMUNITY VOTES HIDDEN] if (commEl) commEl.innerHTML = '';
     hideAIExplanation();
     renderProvisionalNotice();
+    updateThemeTrainingUI();
+};
+
+function buildThemeTrainingOptions() {
+    const counts = new Map();
+    positions.forEach(position => {
+        const seenForPosition = new Set();
+        const rawThemes = Array.isArray(position?.AIExplanation?.themes) ? position.AIExplanation.themes : [];
+        rawThemes.forEach(theme => {
+            const key = getThemeKey(theme);
+            if (!key || seenForPosition.has(key)) return;
+            seenForPosition.add(key);
+            const label = String(theme).normalize('NFKC').trim().replace(/\s+/g, ' ');
+            const entry = counts.get(key) || { key, label, count: 0 };
+            entry.count += 1;
+            counts.set(key, entry);
+        });
+    });
+
+    topThemeOptions = [...counts.values()]
+        .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+        .slice(0, THEME_SELECTION_LIMIT);
+
+    selectedThemeKeys = new Set([...selectedThemeKeys].filter(key => topThemeOptions.some(option => option.key === key)));
+    renderThemeTrainingOptions();
+    updateThemeTrainingUI();
+}
+
+function renderThemeTrainingOptions() {
+    const grid = document.getElementById('theme-option-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    topThemeOptions.forEach(option => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'theme-option-btn';
+        button.dataset.themeKey = option.key;
+        button.title = `${option.label} · ${option.count} positions`;
+        button.setAttribute('aria-pressed', 'false');
+        button.addEventListener('click', () => window.toggleThemeTraining(option.key));
+
+        const label = document.createElement('span');
+        label.className = 'theme-option-label';
+        label.textContent = option.label;
+        button.append(label);
+        grid.append(button);
+    });
+}
+
+function updateThemeTrainingUI() {
+    const active = isThemeFilterActive();
+    const selectedCount = selectedThemeKeys.size;
+    const allButton = document.getElementById('theme-all-btn');
+    const countEl = document.getElementById('theme-selection-count');
+    const helpEl = document.getElementById('theme-training-help');
+
+    if (allButton) {
+        const isAllThemesMode = selectedCount === 0;
+        allButton.classList.toggle('active', isAllThemesMode);
+        allButton.setAttribute('aria-pressed', String(isAllThemesMode));
+    }
+
+    document.querySelectorAll('.theme-option-btn').forEach(button => {
+        const selected = selectedThemeKeys.has(button.dataset.themeKey);
+        button.classList.toggle('active', active && selected);
+        button.classList.toggle('pending', !active && selected);
+        button.setAttribute('aria-pressed', String(selected));
+    });
+
+    if (!countEl || !helpEl) return;
+    countEl.classList.toggle('is-focused', active);
+    helpEl.classList.toggle('is-warning', !active && selectedCount === 1);
+
+    if (!selectedCount) {
+        countEl.textContent = 'All themes';
+        helpEl.textContent = 'Train from every positional theme, or choose at least two focus areas.';
+    } else if (!active) {
+        countEl.textContent = '1 selected';
+        helpEl.textContent = 'Select one more theme to activate the focused puzzle pool.';
+    } else {
+        const poolCount = getActivePuzzlePool().length;
+        const difficultyLabel = isProvisionalMode() ? 'all difficulty levels' : `${getActiveDifficulty()} difficulty`;
+        countEl.textContent = `${selectedCount} selected`;
+        helpEl.textContent = `${poolCount} matching positions · either selected theme · ${difficultyLabel}. Repeats after the pool is completed.`;
+    }
+}
+
+window.setThemeTrainingAll = function() {
+    const wasActive = isThemeFilterActive();
+    selectedThemeKeys.clear();
+    resetThemedPuzzleCycle();
+    updateThemeTrainingUI();
+    if (wasActive && positions.length) window.nextPosition();
+};
+
+window.toggleThemeTraining = function(themeKey) {
+    if (!themeKey) return;
+    const wasActive = isThemeFilterActive();
+    if (selectedThemeKeys.has(themeKey)) selectedThemeKeys.delete(themeKey);
+    else selectedThemeKeys.add(themeKey);
+
+    const isActive = isThemeFilterActive();
+    resetThemedPuzzleCycle();
+    updateThemeTrainingUI();
+
+    // Apply a newly enabled filter immediately. If a valid filter was just
+    // removed, return to the normal unfiltered pool immediately as well.
+    if (positions.length && (wasActive || isActive)) window.nextPosition();
 };
 
 function sendAnswer(guess) {
@@ -2054,10 +2249,12 @@ function initPositions() {
         if (snapshot.exists()) {
             // Preserve Firebase key as _key on each position — used for puzzleVotes path
             positions = Object.entries(snapshot.val()).map(([k, v]) => ({ ...v, _key: k }));
-            positionsByDiff.Easy   = positions.filter(p => p.Difficulty === "Easy");
+                        positionsByDiff.Easy   = positions.filter(p => p.Difficulty === "Easy");
             positionsByDiff.Medium = positions.filter(p => p.Difficulty === "Medium");
             positionsByDiff.Hard   = positions.filter(p => p.Difficulty === "Hard");
+            buildThemeTrainingOptions();
             if (boardEl) loadPuzzleForPR();
+
             initPOTD(); // kick off POTD after positions are ready
         }
     }).catch((error) => {
