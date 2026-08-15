@@ -2767,9 +2767,10 @@ svg.board, #board svg {
    THEMATIC TRAINING SELECTOR — homepage left training column
    ══════════════════════════════════════════════════════════════════════════ */
 #theme-training-selector {
-    border-top: 1px solid var(--line);
-    margin-top: 0;
-    padding-top: 14px;
+    border-top: 2px solid var(--yellow-line);
+    margin-top: 18px;
+    padding-top: 16px;
+    position: relative;
 }
 
 .theme-training-heading {
@@ -2777,13 +2778,13 @@ svg.board, #board svg {
     align-items: flex-start;
     justify-content: space-between;
     gap: 10px;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
 }
 
 .theme-training-eyebrow {
     color: var(--yellow);
     font-family: var(--font-mono);
-    font-size: 0.56rem;
+    font-size: 0.62rem;
     font-weight: 800;
     letter-spacing: 0.18em;
     line-height: 1.2;
@@ -2793,7 +2794,7 @@ svg.board, #board svg {
 #theme-training-title {
     color: var(--text);
     font-family: var(--font-display);
-    font-size: 0.92rem;
+    font-size: 1.0rem;
     font-weight: 700;
     letter-spacing: -0.01em;
     line-height: 1.15;
@@ -2805,11 +2806,11 @@ svg.board, #board svg {
     border: 1px solid var(--line-bright);
     color: var(--text-faint);
     font-family: var(--font-mono);
-    font-size: 0.54rem;
+    font-size: 0.6rem;
     font-weight: 800;
     letter-spacing: 0.08em;
     line-height: 1;
-    padding: 5px 6px;
+    padding: 5px 8px;
     text-transform: uppercase;
     white-space: nowrap;
 }
@@ -2820,11 +2821,11 @@ svg.board, #board svg {
 }
 
 .theme-training-help {
-    color: var(--text-faint);
+    color: var(--text-dim);
     font-family: var(--font-body);
-    font-size: 0.68rem;
-    line-height: 1.35;
-    margin: 0 0 9px;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    margin: 0 0 12px;
 }
 
 .theme-training-help.is-warning { color: var(--bad); }
@@ -2837,12 +2838,12 @@ svg.board, #board svg {
     cursor: pointer;
     display: flex;
     font-family: var(--font-display);
-    font-size: 0.72rem;
+    font-size: 0.82rem;
     font-weight: 700;
     justify-content: space-between;
-    margin: 0 0 8px;
-    min-height: 32px;
-    padding: 7px 9px;
+    margin: 0 0 10px;
+    min-height: 40px;
+    padding: 10px 12px;
     text-align: left;
     transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
     width: 100%;
@@ -2864,7 +2865,7 @@ svg.board, #board svg {
 .theme-all-btn-note {
     color: var(--text-faint);
     font-family: var(--font-mono);
-    font-size: 0.52rem;
+    font-size: 0.6rem;
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -2874,7 +2875,7 @@ svg.board, #board svg {
 
 .theme-option-grid {
     display: grid;
-    gap: 5px;
+    gap: 7px;
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
@@ -2882,18 +2883,18 @@ svg.board, #board svg {
     align-items: center;
     background: color-mix(in srgb, var(--surface-2) 92%, transparent);
     border: 1px solid var(--line);
-    color: var(--text-faint);
+    color: var(--text-dim);
     cursor: pointer;
     display: flex;
     font-family: var(--font-mono);
-    font-size: 0.57rem;
-    font-weight: 800;
+    font-size: 0.68rem;
+    font-weight: 700;
     justify-content: flex-start;
-    letter-spacing: 0.025em;
-    line-height: 1.1;
-    min-height: 31px;
+    letter-spacing: 0.03em;
+    line-height: 1.2;
+    min-height: 40px;
     overflow: hidden;
-    padding: 6px 7px;
+    padding: 9px 10px;
     position: relative;
     text-align: left;
     transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.16s var(--ease-snap);
@@ -2903,10 +2904,12 @@ svg.board, #board svg {
     background: var(--yellow);
     content: '';
     height: 5px;
-    margin-right: 6px;
+    margin-right: 7px;
+    flex-shrink: 0;
     opacity: 0;
     transition: opacity 0.16s ease;
     width: 5px;
+    border-radius: 1px;
 }
 
 .theme-option-btn:hover {
@@ -2933,9 +2936,9 @@ svg.board, #board svg {
 .theme-loading-note {
     color: var(--text-faint);
     font-family: var(--font-mono);
-    font-size: 0.62rem;
+    font-size: 0.68rem;
     grid-column: 1 / -1;
-    padding: 6px 0;
+    padding: 8px 0;
 }
 
 @media (min-width: 901px) {
@@ -2970,11 +2973,12 @@ svg.board, #board svg {
         padding: 2px 4px;
     }
     .diff-panel-desc {
-        font-size: 0.68rem;
-        line-height: 1.32;
-        margin: 0 0 13px;
+        font-size: 0.76rem;
+        line-height: 1.48;
+        margin: 0 0 14px;
         min-height: 0;
-        padding: 7px 8px;
+        padding: 10px 11px;
+        color: var(--text-dim);
     }
 }
 
@@ -3077,21 +3081,21 @@ svg.board, #board svg {
     .diff-panel-desc {
         background: color-mix(in srgb, var(--surface-2) 82%, transparent);
         border-left-color: color-mix(in srgb, var(--yellow) 65%, var(--line));
-        color: var(--text-faint);
-        font-size: 0.66rem;
-        line-height: 1.36;
-        margin: 0 0 12px;
-        padding: 8px 9px;
+        color: var(--text-dim);
+        font-size: 0.76rem;
+        line-height: 1.5;
+        margin: 0 0 14px;
+        padding: 10px 12px;
     }
 
     #theme-training-selector {
         background:
             linear-gradient(145deg, color-mix(in srgb, var(--surface-2) 90%, transparent), color-mix(in srgb, var(--surface) 92%, transparent));
         border: 1px solid var(--line);
-        border-top: 2px solid color-mix(in srgb, var(--yellow) 65%, var(--line));
+        border-top: 2px solid color-mix(in srgb, var(--yellow) 72%, var(--line));
         box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 6%, transparent);
-        margin: 0;
-        padding: 11px 9px 9px;
+        margin: 16px 0 0;
+        padding: 16px 14px 14px;
         position: relative;
     }
 
@@ -3103,64 +3107,66 @@ svg.board, #board svg {
         font-weight: 800;
         letter-spacing: 0.11em;
         position: absolute;
-        right: 9px;
-        top: 11px;
+        right: 14px;
+        top: 16px;
     }
 
     .theme-training-heading {
         align-items: center;
         border-left: 2px solid var(--yellow);
-        margin: 0 30px 7px 0;
-        padding-left: 8px;
+        margin: 0 36px 10px 0;
+        padding-left: 10px;
     }
 
     .theme-training-eyebrow {
-        font-size: 0.5rem;
+        font-size: 0.58rem;
         letter-spacing: 0.2em;
     }
 
     #theme-training-title {
-        font-size: 0.84rem;
-        margin-top: 2px;
+        font-size: 0.96rem;
+        margin-top: 3px;
     }
 
     .theme-selection-count {
         background: color-mix(in srgb, var(--surface) 68%, transparent);
-        font-size: 0.48rem;
-        padding: 4px 5px;
+        font-size: 0.56rem;
+        padding: 5px 7px;
     }
 
     .theme-training-help {
-        font-size: 0.62rem;
-        line-height: 1.33;
-        margin: 0 0 8px;
+        font-size: 0.74rem;
+        line-height: 1.48;
+        margin: 0 0 13px;
+        color: var(--text-dim);
     }
 
     .theme-all-btn {
         background: color-mix(in srgb, var(--surface) 76%, transparent);
-        font-size: 0.68rem;
-        margin-bottom: 7px;
-        min-height: 29px;
-        padding: 6px 8px;
+        font-size: 0.78rem;
+        margin-bottom: 10px;
+        min-height: 38px;
+        padding: 9px 11px;
     }
 
     .theme-all-btn.active {
         background: linear-gradient(90deg, var(--yellow-soft), color-mix(in srgb, var(--surface) 82%, transparent));
     }
 
-    .theme-option-grid { gap: 6px; }
+    .theme-option-grid { gap: 8px; }
 
     .theme-option-btn {
         background: color-mix(in srgb, var(--surface) 84%, transparent);
-        font-size: 0.55rem;
-        min-height: 29px;
-        padding: 6px 7px;
+        font-size: 0.67rem;
+        min-height: 38px;
+        padding: 9px 10px;
+        letter-spacing: 0.025em;
     }
 
     .theme-option-btn::before {
-        height: 4px;
-        margin-right: 5px;
-        width: 4px;
+        height: 5px;
+        margin-right: 7px;
+        width: 5px;
     }
 }
 
@@ -3174,45 +3180,50 @@ svg.board, #board svg {
     }
 }
 
-/* Slightly roomier thematic-focus card: gives the instructional copy and all
-   ten focus buttons a calmer rhythm without requiring a scrollable panel. */
+/* Thematic-focus card: generous spacing, readable text, good use of vertical space */
 @media (min-width: 901px) {
     #theme-training-selector {
-        min-height: 308px;
-        padding: 14px 11px 12px;
+        min-height: 340px;
+        padding: 16px 14px 16px;
     }
 
     .theme-training-heading {
-        margin-bottom: 9px;
-        padding: 2px 0 2px 9px;
+        margin-bottom: 10px;
+        padding: 3px 0 3px 10px;
     }
 
-    .theme-training-eyebrow { font-size: 0.53rem; }
-    #theme-training-title { font-size: 0.9rem; }
+    .theme-training-eyebrow { font-size: 0.58rem; }
+    #theme-training-title { font-size: 0.96rem; }
 
     .theme-training-help {
-        font-size: 0.66rem;
-        line-height: 1.42;
-        margin-bottom: 10px;
-        min-height: 2.84em;
+        font-size: 0.75rem;
+        line-height: 1.5;
+        margin-bottom: 13px;
+        min-height: auto;
+        color: var(--text-dim);
     }
 
     .theme-all-btn {
-        font-size: 0.7rem;
-        margin-bottom: 9px;
-        min-height: 35px;
-        padding: 7px 9px;
+        font-size: 0.8rem;
+        margin-bottom: 11px;
+        min-height: 40px;
+        padding: 10px 12px;
+    }
+
+    .theme-all-btn-note {
+        font-size: 0.62rem;
     }
 
     .theme-option-grid {
         flex: 1;
-        gap: 7px;
-        grid-auto-rows: minmax(35px, 1fr);
+        gap: 8px;
+        grid-auto-rows: minmax(40px, 1fr);
     }
 
     .theme-option-btn {
-        font-size: 0.58rem;
-        min-height: 35px;
-        padding: 7px 8px;
+        font-size: 0.68rem;
+        min-height: 40px;
+        padding: 10px 11px;
+        letter-spacing: 0.025em;
     }
 }
