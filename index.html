@@ -148,6 +148,22 @@
         <button class="decay-dismiss" onclick="document.getElementById('decay-banner').style.display='none'" aria-label="Dismiss">×</button>
     </div>
 
+    <!-- ── Email verification banner ────────────────────────────────────────── -->
+    <!-- Shown when an email/password user is signed in but unverified.         -->
+    <!-- isGuest stays true so NO puzzles save, NO PR updates, NO leaderboard.  -->
+    <div id="verif-banner" style="display:none;" role="alert">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 8.586 6.121a2 2 0 0 0 2.828 0L22 7"/></svg>
+        <div class="verif-banner-body">
+            <span><strong>Verify your email to play.</strong> We sent a link to <b id="verif-banner-email">your email</b>. Click it to activate your account.</span>
+            <span class="verif-banner-hint">Already verified? <button class="verif-banner-reload" onclick="reloadAfterVerification()">Click here to continue →</button></span>
+            <span class="verif-banner-msg" id="verif-banner-msg"></span>
+        </div>
+        <div class="verif-banner-actions">
+            <button id="verif-resend-btn" onclick="resendVerificationEmail()">Resend email</button>
+            <button onclick="signOutFromBanner()">Sign out</button>
+        </div>
+    </div>
+
     <!-- ── Main layout ─────────────────────────────────────────────────────── -->
     <main class="main-content" id="main-game">
 

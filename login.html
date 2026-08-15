@@ -121,6 +121,64 @@
             .auth-logo h1 { font-size: 1.8rem; }
         }
 
+        /* ── Email verification pending screen ───────────────────────────────── */
+        .verif-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 8px 0 4px;
+            gap: 14px;
+        }
+        .verif-screen.active { display: flex; }
+        .verif-icon {
+            width: 58px; height: 58px;
+            background: var(--yellow-soft);
+            border: 1px solid var(--yellow-line);
+            display: grid; place-items: center;
+            clip-path: polygon(16% 0, 100% 0, 100% 84%, 84% 100%, 0 100%, 0 16%);
+        }
+        .verif-icon svg { width: 28px; height: 28px; color: var(--yellow); }
+        .verif-title {
+            font-family: var(--font-display); font-size: 1.35rem; font-weight: 700;
+            color: var(--text); margin: 0;
+        }
+        .verif-email-label {
+            font-family: var(--font-mono); font-size: 0.78rem;
+            font-weight: 700; color: var(--yellow); letter-spacing: 0.04em;
+            background: var(--yellow-soft); border: 1px solid var(--yellow-line);
+            padding: 7px 14px; max-width: 100%; word-break: break-all;
+        }
+        .verif-body {
+            font-size: 0.9rem; color: var(--text-dim); line-height: 1.55; margin: 0;
+        }
+        .verif-body strong { color: var(--text); font-weight: 700; }
+        .verif-actions { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 4px; }
+        .btn-resend {
+            padding: 13px; border: 1px solid var(--yellow-line); cursor: pointer;
+            background: transparent; color: var(--yellow);
+            font-family: var(--font-display); font-size: 0.92rem; font-weight: 700;
+            letter-spacing: 0.04em;
+            transition: background 0.18s ease, border-color 0.18s ease;
+            clip-path: polygon(5% 0, 100% 0, 95% 100%, 0 100%);
+        }
+        .btn-resend:hover { background: var(--yellow-soft); border-color: var(--yellow); }
+        .btn-resend:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-back-login {
+            padding: 11px; border: none; cursor: pointer;
+            background: transparent; color: var(--text-faint);
+            font-family: var(--font-mono); font-size: 0.78rem; font-weight: 700;
+            letter-spacing: 0.06em; text-transform: uppercase;
+            transition: color 0.15s ease;
+        }
+        .btn-back-login:hover { color: var(--text); }
+        .verif-msg {
+            font-size: 0.85rem; padding: 9px 14px; width: 100%;
+            border: 1px solid transparent; display: none; text-align: left;
+        }
+        .verif-msg.ok  { display: block; background: var(--yellow-soft); color: var(--yellow); border-color: var(--yellow-line); }
+        .verif-msg.err { display: block; background: rgba(255,77,77,0.1); color: var(--bad); border-color: rgba(255,77,77,0.4); }
+
         /* ── Google sign-in ───────────────────────────────────────────────────── */
         .auth-divider {
             display: flex; align-items: center; gap: 12px;
@@ -239,6 +297,27 @@
             <button type="submit" class="auth-submit" id="btn-signup">Create Account</button>
         </form>
 
+        <!-- ── Email verification pending screen ── -->
+        <div class="verif-screen" id="verif-screen">
+            <div class="verif-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"/>
+                    <path d="m2 7 8.586 6.121a2 2 0 0 0 2.828 0L22 7"/>
+                </svg>
+            </div>
+            <h2 class="verif-title">Check your inbox</h2>
+            <div class="verif-email-label" id="verif-email-label">you@email.com</div>
+            <p class="verif-body">
+                We've sent a verification link to that address.<br>
+                <strong>Click the link in the email</strong> to activate your account, then sign in below.
+            </p>
+            <div class="verif-msg" id="verif-msg"></div>
+            <div class="verif-actions">
+                <button class="btn-resend" id="btn-resend" onclick="handleResend()">Resend Verification Email</button>
+                <button class="btn-back-login" onclick="backToLogin()">← Back to Sign In</button>
+            </div>
+        </div>
+
         <div class="auth-card-footer">
             CHESSIQ v0.5 &nbsp;·&nbsp; BETA
         </div>
@@ -251,7 +330,8 @@
         import { getAuth, createUserWithEmailAndPassword,
                  signInWithEmailAndPassword, onAuthStateChanged,
                  updateProfile, GoogleAuthProvider,
-                 signInWithPopup }                    from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+                 signInWithPopup, sendEmailVerification,
+                 signOut }                            from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey:            "AIzaSyDtGbU8BN06Y_GNDmhV1FJFRhTvD603DN0",
@@ -270,10 +350,24 @@
 
         const PR_START = 500;
 
-        // ── If already signed in, skip straight to the game ──────────────────
+        // ── If already signed in and verified, skip straight to the game ──────
+        // Unverified email/password accounts stay on this page so the user can
+        // see the verification-pending screen or resend the email.
         onAuthStateChanged(auth, (user) => {
-            if (user) window.location.href = 'index.html';
+            if (!user) return;
+            const isEmailPassword = user.providerData.some(p => p.providerId === 'password');
+            if (isEmailPassword && !user.emailVerified) {
+                // Stay — they need to verify. If the screen isn't showing already
+                // (e.g. they refreshed after sign-up), show it now.
+                showVerifScreen(user.email);
+                return;
+            }
+            window.location.href = 'index.html';
         });
+
+        // ── Pending email stored so resend can use it after sign-out ─────────
+        let pendingVerifEmail = '';
+        let pendingVerifPwd   = '';
 
         // ── Tab switching ─────────────────────────────────────────────────────
         window.switchTab = function(tab) {
@@ -300,6 +394,78 @@
                 ? (btnId === 'btn-login' ? 'Signing in' : 'Creating account')
                 : (btnId === 'btn-login' ? 'Sign In'    : 'Create Account');
         }
+
+        // ── Verification-screen helpers ───────────────────────────────────────
+        function showVerifScreen(email) {
+            // Hide the tab UI and forms, show the pending screen
+            document.getElementById('tab-login').closest('.auth-tabs').style.display = 'none';
+            document.getElementById('btn-google').style.display = 'none';
+            document.querySelector('.auth-divider').style.display = 'none';
+            document.getElementById('form-login').classList.add('hidden');
+            document.getElementById('form-signup').classList.add('hidden');
+            document.getElementById('auth-msg').style.display = 'none';
+
+            const label = document.getElementById('verif-email-label');
+            if (label) label.textContent = email || 'your email address';
+            document.getElementById('verif-screen').classList.add('active');
+            pendingVerifEmail = email || '';
+        }
+
+        function hideVerifScreen() {
+            document.getElementById('verif-screen').classList.remove('active');
+            document.getElementById('tab-login').closest('.auth-tabs').style.display = '';
+            document.getElementById('btn-google').style.display = '';
+            document.querySelector('.auth-divider').style.display = '';
+            document.getElementById('auth-msg').style.display = '';
+        }
+
+        function showVerifMsg(text, type) {
+            const el = document.getElementById('verif-msg');
+            el.textContent = text;
+            el.className = `verif-msg ${type}`;
+        }
+
+        window.backToLogin = async function() {
+            // Sign out the unverified user so they can log in fresh after verifying
+            try { await signOut(auth); } catch (_) {}
+            hideVerifScreen();
+            switchTab('login');
+            pendingVerifEmail = '';
+            pendingVerifPwd   = '';
+        };
+
+        window.handleResend = async function() {
+            const btn = document.getElementById('btn-resend');
+            btn.disabled = true;
+            showVerifMsg('', '');
+
+            try {
+                // Firebase requires an active user session to resend.
+                // If still signed in (unverified), send directly.
+                const user = auth.currentUser;
+                if (user && !user.emailVerified) {
+                    await sendEmailVerification(user);
+                } else if (pendingVerifEmail && pendingVerifPwd) {
+                    // Re-authenticate silently to get a fresh session for sending.
+                    const cred = await signInWithEmailAndPassword(auth, pendingVerifEmail, pendingVerifPwd);
+                    await sendEmailVerification(cred.user);
+                } else {
+                    throw new Error('no-session');
+                }
+                showVerifMsg('Verification email sent! Check your inbox (and spam folder).', 'ok');
+            } catch (err) {
+                if (err.message === 'no-session') {
+                    showVerifMsg('Please go back and sign in again to resend.', 'err');
+                } else if (err.code === 'auth/too-many-requests') {
+                    showVerifMsg('Too many requests — please wait a few minutes before resending.', 'err');
+                } else {
+                    showVerifMsg('Could not resend. Please try again shortly.', 'err');
+                }
+            }
+
+            // Re-enable the button after 30 s to prevent spam
+            setTimeout(() => { btn.disabled = false; }, 30_000);
+        };
 
         // ── Friendly Firebase error messages ─────────────────────────────────
         function friendlyError(code) {
@@ -394,8 +560,18 @@
             setLoading('btn-login', true);
 
             try {
-                await signInWithEmailAndPassword(auth, email, pwd);
-                // onAuthStateChanged will redirect
+                const cred = await signInWithEmailAndPassword(auth, email, pwd);
+
+                if (!cred.user.emailVerified) {
+                    // Signed in but not verified — show the pending screen.
+                    // Store creds so resend can re-auth if the session expires.
+                    pendingVerifEmail = email;
+                    pendingVerifPwd   = pwd;
+                    setLoading('btn-login', false);
+                    showVerifScreen(email);
+                    return;
+                }
+                // Verified — onAuthStateChanged will redirect to index.html
             } catch (err) {
                 showMsg(friendlyError(err.code), 'error');
                 setLoading('btn-login', false);
@@ -454,7 +630,17 @@
                 // Reserve the username
                 await set(ref(db, `usernames/${username.toLowerCase()}`), uid);
 
-                // onAuthStateChanged will redirect to index.html
+                // Send email verification — user must verify before they can play
+                await sendEmailVerification(cred.user);
+
+                // Store creds so the resend handler can re-auth if session expires
+                pendingVerifEmail = email;
+                pendingVerifPwd   = pwd;
+
+                // Show the verification-pending screen instead of redirecting
+                setLoading('btn-signup', false);
+                showVerifScreen(email);
+
             } catch (err) {
                 showMsg(friendlyError(err.code), 'error');
                 setLoading('btn-signup', false);
