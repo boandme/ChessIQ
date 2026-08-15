@@ -376,6 +376,118 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
 }
 .decay-dismiss:hover { color: var(--text); }
 
+/* ── Email verification banner ───────────────────────────────────────────── */
+/* Full-width warning above the game. User is treated as a guest until        */
+/* they verify — no PR, no saves, no leaderboard.                             */
+#verif-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    max-width: 720px;
+    margin: 0 auto 18px;
+    padding: 14px 16px 14px 18px;
+    background: linear-gradient(90deg, rgba(255,212,0,0.09), var(--surface-2));
+    border: 1px solid var(--yellow-line);
+    border-left: 3px solid var(--yellow);
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    color: var(--text-dim);
+    animation: banner-in 0.35s var(--ease-out);
+}
+@keyframes banner-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+
+#verif-banner > svg {
+    width: 20px; height: 20px;
+    color: var(--yellow);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+.verif-banner-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+#verif-banner strong {
+    color: var(--text);
+    font-weight: 800;
+}
+#verif-banner b {
+    font-family: var(--font-mono);
+    color: var(--yellow);
+    font-weight: 700;
+}
+.verif-banner-hint {
+    font-size: 0.8rem;
+    color: var(--text-faint);
+}
+.verif-banner-reload {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--yellow);
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: var(--yellow-line);
+    text-underline-offset: 2px;
+    transition: color 0.15s ease;
+}
+.verif-banner-reload:hover { color: var(--yellow-bright); }
+.verif-banner-msg {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: none;
+}
+.verif-banner-msg.ok  { display: block; color: var(--ok,  #4ade80); }
+.verif-banner-msg.err { display: block; color: var(--bad, #ff4d4d); }
+
+.verif-banner-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    flex-shrink: 0;
+}
+.verif-banner-actions button {
+    padding: 7px 14px;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition: background 0.15s ease, color 0.15s ease;
+    clip-path: polygon(6% 0, 100% 0, 94% 100%, 0 100%);
+}
+#verif-resend-btn {
+    background: var(--yellow);
+    color: var(--bg);
+}
+#verif-resend-btn:hover   { background: var(--yellow-bright); }
+#verif-resend-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.verif-banner-actions button:last-child {
+    background: transparent;
+    color: var(--text-faint);
+    border: 1px solid var(--line);
+}
+.verif-banner-actions button:last-child:hover {
+    color: var(--text);
+    border-color: var(--line-bright);
+    background: var(--surface-2);
+}
+
+@media (max-width: 600px) {
+    #verif-banner      { flex-wrap: wrap; }
+    .verif-banner-actions { flex-direction: row; width: 100%; }
+    .verif-banner-actions button { flex: 1; }
+}
+
 /* ── Guest puzzle-cap gate overlay ────────────────────────────────────────── */
 #guest-gate {
     position: absolute; inset: 0;

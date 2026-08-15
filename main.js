@@ -14,6 +14,13 @@ const DECAY_GRACE_DAYS   = 7;    // days of inactivity before decay starts
 const DECAY_PER_DAY      = 3;    // PR lost per day after grace period
 const DECAY_FLOOR        = 300;  // PR never decays below this
 
+// ── Rating formula denominator ────────────────────────────────────────────────
+// Controls how quickly ratingFactor compresses gains as PR climbs.
+// Lower = steeper compression = harder to gain points at higher ratings.
+// At 3500: PR=875→75% efficiency, PR=1750→50%, PR=3000→14%.
+// (Old value was 4480 — too gentle, allowed fast climbs with very few puzzles.)
+const PR_RATING_DENOM = 3500;
+
 // ── In-memory player state (loaded from Firebase after auth) ──────────────────
 var playerPR      = PR_START;
 var totalPuzzles  = 0;
@@ -60,16 +67,32 @@ var accountCreatedAt = null;
 // Easy:   low risk / low reward — gentle entry point
 // Medium: balanced risk / balanced reward
 // Hard:   high risk / high reward — meaningful swing, not a PR printer
+//
+// Base values were reduced significantly (v2 rebalance):
+//   - Old Hard was +70/-70; 50 correct puzzles from PR500 could reach ~2860.
+//   - New Hard is +25/-25; 50 correct from PR500 reaches ~1593.
+//   - Wrong answers are symmetric to gains — no free ride from asymmetric losses.
+//   - Combined with the steeper PR_RATING_DENOM (3500 vs 4480), real grinding
+//     is now required: 100 near-perfect Hard puzzles ≈ PR 2000-2300.
 const PR_BASE = {
-    Easy:   { correct: 32,  wrong: -28  },
-    Medium: { correct: 61,  wrong: -61  },
-    Hard:   { correct: 70,  wrong: -70  },   // fix 1: was 110/-95 — too large, caused 800pt/session exploits
+    Easy:   { correct: 12,  wrong: -12  },
+    Medium: { correct: 18,  wrong: -18  },
+    Hard:   { correct: 25,  wrong: -25  },
 };
 
+// Provisional (first 10 puzzles): larger swings to anchor starting rating,
+// but capped so a perfect Hard run lands at ~1950 max.
+// Wrong answers are intentionally harder than correct gains (ratio ~1.55×)
+// to punish guessing and reward genuine positional knowledge from puzzle 1.
+//
+//   Perfect Easy  × 10 → ~1100-1200
+//   Perfect Med   × 10 → ~1400-1600
+//   Perfect Hard  × 10 → ~1900-1950 (hard ceiling via ratingFactor compression)
+//   7/10 Hard correct  → ~900-1050  (realistic good-but-not-perfect run)
 const PR_PROVISIONAL_BASE = {
-    Easy:   { correct: 180, wrong: -160 },
-    Medium: { correct: 285, wrong: -260 },
-    Hard:   { correct: 250, wrong: -230 },   // fix 5: was 420/-380 — a perfect provisional Hard run hit PR=3000+
+    Easy:   { correct: 80,  wrong: -110 },
+    Medium: { correct: 115, wrong: -155 },
+    Hard:   { correct: 165, wrong: -220 },
 };
 
 function isProvisionalMode() {
@@ -89,17 +112,25 @@ function renderProvisionalNotice() {
 }
 
 function confidenceMultiplier() {
-    // fix 3: was 1 + 1.5·exp(-n/15) — peaked at 1.77 on puzzle 10 and stayed
-    // elevated (1.20) well into puzzle 30+, invisibly compounding with Hard+streak.
-    // New curve peaks at 1.60 on puzzle 10 and reaches ~1.02 by puzzle 60.
-    return 1 + 0.6 * Math.exp(-totalPuzzles / 20);
+    // v2 rebalance: was 1 + 0.6·exp(-n/20), which peaked at 1.55× around puzzle 11
+    // and stayed at 1.20× well into puzzle 30, invisibly inflating early gains.
+    // New curve: amplitude 0.20, decay constant 25 — peaks at ~1.18× on puzzle 11
+    // and reaches ~1.02× by puzzle 80. Effectively a very mild early-game bonus
+    // that disappears quickly, so the ratingFactor does the real compression work.
+    return 1 + 0.20 * Math.exp(-totalPuzzles / 25);
 }
 
 function streakMultiplier(correct) {
-    // fix 2: was min(streak,5)*0.10 → max 1.50x. Too punishing/rewarding.
-    // Now min(streak,5)*0.05 → max 1.25x. Still meaningful, no longer dominant.
-    if (correct && currentStreak > 0)  return 1 + Math.min(currentStreak, 5) * 0.05;
-    if (!correct && currentStreak < 0) return 1 + Math.min(Math.abs(currentStreak), 5) * 0.05;
+    // v2 rebalance: separate caps for gains vs losses.
+    // Correct streak: max 5 steps × 4% = 1.20× max. Rewards consistency mildly.
+    // Wrong streak:   max 3 steps × 3% = 1.09× max. Avoids catastrophic loss spirals
+    //                 while still nudging players to take a break on a bad run.
+    // (Old: both directions were min(5)×5% = 1.25×, compounding too heavily with
+    //  Hard base + confMult, especially in early puzzles right after provisional.)
+    if (correct && currentStreak > 0)
+        return 1 + Math.min(currentStreak, 5) * 0.04;
+    if (!correct && currentStreak < 0)
+        return 1 + Math.min(Math.abs(currentStreak), 3) * 0.03;
     return 1.0;
 }
 
@@ -150,7 +181,7 @@ window.setDifficultyOverride = function(value) {
 import { initializeApp }                         from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getDatabase, ref, get, set, update }   from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
 import { getAnalytics }                          from "https://www.gstatic.com/firebasejs/12.1.0/firebase-analytics.js";
-import { getAuth, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut, updateProfile, sendEmailVerification } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey:            "AIzaSyDtGbU8BN06Y_GNDmhV1FJFRhTvD603DN0",
@@ -241,6 +272,21 @@ onAuthStateChanged(auth, async (user) => {
         updateDifficultyPanelUI();
         renderPR();
         initPositions();
+        return;
+    }
+
+    // ── Email verification gate ────────────────────────────────────────────────
+    // Only email/password accounts need this check — Google accounts are already
+    // verified by Google. Unverified users are treated as guests for ALL gameplay:
+    // isGuest stays true, so saveStatsToFirebase / updatePR / leaderboard writes
+    // are all no-ops. They see the verification banner and nothing is persisted.
+    const isEmailPasswordUser = user.providerData.some(p => p.providerId === 'password');
+    if (isEmailPasswordUser && !user.emailVerified) {
+        showGuestUI();
+        updateDifficultyPanelUI();
+        renderPR();
+        initPositions();
+        showVerificationBanner(user);
         return;
     }
 
@@ -809,7 +855,11 @@ function updatePR(difficulty, correct) {
     if (!base) return;
 
     const baseValue    = correct ? base.correct : base.wrong;
-    const ratingFactor = 1 - (playerPR / 4480);
+    // ratingFactor compresses gains as PR rises. PR_RATING_DENOM = 3500 gives
+    // steeper compression than the old 4480, making high-PR gains much smaller.
+    const ratingFactor = Math.max(0, 1 - (playerPR / PR_RATING_DENOM));
+    // confMult: small early-game boost (peaks ~1.18×), fades by puzzle 80.
+    // Not applied during provisional — those base values already handle anchoring.
     const confMult     = provisional ? 1 : confidenceMultiplier();
     const streakMult   = streakMultiplier(correct);
     let   delta        = Math.round(baseValue * ratingFactor * confMult * streakMult);
@@ -889,6 +939,58 @@ function renderPR(delta) {
     }
 }
 window.renderPR = renderPR;
+
+// ── Email verification banner ─────────────────────────────────────────────────
+// Shown when an email/password user is signed in but has not verified their
+// address. They are treated as a guest (isGuest = true) so NO PR updates,
+// puzzle saves, or leaderboard writes occur. The banner is the only path
+// forward: verify the email, then reload, or sign out and use a real address.
+function showVerificationBanner(user) {
+    const banner  = document.getElementById('verif-banner');
+    if (!banner) return;
+    const emailEl = document.getElementById('verif-banner-email');
+    if (emailEl) emailEl.textContent = user.email || 'your email address';
+    banner.style.display = 'flex';
+}
+
+// Resend verification email from the index.html banner.
+// Re-checks the live session — Firebase requires an active signed-in user.
+window.resendVerificationEmail = async function() {
+    const btn = document.getElementById('verif-resend-btn');
+    const msg = document.getElementById('verif-banner-msg');
+    if (btn) btn.disabled = true;
+    if (msg) { msg.textContent = ''; msg.className = 'verif-banner-msg'; }
+
+    try {
+        const user = auth.currentUser;
+        if (!user) throw Object.assign(new Error(), { code: 'no-session' });
+        await sendEmailVerification(user);
+        if (msg) {
+            msg.textContent = 'Sent! Check your inbox and spam folder.';
+            msg.className   = 'verif-banner-msg ok';
+        }
+    } catch (err) {
+        const text = err.code === 'auth/too-many-requests'
+            ? 'Too many requests — wait a few minutes before retrying.'
+            : 'Could not send — please try again shortly.';
+        if (msg) { msg.textContent = text; msg.className = 'verif-banner-msg err'; }
+    }
+
+    // Re-enable after 30 s to prevent spam tapping
+    setTimeout(() => { if (btn) btn.disabled = false; }, 30_000);
+};
+
+// "Already verified? Click here to reload" — re-runs onAuthStateChanged which
+// will now see emailVerified = true and promote the user to full signed-in state.
+window.reloadAfterVerification = function() {
+    window.location.reload();
+};
+
+// Sign out from the banner — takes them back to login.html to use a real email.
+window.signOutFromBanner = async function() {
+    await signOut(auth);
+    window.location.href = 'login.html';
+};
 
 // ── Logout ────────────────────────────────────────────────────────────────────
 window.logoutUser = async function() {
