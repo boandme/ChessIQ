@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ChessIQ release history: major milestones in positional chess training, analytics, AI explanations, and thematic practice.">
+    <title>ChessIQ — Changelog</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="changelog.css">
+    <script>
+        try {
+            if (localStorage.getItem('chessiq-theme') === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        } catch (_) {}
+    </script>
+</head>
+<body>
+    <canvas id="bg-canvas" aria-hidden="true"></canvas>
+    <div id="bg-vignette" aria-hidden="true"></div>
+    <div id="bg-grid" aria-hidden="true"></div>
+    <div id="page-transition" aria-hidden="true"><span class="pt-bar"></span></div>
+
+    <button id="hamburger-menu" onclick="openSidebar()" aria-label="Menu">
+        <span></span><span></span><span></span>
+    </button>
+
+    <aside id="sidebar" class="sidebar">
+        <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+        <div class="sidebar-brand">CHESS<span>IQ</span></div>
+        <nav class="sidebar-nav">
+            <h3>Products</h3>
+            <ul>
+                <li><a href="index.html" onclick="closeSidebar()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
+                    PositionGuesser
+                </a></li>
+            </ul>
+        </nav>
+        <div class="sidebar-foot">v1.5 — ACTIVE</div>
+    </aside>
+    <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <header class="topbar">
+        <div class="topbar-left">
+            <a href="index.html" class="brand" aria-label="ChessIQ home">
+                <span class="brand-mark">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
+                </span>
+                <span class="brand-text">CHESS<span>IQ</span></span>
+                <span class="brand-ver">v1.5</span>
+            </a>
+        </div>
+        <nav class="topnav">
+            <a href="index.html">Home</a>
+            <a href="leaderboard.html">Leaderboard</a>
+            <a href="analytics.html">Analytics</a>
+            <a href="info.html">Information</a>
+            <a href="changelog.html" class="active">Changelog</a>
+            <button id="potd-nav-btn" class="potd-nav-btn" onclick="openPOTD()" aria-label="Puzzle of the Day" title="Puzzle of the Day">
+                <span class="potd-nav-icon">📅</span>
+                <span class="potd-nav-label">Daily</span>
+            </button>
+        </nav>
+        <div class="topbar-right">
+            <button id="theme-btn" class="icon-btn" onclick="toggleTheme()" aria-label="Toggle light/dark mode" title="Toggle light/dark mode">
+                <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.6 6.6 0 0 0 21 12.8z"/></svg>
+                <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+            </button>
+            <button id="help-btn" class="icon-btn" onclick="openModal()" aria-label="Help" title="How to play">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.2"/><path d="M9.2 9.2a2.8 2.8 0 0 1 5.4 1c0 1.9-2.8 2.5-2.8 2.5"/><line x1="12" y1="17" x2="12" y2="17.01"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="changelog-shell reveal">
+        <section class="changelog-hero" aria-labelledby="changelog-title">
+            <div>
+                <div class="changelog-kicker">Release history</div>
+                <h1 id="changelog-title" class="changelog-title">ChessIQ <span>Changelog</span></h1>
+                <p class="changelog-lede">A record of the major milestones that shaped ChessIQ from a positional-puzzle prototype into a focused training platform. Patch-level fixes are intentionally grouped into their closest major release.</p>
+            </div>
+            <div class="changelog-hero-mark" aria-hidden="true">♞</div>
+        </section>
+
+        <section class="changelog-summary" aria-label="Release summary">
+            <dl class="release-stat release-stats">
+                <dt>Major releases</dt>
+                <dd>12</dd>
+                <span class="release-stat-label">Documented milestones</span>
+            </dl>
+            <dl class="release-stat release-stats">
+                <dt>Latest feature line</dt>
+                <dd>v1.4</dd>
+                <span class="release-stat-label">Thematic training</span>
+            </dl>
+            <dl class="release-stat release-stats">
+                <dt>Training inventory</dt>
+                <dd>73</dd>
+                <span class="release-stat-label">Canonical themes</span>
+            </dl>
+        </section>
+
+        <section class="release-timeline" aria-label="Major ChessIQ releases">
+            <article class="release-card current">
+                <div class="release-side">
+                    <div>
+                        <div class="release-version">v1.4</div>
+                        <div class="release-era">August 2026</div>
+                    </div>
+                    <span class="release-badge">Latest</span>
+                </div>
+                <div class="release-body">
+                    <div class="release-body-top">
+                        <h2 class="release-name">Thematic Analysis &amp; Training</h2>
+                        <span class="release-meta">Targeted practice</span>
+                    </div>
+                    <ul class="release-list">
+                        <li>Introduced Thematic Focus training, allowing players to combine two or more high-frequency positional themes with their chosen difficulty.</li>
+                        <li>Added a dedicated Analytics page with a theme-accuracy radar, PR trend, recent puzzle log, and positional training profile.</li>
+                        <li>Normalized Gemini-generated labels into a consistent 73-theme taxonomy for reliable learning feedback and analytics.</li>
+                    </ul>
+                </div>
+            </article>
+
+            <article class="release-card">
+                <div class="release-side">
+                    <div>
+                        <div class="release-version">v1.3</div>
+                        <div class="release-era">August 2026</div>
+                    </div>
+                    <span class="release-badge">Progress</span>
+                </div>
+                <div class="release-body">
+                    <div class="release-body-top">
+                        <h2 class="release-name">Achievements &amp; Player Progress</h2>
+                        <span class="release-meta">26 milestones</span>
+                    </div>
+                    <ul class="release-list">
+                        <li>Added 26 unlockable achievements covering performance, positional-rating progress, daily training, consistency, leaderboard rank, and account milestones.</li>
+                        <li>Built an in-game achievement gallery, progress tracking, unlock notifications, and early-member recognition.</li>
+                        <li>Refined the main training experience with a prominent difficulty selector and clearer player progression feedback.</li>
+                    </ul>
+                </div>
+            </article>
+
+            <article class="release-card">
+                <div class="release-side">
+                    <div>
+                        <div class="release-version">v1.2</div>
+                        <div class="release-era">August 2026</div>
+                    </div>
+                    <span class="release-badge">Learning</span>
+                </div>
+                <div class="release-body">
+                    <div class="release-body-top">
+                        <h2 class="release-name">AI Explanations &amp; Interface Revamp</h2>
+                        <span class="release-meta">Reflection loop</span>
+                    </div>
+                    <ul class="release-list">
+                        <li>Added pre-cached AI explanations to every stored position, making the positional reason behind an evaluation immediately available after each answer.</li>
+                        <li>Expanded explanations to cover themes, common mistakes, best moves, and strategic plans.</li>
+                        <li>Reworked post-puzzle presentation and navigation to keep analysis accessible without overwhelming the board.</li>
+                    </ul>
+                </div>
+            </article>
+
+            <article class="release-card">
+                <div class="release-side">
+                    <div>
+                        <div class="release-version">v1.0</div>
+                        <div class="release-era">June 2026</div>
+                    </div>
+                    <span class="release-badge">Launch</span>
+                </div>
+                <div class="release-body">
+                    <div class="release-body-top">
+                        <h2 class="release-name">Full Public Release</h2>
+                        <span class="release-meta">ChessIQ goes live</span>
+                    </div>
+                    <ul class="release-list">
+                        <li>Officially launched ChessIQ with a complete puzzle, account, progress, leaderboard, and review experience.</li>
+                        <li>Delivered broad visual polish, improved PR calculations, puzzle history, and release-ready project pages.</li>
+                        <li>Prepared ChessIQ for sharing with Lichess, Chess.com, Devpost, schools, and chess communities.</li>
+                    </ul>
+                </div>
+            </article>
+
+            <article class="release-card">
+                <div class="release-side">
+                    <div>
+                        <div class="release-version">v0.9</div>
+                        <div class="release-era">June 2026</div>
+                    </div>
+                    <span class="release-badge">Accounts</span>
+                </div>
+                <div class="release-body">
+                    <div class="release-body-top">
+                        <h2 class="release-name">Accounts &amp; Global Leaderboards</h2>
+                        <span class="release-meta">Long-term training</span>
+                    </div>
+                    <ul class="release-list">
+                        <li>Introduced account authentication, persistent PR, score tracking, and long-term player progress.</li>
+                        <li>Launched the global Positional Rating leaderboard and a complete statistics overview.</li>
+                        <li>Added Google sign-in alongside account-based ChessIQ progression.</li>
+                    </ul>
+                </div>
+            </article>
+
+            <article class="release-card">
+                <div class="release-side">
+                    <div>
+                        <div class="release-version">v0.8</div>
+                        <div class="release-era">Pre-release</div>
+                    </div>
+                    <span class="release-badge">Design</span>
+                </div>
+                <div class="release-body">
+                    <div class="release-body-top">
+                        <h2 class="release-name">Full Interface Revamp</h2>
+                        <span class="release-meta">Visual system</span>
+                    </div>
+                    <ul class="release-list">
+                        <li>Rebuilt the play page around ChessIQ’s yellow-and-black visual identity.</li>
+                        <li>Modernized the interface and page transitions to make positional training feel more deliberate and focused.</li>
+                    </ul>
+                </div>
+            </article>
+
+            <article class="release-card">
+                <div class="release-side">
+                    <div>
+                        <div class="release-version">v0.6</div>
+                        <div class="release-era">Foundation</div>
+                    </div>
+                    <span class="release-badge">Rating</span>
+                </div>
+                <div class="release-body">
+                    <div class="release-body-top">
+                        <h2 class="release-name">First Rating System</h2>
+                        <span class="release-meta">Early progression</span>
+                    </div>
+                    <ul class="release-list">
+                        <li>Introduced the first local rating model with streak and confidence mechanics.</li>
+                        <li>Established the progression ideas that later became ChessIQ’s Positional Rating system.</li>
+                    </ul>
+                </div>
+            </article>
+
+            <article class="release-card">
+                <div class="release-side">
+                    <div>
+                        <div class="release-version">v0.5</div>
+                        <div class="release-era">Foundation</div>
+                    </div>
+                    <span class="release-badge">Difficulty</span>
+                </div>
+                <div class="release-body">
+                    <div class="release-body-top">
+                        <h2 class="release-name">Difficulty Modes</h2>
+                        <span class="release-meta">Structured practice</span>
+                    </div>
+                    <ul class="release-list">
+                        <li>Added Easy, Medium, and Hard modes using positional-complexity filtering.</li>
+                        <li>Made training more approachable for newer players while preserving richer challenges for advanced players.</li>
+                    </ul>
+                </div>
+            </article>
+
+            <article class="release-card">
+                <div class="release-side">
+                    <div>
+                        <div class="release-version">v0.4</div>
+                        <div class="release-era">First public release</div>
+                    </div>
+                    <span class="release-badge">Public</span>
+                </div>
+                <div class="release-body">
+                    <div class="release-body-top">
+                        <h2 class="release-name">First Public Release</h2>
+                        <span class="release-meta">ChessIQ opens</span>
+                    </div>
+                    <ul class="release-list">
+                        <li>Published the application and upgraded its core user interface and user experience.</li>
+                        <li>Added dedicated information and credits pages to introduce the project and its purpose.</li>
+                    </ul>
+                </div>
+            </article>
+
+            <article class="release-card">
+                <div class="release-side">
+                    <div>
+                        <div class="release-version">v0.3</div>
+                        <div class="release-era">Data</div>
+                    </div>
+                    <span class="release-badge">Games</span>
+                </div>
+                <div class="release-body">
+                    <div class="release-body-top">
+                        <h2 class="release-name">Real-Game Position Pipeline</h2>
+                        <span class="release-meta">Lichess integration</span>
+                    </div>
+                    <ul class="release-list">
+                        <li>Integrated real Lichess game data into the puzzle pipeline.</li>
+                        <li>Added a side-to-move indicator for more realistic board evaluation practice.</li>
+                    </ul>
+                </div>
+            </article>
+
+            <article class="release-card">
+                <div class="release-side">
+                    <div>
+                        <div class="release-version">v0.2</div>
+                        <div class="release-era">Infrastructure</div>
+                    </div>
+                    <span class="release-badge">Firebase</span>
+                </div>
+                <div class="release-body">
+                    <div class="release-body-top">
+                        <h2 class="release-name">Database Update</h2>
+                        <span class="release-meta">Persistent positions</span>
+                    </div>
+                    <ul class="release-list">
+                        <li>Connected evaluated positions to Firebase and removed the need for continuous Python execution on the frontend.</li>
+                        <li>Enabled the browser client to load prepared puzzle data dynamically.</li>
+                    </ul>
+                </div>
+            </article>
+
+            <article class="release-card">
+                <div class="release-side">
+                    <div>
+                        <div class="release-version">v0.1</div>
+                        <div class="release-era">Origin</div>
+                    </div>
+                    <span class="release-badge">Prototype</span>
+                </div>
+                <div class="release-body">
+                    <div class="release-body-top">
+                        <h2 class="release-name">Initial ChessIQ Prototype</h2>
+                        <span class="release-meta">First position flow</span>
+                    </div>
+                    <ul class="release-list">
+                        <li>Built the initial HTML experience with SVG chess positions and Python-based evaluation preprocessing.</li>
+                        <li>Established ChessIQ’s central idea: training positional judgment instead of tactical calculation alone.</li>
+                    </ul>
+                </div>
+            </article>
+        </section>
+
+        <p class="changelog-footnote">This page intentionally records major product milestones. Smaller patches, visual refinements, and maintenance fixes are grouped into the closest major release so the history stays useful as a product narrative.</p>
+    </main>
+
+    <div id="modal">
+        <div class="modal-content">
+            <button class="modal-close-btn" onclick="closeModal()" aria-label="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+            </button>
+            <h2>Welcome to ChessIQ</h2>
+            <p class="modal-intro">Train your positional knowledge and master the art of self-analysis — a skill invaluable for chess players of every level.</p>
+            <div class="modal-section">
+                <h3>How To Play</h3>
+                <p class="modal-instruction-intro">Read the position, then decide which side has the advantage.</p>
+                <ul class="modal-list">
+                    <li><strong>White Winning</strong> — White has the better position</li>
+                    <li><strong>Equal</strong> — the position is approximately balanced</li>
+                    <li><strong>Black Winning</strong> — Black has the better position</li>
+                </ul>
+            </div>
+            <button class="got-it-btn" onclick="closeModal()">Got It</button>
+        </div>
+    </div>
+
+    <script type="module" src="experience.js"></script>
+    <script>
+        window.openSidebar = () => {
+            document.getElementById('sidebar').classList.add('open');
+            document.getElementById('sidebar-overlay').classList.add('open');
+        };
+        window.closeSidebar = () => {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebar-overlay').classList.remove('open');
+        };
+        window.openModal = () => document.getElementById('modal').style.display = 'flex';
+        window.closeModal = () => document.getElementById('modal').style.display = 'none';
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                closeSidebar();
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

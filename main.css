@@ -3339,3 +3339,19 @@ svg.board, #board svg {
         letter-spacing: 0.025em;
     }
 }
+
+/* Keep the full center navigation—including Changelog—comfortable between the
+   desktop and hamburger-menu breakpoints. */
+@media (min-width: 761px) and (max-width: 1180px) {
+    .topbar { gap: 10px; padding-inline: 16px; }
+    .brand { gap: 8px; }
+    .brand-mark { height: 33px; width: 33px; }
+    .brand-text { font-size: 1.1rem; }
+    .brand-ver { font-size: 0.56rem; }
+    .topnav { gap: 1px; }
+    .topnav a { font-size: 0.78rem; padding: 9px 8px; }
+    .topnav a::after { left: 8px; right: 8px; }
+    .potd-nav-btn { font-size: 0.72rem; gap: 4px; padding: 7px 8px; }
+    .topbar-right { gap: 7px; }
+    .icon-btn { height: 36px; width: 36px; }
+}
