@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Learn how ChessIQ trains positional chess understanding through real positions, adaptive practice, feedback, and reflection.">
-    <title>ChessIQ — Information</title>
+    <meta name="description" content="Learn how ChessIQ trains positional chess understanding through real positions, expert review, feedback, and reflection.">
+    <title>ChessIQ — About</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="main.css">
 </head>
 <body>
-
     <canvas id="bg-canvas" aria-hidden="true"></canvas>
     <div id="bg-vignette" aria-hidden="true"></div>
     <div id="bg-grid" aria-hidden="true"></div>
@@ -34,7 +33,7 @@
                 </a></li>
             </ul>
         </nav>
-        <div class="sidebar-foot">v1.0 — BETA</div>
+        <div class="sidebar-foot">v1.5 — ACTIVE</div>
     </aside>
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
 
@@ -45,15 +44,15 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
                 </span>
                 <span class="brand-text">CHESS<span>IQ</span></span>
-                <span class="brand-ver">v1.0</span>
+                <span class="brand-ver">v1.5</span>
             </a>
         </div>
         <nav class="topnav">
             <a href="index.html">Home</a>
             <a href="leaderboard.html">Leaderboard</a>
             <a href="analytics.html">Analytics</a>
-            <a href="credits.html">Credits</a>
             <a href="info.html" class="active">Information</a>
+            <a href="changelog.html">Changelog</a>
             <button id="potd-nav-btn" class="potd-nav-btn" onclick="openPOTD()" aria-label="Puzzle of the Day" title="Puzzle of the Day">
                 <span class="potd-nav-icon">📅</span>
                 <span class="potd-nav-label">Daily</span>
@@ -75,53 +74,52 @@
 
         <section>
             <h2>Positional training for real games</h2>
-            <p><strong>ChessIQ</strong> is a chess-training application built around a question strong players answer constantly: <em>who is better here, and why?</em> Rather than asking you to find a forcing tactical sequence, ChessIQ presents a real position and asks whether White is better, Black is better, or the position is approximately equal.</p>
-            <p>The aim is to develop a fast, reliable positional first impression. Players learn to recognize the factors that shape real games: piece activity, space, pawn structure, king safety, weak squares, open files and diagonals, initiative, material, and overall coordination.</p>
+            <p><strong>ChessIQ</strong> is an independent student-built chess-training project created by <em>Boandme</em>. It is built around a question strong players answer constantly: <em>who is better here, and why?</em> Rather than asking for a forcing tactical sequence, ChessIQ presents a real position and asks whether White is better, Black is better, or the position is approximately equal.</p>
+            <p>The aim is to develop a fast, reliable positional first impression by recognizing the factors that shape real games: piece activity, space, pawn structure, king safety, weak squares, open lines, initiative, material, and coordination.</p>
         </section>
 
         <section>
             <h2>How a training round works</h2>
-            <p>Start with the board, assess the important imbalances, and make your call. After answering, ChessIQ shows the engine evaluation and a concise explanation of the ideas that mattered. The feedback is designed to turn a result into reflection: not only whether your judgment was right, but which strategic clues you could have used more effectively.</p>
+            <p>Start with the board, assess the imbalances, and make your call without live engine assistance. After answering, ChessIQ shows the evaluation and a concise pre-generated explanation of the ideas that mattered—turning a result into reflection on which strategic clues you could have used more effectively.</p>
             <ul>
                 <li><strong>Read the position.</strong> Identify the side with the more active pieces, safer king, better structure, or clearer plan.</li>
-                <li><strong>Make a judgment.</strong> Choose White advantage, Equal, or Black advantage without relying on a live engine.</li>
-                <li><strong>Review the why.</strong> Compare your intuition with the evaluation, positional themes, and the strategic direction of the position.</li>
+                <li><strong>Make a judgment.</strong> Choose White advantage, Equal, or Black advantage.</li>
+                <li><strong>Review the why.</strong> Compare your intuition with the evaluation, positional themes, and strategic direction.</li>
             </ul>
         </section>
 
         <section>
             <h2>What ChessIQ includes</h2>
-            <p>ChessIQ combines real-game positional puzzles with focused feedback and long-term progress tracking.</p>
+            <p>ChessIQ combines real-game positional puzzles with focused feedback and long-term training tools.</p>
             <ul>
-                <li><strong>900+ real positions</strong>, Adaptive Position Rating (PR), and Easy, Medium, and Hard practice paths.</li>
-                <li><strong>Daily puzzles, streaks, achievements, statistics, and a global leaderboard</strong> to support consistent training.</li>
-                <li><strong>Community results and pre-generated AI explanations</strong> that explain the key positional ideas behind each answer.</li>
+                <li><strong>Adaptive PR and difficulty paths</strong> for Easy, Medium, and Hard practice, plus targeted thematic training.</li>
+                <li><strong>Daily puzzles, achievements, Analytics, puzzle history, and a global leaderboard</strong> to support consistent improvement.</li>
+                <li><strong>Community results and AI explanations</strong> that explain the key positional ideas behind each answer.</li>
             </ul>
         </section>
 
         <section>
-            <h2>Quality review</h2>
-            <p>ChessIQ is peer reviewed by an <strong>International Master</strong> and <strong>two National Masters</strong>. Their perspective helps keep the training experience grounded in serious chess thinking, while the app’s real-game data, engine evaluation, and educational explanations support a high-quality standard for every session.</p>
+            <h2>Chess expertise &amp; quality review</h2>
+            <p>ChessIQ is peer reviewed by an <strong>International Master</strong> and <strong>two National Masters</strong>, with feedback from experienced expert chess players. Their practical perspective helps keep the project grounded in serious chess thinking and supports a high-quality, instructive training experience.</p>
         </section>
 
         <section>
-            <h2>Read the Chess.com feature</h2>
-            <p>For the story behind the project, a sample positional evaluation, and a closer look at the original training idea, read <a href="https://www.chess.com/blog/boandme/train-smarter-introducing-chessiq-the-positional-puzzle-trainer" target="_blank" rel="noopener noreferrer">“Train Smarter: Introducing ChessIQ, the Positional Puzzle Trainer” on Chess.com</a>.</p>
+            <h2>Project, data &amp; contributors</h2>
+            <p>Real-game position data is sourced through the <a href="https://lichess.org" target="_blank" rel="noopener noreferrer">Lichess</a> ecosystem. ChessIQ uses chess-engine evaluation and position-processing tools to prepare positions, organize difficulty, and support the feedback shown after each answer.</p>
+            <ul>
+                <li><strong>Testing</strong> — <a href="https://entyx.github.io/entyprojects/" target="_blank" rel="noopener noreferrer">EntyXD</a></li>
+                <li><strong>Icons and visual assets</strong> — <a href="https://uxwing.com" target="_blank" rel="noopener noreferrer">UXWing</a></li>
+                <li><strong>Image editing and selected UI design</strong> — <a href="https://www.etsy.com/shop/plumpalettecreations/?etsrc=sdt" target="_blank" rel="noopener noreferrer">PlumPaletteCreations</a></li>
+            </ul>
         </section>
 
         <section>
-            <h2>Feedback helps shape ChessIQ</h2>
-            <p>ChessIQ is actively evolving, and player feedback is welcome. If a feature helps your training, a position feels especially instructive, or you have an idea that would improve the experience, please share it. Constructive feedback from players, coaches, and chess communities helps ChessIQ become a stronger and more useful positional-training resource.</p>
-            <p>You can start by leaving a comment on the <a href="https://www.chess.com/blog/boandme/train-smarter-introducing-chessiq-the-positional-puzzle-trainer" target="_blank" rel="noopener noreferrer">Chess.com introduction</a>.</p>
-        </section>
-
-        <section>
-            <h2>Development note</h2>
-            <p>ChessIQ is a serious student-built software project and an active work in progress. The core training loop, rating progression, daily practice, statistics, explanations, and community-oriented systems are in place, with additional refinements planned as the project grows. Thank you for being part of its development.</p>
+            <h2>Community, feedback &amp; use</h2>
+            <p>ChessIQ is actively evolving, and thoughtful feedback from players, coaches, and chess communities is welcome. Read the project introduction and share ideas through <a href="https://www.chess.com/blog/boandme/train-smarter-introducing-chessiq-the-positional-puzzle-trainer" target="_blank" rel="noopener noreferrer">“Train Smarter: Introducing ChessIQ” on Chess.com</a>.</p>
+            <p><strong>Privacy &amp; ownership:</strong> ChessIQ stores the account and training information needed to provide its features. Keep login details private and do not submit sensitive information. ChessIQ’s original code, interface, PR system, gameplay flow, and content belong to their creator unless otherwise credited; please do not copy, resell, or present the project as your own without permission.</p>
         </section>
     </main>
 
-    <!-- Help modal -->
     <div id="modal">
         <div class="modal-content">
             <button class="modal-close-btn" onclick="closeModal()" aria-label="Close">
@@ -144,11 +142,11 @@
 
     <script type="module" src="experience.js"></script>
     <script>
-        window.openSidebar  = () => { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebar-overlay').classList.add('open'); };
+        window.openSidebar = () => { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebar-overlay').classList.add('open'); };
         window.closeSidebar = () => { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('open'); };
-        window.openModal    = () => document.getElementById('modal').style.display = 'flex';
-        window.closeModal   = () => document.getElementById('modal').style.display = 'none';
-        document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeSidebar(); closeModal(); } });
+        window.openModal = () => document.getElementById('modal').style.display = 'flex';
+        window.closeModal = () => document.getElementById('modal').style.display = 'none';
+        document.addEventListener('keydown', event => { if (event.key === 'Escape') { closeSidebar(); closeModal(); } });
     </script>
 </body>
 </html>
