@@ -2556,6 +2556,53 @@ svg.board, #board svg {
     letter-spacing: -0.01em;
 }
 
+/* ── Primary section heading (TRAINING MODE / THEMATIC FOCUS) ──────────── */
+.diff-panel-section-heading {
+    font-family: var(--font-display);
+    font-size: 1.18rem;
+    font-weight: 800;
+    color: var(--yellow);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin: 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--yellow-line);
+    position: relative;
+}
+.diff-panel-section-heading::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 56px;
+    height: 2px;
+    background: var(--yellow);
+    box-shadow: var(--glow);
+}
+
+/* Thematic Focus heading — used inside #theme-training-selector */
+.theme-section-heading {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--yellow);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin: 0 0 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--yellow-line);
+    position: relative;
+}
+.theme-section-heading::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 44px;
+    height: 1px;
+    background: var(--yellow);
+}
+
 /* ── Button stack ────────────────────────────────────────────────────────── */
 .diff-panel-cards {
     display: flex;
@@ -2619,14 +2666,14 @@ svg.board, #board svg {
 }
 .diff-panel-btn-name {
     font-family: var(--font-display);
-    font-size: 0.84rem;
+    font-size: 1.25rem;
     font-weight: 700;
     letter-spacing: 0.01em;
     line-height: 1;
 }
 .diff-panel-btn-sub {
     font-family: var(--font-mono);
-    font-size: 0.6rem;
+    font-size: 0.66rem;
     font-weight: 700;
     letter-spacing: 0.04em;
     color: var(--text-faint);
@@ -2637,14 +2684,14 @@ svg.board, #board svg {
 /* Right-side tag chip */
 .diff-panel-btn-tag {
     font-family: var(--font-mono);
-    font-size: 0.52rem;
+    font-size: 0.75rem;
     font-weight: 800;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.09em;
     text-transform: uppercase;
-    padding: 2px 6px;
+    padding: 3px 8px;
     border: 1px solid;
     flex-shrink: 0;
-    opacity: 0.75;
+    opacity: 0.8;
 }
 .diff-panel-btn.active .diff-panel-btn-tag { opacity: 1; }
 
@@ -2769,6 +2816,7 @@ svg.board, #board svg {
         margin-bottom: 18px;
     }
 
+    .diff-panel-section-heading { font-size: 1.22rem; }
     .diff-panel-title { font-size: 1.2rem; }
 
     .diff-panel-cards {
@@ -2795,10 +2843,10 @@ svg.board, #board svg {
     }
     .diff-panel-btn-icon svg { width: 18px; height: 18px; }
 
-    .diff-panel-btn-body { gap: 5px; padding: 1px 58px 1px 0; }
-    .diff-panel-btn-name { font-size: 0.96rem; line-height: 1.1; }
+    .diff-panel-btn-body { gap: 5px; padding: 1px 64px 1px 0; }
+    .diff-panel-btn-name { font-size: 1.325rem; line-height: 1.1; }
     .diff-panel-btn-sub {
-        font-size: 0.66rem;
+        font-size: 0.69rem;
         line-height: 1.38;
         letter-spacing: 0.035em;
         white-space: normal;
@@ -2808,8 +2856,8 @@ svg.board, #board svg {
         position: absolute;
         top: 14px;
         right: 16px;
-        font-size: 0.5rem;
-        padding: 3px 6px;
+        font-size: 0.725rem;
+        padding: 3px 8px;
     }
 
     .diff-panel-desc {
@@ -3077,12 +3125,12 @@ svg.board, #board svg {
         width: 19px;
     }
     .diff-panel-btn-icon svg { height: 14px; width: 14px; }
-    .diff-panel-btn-name { font-size: 0.74rem; }
+    .diff-panel-btn-name { font-size: 1.075rem; }
     .diff-panel-btn-sub { display: none; }
     .diff-panel-btn-tag {
-        font-size: 0.44rem;
+        font-size: 0.65rem;
         letter-spacing: 0.06em;
-        padding: 2px 4px;
+        padding: 2px 6px;
     }
     .diff-panel-desc {
         font-size: 0.76rem;
@@ -3180,14 +3228,14 @@ svg.board, #board svg {
     .diff-panel-btn:hover { transform: translateY(-1px); }
 
     .diff-panel-btn-name {
-        font-size: 0.72rem;
+        font-size: 1.025rem;
         letter-spacing: 0.025em;
     }
 
     .diff-panel-btn-tag {
         border-color: transparent;
-        font-size: 0.42rem;
-        padding: 2px 3px;
+        font-size: 0.65rem;
+        padding: 2px 6px;
     }
 
     .diff-panel-desc {
@@ -3354,4 +3402,37 @@ svg.board, #board svg {
     .potd-nav-btn { font-size: 0.72rem; gap: 4px; padding: 7px 8px; }
     .topbar-right { gap: 7px; }
     .icon-btn { height: 36px; width: 36px; }
+}
+
+/* ── Active correct streak — PR card ─────────────────────────────────────── */
+.pr-streak {
+    position: absolute;
+    right: 18px;
+    bottom: 17px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 8px 5px 7px;
+    border: 1px solid rgba(255, 132, 45, 0.42);
+    background: linear-gradient(135deg, rgba(255, 118, 38, 0.18), rgba(255, 212, 0, 0.08));
+    color: #ff9c42;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    line-height: 1;
+    text-transform: uppercase;
+    box-shadow: 0 0 16px rgba(255, 119, 32, 0.14);
+    animation: pr-streak-in 0.22s var(--ease-snap) both;
+}
+.pr-streak[hidden] { display: none; }
+.pr-streak-fire { font-size: 0.92rem; line-height: 1; filter: drop-shadow(0 0 5px rgba(255, 124, 35, 0.56)); }
+.pr-streak #pr-streak-count { color: var(--yellow-bright); }
+.pr-streak-label { color: var(--text-dim); font-size: 0.57rem; letter-spacing: 0.1em; }
+@keyframes pr-streak-in {
+    from { opacity: 0; transform: translateY(4px) scale(0.94); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (max-width: 520px) {
+    .pr-streak { right: 14px; bottom: 14px; }
 }

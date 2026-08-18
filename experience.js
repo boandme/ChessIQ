@@ -6,18 +6,6 @@
 //  • shared Daily Puzzle access for non-home pages (kept separate from main.js)
 // ════════════════════════════════════════════════════════════════════════════
 
-// ── Theme: apply IMMEDIATELY before any paint so there's no flash ─────────────
-// This must run on every page, so it lives here in experience.js (loaded by all
-// pages) rather than in main.js (only loaded on index.html).
-(function applyTheme() {
-    const saved = localStorage.getItem('chessiq-theme');
-    if (saved === 'light') {
-        document.documentElement.setAttribute('data-theme', 'light');
-    } else {
-        document.documentElement.removeAttribute('data-theme');
-    }
-})();
-
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { initializeApp, getApp, getApps } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js';
 import { getDatabase, ref, get, set, onValue } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js';

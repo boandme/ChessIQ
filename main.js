@@ -44,6 +44,9 @@ var puzzleActivityDays = {};
 var playDayStreak = 0;
 var lastPuzzleDate = null;
 var totalPlaySeconds = 0;
+// Canonical theme key → { label, correct, total }. This is intentionally stored
+// with achievement activity so theme mastery can be measured from real answers.
+var themePerformance = {};
 var dailyPuzzleHistory = {};
 var leaderboardRank = null;
 var lastLeaderboardRankCheck = 0;
@@ -259,6 +262,9 @@ function hydratePlayerState(data) {
     playDayStreak = Number(activity.playDayStreak) || 0;
     lastPuzzleDate = activity.lastPuzzleDate || null;
     totalPlaySeconds = Number(activity.totalPlaySeconds) || 0;
+    themePerformance = activity.themePerformance && typeof activity.themePerformance === 'object'
+        ? activity.themePerformance
+        : {};
     dailyPuzzleHistory = data.potd && typeof data.potd === 'object' ? data.potd : {};
 }
 
@@ -356,7 +362,7 @@ onAuthStateChanged(auth, async (user) => {
                 prHistory:    [],
                 achievements: {
                     unlocked: {},
-                    activity: { puzzleDays: {}, playDayStreak: 0, lastPuzzleDate: null, totalPlaySeconds: 0 },
+                    activity: { puzzleDays: {}, playDayStreak: 0, lastPuzzleDate: null, totalPlaySeconds: 0, themePerformance: {} },
                 },
                 createdAt,
 
@@ -491,6 +497,7 @@ async function saveStatsToFirebase() {
                 playDayStreak,
                 lastPuzzleDate,
                 totalPlaySeconds: getCurrentTotalPlaySeconds(),
+                themePerformance,
             },
         },
     });
@@ -515,6 +522,19 @@ const ACHIEVEMENTS = [
     { id: 'puzzles_250', category: 'Performance', name: 'Positional Student', description: 'Solve 250 positions.', rarity: 'Epic', icon: '◇', progressType: 'puzzles', threshold: 250 },
     { id: 'puzzles_500', category: 'Performance', name: 'Board Vision', description: 'Solve 500 positions.', rarity: 'Legendary', icon: '◇', progressType: 'puzzles', threshold: 500 },
 
+    // Positional Accuracy — sustained quality matters more than a single hot run.
+    { id: 'accuracy_65_30', category: 'Positional Accuracy', name: 'Reliable Eye', description: 'Maintain 65% accuracy across 30 positions.', rarity: 'Common', icon: '◎', progressType: 'overallAccuracy', threshold: 65, minimum: 30 },
+    { id: 'accuracy_70_75', category: 'Positional Accuracy', name: 'Clear Evaluation', description: 'Maintain 70% accuracy across 75 positions.', rarity: 'Rare', icon: '◎', progressType: 'overallAccuracy', threshold: 70, minimum: 75 },
+    { id: 'accuracy_75_150', category: 'Positional Accuracy', name: 'Positional Precision', description: 'Maintain 75% accuracy across 150 positions.', rarity: 'Epic', icon: '◎', progressType: 'overallAccuracy', threshold: 75, minimum: 150 },
+    { id: 'accuracy_80_250', category: 'Positional Accuracy', name: 'Evaluation Machine', description: 'Maintain 80% accuracy across 250 positions.', rarity: 'Legendary', icon: '◎', progressType: 'overallAccuracy', threshold: 80, minimum: 250 },
+
+    // Thematic Mastery — credited from the canonical themes on positions answered after this update.
+    { id: 'theme_60_10', category: 'Thematic Mastery', name: 'Theme Finder', description: 'Reach 60% accuracy in one theme across 10 positions.', rarity: 'Common', icon: '◈', progressType: 'bestThemeAccuracy', threshold: 60, minimum: 10 },
+    { id: 'theme_70_15', category: 'Thematic Mastery', name: 'Theme Reader', description: 'Reach 70% accuracy in one theme across 15 positions.', rarity: 'Rare', icon: '◈', progressType: 'bestThemeAccuracy', threshold: 70, minimum: 15 },
+    { id: 'theme_80_20', category: 'Thematic Mastery', name: 'Positional Specialist', description: 'Reach 80% accuracy in one theme across 20 positions.', rarity: 'Epic', icon: '◈', progressType: 'bestThemeAccuracy', threshold: 80, minimum: 20 },
+    { id: 'theme_3_mastered', category: 'Thematic Mastery', name: 'Three Dimensions', description: 'Maintain 70% accuracy across 10 positions in three themes.', rarity: 'Epic', icon: '◇', progressType: 'themeMasteryCount', threshold: 3, accuracyThreshold: 70, minimum: 10 },
+    { id: 'theme_5_mastered', category: 'Thematic Mastery', name: 'Well-Rounded Eye', description: 'Maintain 70% accuracy across 10 positions in five themes.', rarity: 'Legendary', icon: '◇', progressType: 'themeMasteryCount', threshold: 5, accuracyThreshold: 70, minimum: 10 },
+
     // Leaderboard
     { id: 'leaderboard_top_100', category: 'Leaderboard', name: 'On the Board', description: 'Reach the global Top 100.', rarity: 'Rare', icon: '#', progressType: 'rank', threshold: 100 },
     { id: 'leaderboard_top_25', category: 'Leaderboard', name: 'Contender', description: 'Reach the global Top 25.', rarity: 'Epic', icon: '#', progressType: 'rank', threshold: 25 },
@@ -527,7 +547,13 @@ const ACHIEVEMENTS = [
     // Dedication
     { id: 'return_7_days', category: 'Dedication', name: 'Steady Return', description: 'Train for 7 consecutive days.', rarity: 'Common', icon: '◌', progressType: 'playDayStreak', threshold: 7 },
     { id: 'return_30_days', category: 'Dedication', name: 'Training Habit', description: 'Train for 30 consecutive days.', rarity: 'Epic', icon: '◌', progressType: 'playDayStreak', threshold: 30 },
+    { id: 'return_3_days', category: 'Dedication', name: 'Opening Routine', description: 'Train for 3 consecutive days.', rarity: 'Common', icon: '◌', progressType: 'playDayStreak', threshold: 3 },
+    { id: 'return_14_days', category: 'Dedication', name: 'Two-Week Discipline', description: 'Train for 14 consecutive days.', rarity: 'Rare', icon: '◌', progressType: 'playDayStreak', threshold: 14 },
+    { id: 'return_100_days', category: 'Dedication', name: 'Daily Board Vision', description: 'Train for 100 consecutive days.', rarity: 'Legendary', icon: '◌', progressType: 'playDayStreak', threshold: 100 },
+    { id: 'play_30_minutes', category: 'Dedication', name: 'First Session', description: 'Spend 30 minutes training.', rarity: 'Common', icon: '◷', progressType: 'playTime', threshold: 1800 },
     { id: 'play_100_minutes', category: 'Dedication', name: 'Clockwork', description: 'Spend 100 minutes training.', rarity: 'Rare', icon: '◷', progressType: 'playTime', threshold: 6000 },
+    { id: 'play_500_minutes', category: 'Dedication', name: 'Study Hours', description: 'Spend 500 minutes training.', rarity: 'Epic', icon: '◷', progressType: 'playTime', threshold: 30000 },
+    { id: 'play_1500_minutes', category: 'Dedication', name: 'Deep Practice', description: 'Spend 1,500 minutes training.', rarity: 'Legendary', icon: '◷', progressType: 'playTime', threshold: 90000 },
     { id: 'solve_10_days', category: 'Dedication', name: 'Regular Study', description: 'Solve positions on 10 different days.', rarity: 'Rare', icon: '◐', progressType: 'puzzleDays', threshold: 10 },
     { id: 'solve_50_days', category: 'Dedication', name: 'Long Game', description: 'Solve positions on 50 different days.', rarity: 'Epic', icon: '◐', progressType: 'puzzleDays', threshold: 50 },
 
@@ -537,6 +563,14 @@ const ACHIEVEMENTS = [
     { id: 'pr_1800', category: 'Position Rating', name: 'Strategic Vision', description: 'Reach 1,800 PR.', rarity: 'Epic', icon: '↗', progressType: 'pr', threshold: 1800 },
     { id: 'pr_2000', category: 'Position Rating', name: 'Expert Judgment', description: 'Reach 2,000 PR.', rarity: 'Epic', icon: '↗', progressType: 'pr', threshold: 2000 },
     { id: 'pr_2500', category: 'Position Rating', name: 'Master of Imbalances', description: 'Reach 2,500 PR.', rarity: 'Legendary', icon: '↗', progressType: 'pr', threshold: 2500 },
+    { id: 'pr_2750', category: 'Position Rating', name: 'Master-Level Vision', description: 'Reach 2,750 PR.', rarity: 'Legendary', icon: '↗', progressType: 'pr', threshold: 2750 },
+    { id: 'pr_3000', category: 'Position Rating', name: 'Elite Positional Eye', description: 'Reach 3,000 PR.', rarity: 'Legendary', icon: '↗', progressType: 'pr', threshold: 3000 },
+    { id: 'pr_3200', category: 'Position Rating', name: 'Beyond the Board', description: 'Reach 3,200 PR.', rarity: 'Legendary', icon: '↗', progressType: 'pr', threshold: 3200 },
+
+    // Account tenure rewards sustained commitment rather than leaderboard placement.
+    { id: 'account_30_days', category: 'Account', name: 'First Chapter', description: 'Keep your ChessIQ account for 30 days.', rarity: 'Common', icon: '◷', progressType: 'accountAge', threshold: 30 },
+    { id: 'account_180_days', category: 'Account', name: 'Six-Month Student', description: 'Keep your ChessIQ account for 180 days.', rarity: 'Rare', icon: '◷', progressType: 'accountAge', threshold: 180 },
+    { id: 'account_365_days', category: 'Account', name: 'Year of Study', description: 'Keep your ChessIQ account for one year.', rarity: 'Epic', icon: '◷', progressType: 'accountAge', threshold: 365 },
 
     // Daily / Consistency
     { id: 'daily_first', category: 'Daily / Consistency', name: 'Daily Debut', description: 'Complete your first Daily Puzzle.', rarity: 'Common', icon: '□', progressType: 'dailyCount', threshold: 1 },
@@ -581,6 +615,66 @@ function getDailyPuzzleStreak() {
     return streak;
 }
 
+function recordThemePerformance(puzzle, wasCorrect) {
+    const themes = Array.isArray(puzzle?.AIExplanation?.themes) ? puzzle.AIExplanation.themes : [];
+    const seen = new Set();
+
+    themes.forEach(rawTheme => {
+        const key = getThemeKey(rawTheme);
+        if (!key || seen.has(key)) return;
+        seen.add(key);
+
+        const label = String(rawTheme).normalize('NFKC').trim().replace(/\s+/g, ' ');
+        const previous = themePerformance[key] && typeof themePerformance[key] === 'object'
+            ? themePerformance[key]
+            : {};
+        themePerformance[key] = {
+            label: label || previous.label || 'Theme',
+            total: (Number(previous.total) || 0) + 1,
+            correct: (Number(previous.correct) || 0) + (wasCorrect ? 1 : 0),
+        };
+    });
+}
+
+function getOverallAccuracy() {
+    const total = Math.max(0, Number(correctCount) || 0) + Math.max(0, Number(wrongCount) || 0);
+    const correct = Math.max(0, Number(correctCount) || 0);
+    return { total, correct, accuracy: total ? (correct / total) * 100 : 0 };
+}
+
+function getThemePerformanceEntries() {
+    return Object.values(themePerformance || {})
+        .map(entry => {
+            const total = Math.max(0, Number(entry?.total) || 0);
+            const correct = Math.max(0, Number(entry?.correct) || 0);
+            return {
+                label: typeof entry?.label === 'string' && entry.label.trim() ? entry.label.trim() : 'Theme',
+                total,
+                correct,
+                accuracy: total ? (correct / total) * 100 : 0,
+            };
+        })
+        .filter(entry => entry.total > 0);
+}
+
+function getBestThemeAccuracy(minimum = 0) {
+    return getThemePerformanceEntries()
+        .filter(entry => entry.total >= minimum)
+        .sort((a, b) => b.accuracy - a.accuracy || b.total - a.total || a.label.localeCompare(b.label))[0]
+        || null;
+}
+
+function getThemeMasteryCount(minimum = 0, accuracyThreshold = 0) {
+    return getThemePerformanceEntries().filter(entry =>
+        entry.total >= minimum && entry.accuracy >= accuracyThreshold
+    ).length;
+}
+
+function getAccountAgeDays() {
+    if (!Number.isFinite(accountCreatedAt) || accountCreatedAt <= 0) return 0;
+    return Math.max(0, Math.floor((Date.now() - accountCreatedAt) / 86400000));
+}
+
 function getAchievementMetric(definition) {
     switch (definition.progressType) {
         case 'puzzles':       return totalPuzzles;
@@ -593,6 +687,10 @@ function getAchievementMetric(definition) {
         case 'dailyStreak':   return getDailyPuzzleStreak();
         case 'rank':          return leaderboardRank;
         case 'sessionAccuracy': return sessionAnswers;
+        case 'overallAccuracy': return getOverallAccuracy().accuracy;
+        case 'bestThemeAccuracy': return getBestThemeAccuracy(definition.minimum || 0)?.accuracy || 0;
+        case 'themeMasteryCount': return getThemeMasteryCount(definition.minimum || 0, definition.accuracyThreshold || 0);
+        case 'accountAge':    return getAccountAgeDays();
         case 'ogAccount':     return isOGAccount() ? 1 : 0;
         default: return 0;
     }
@@ -625,6 +723,41 @@ function getAchievementProgress(definition) {
         };
     }
 
+    if (definition.progressType === 'overallAccuracy') {
+        const stats = getOverallAccuracy();
+        return {
+            percentage: Math.min(100, Math.round(Math.min(1, stats.total / definition.minimum) * (stats.accuracy / definition.threshold) * 100)),
+            label: `${stats.total} / ${definition.minimum} positions · ${Math.round(stats.accuracy)}% / ${definition.threshold}%`,
+        };
+    }
+
+    if (definition.progressType === 'bestThemeAccuracy') {
+        const theme = getBestThemeAccuracy(definition.minimum || 0);
+        const sampleProgress = theme ? Math.min(1, theme.total / definition.minimum) : 0;
+        const accuracyProgress = theme ? theme.accuracy / definition.threshold : 0;
+        return {
+            percentage: Math.min(100, Math.round(sampleProgress * accuracyProgress * 100)),
+            label: theme
+                ? `${theme.label} · ${theme.correct}/${theme.total} · ${Math.round(theme.accuracy)}% / ${definition.threshold}%`
+                : `Answer ${definition.minimum} themed positions to begin`,
+        };
+    }
+
+    if (definition.progressType === 'themeMasteryCount') {
+        const count = getThemeMasteryCount(definition.minimum || 0, definition.accuracyThreshold || 0);
+        return {
+            percentage: Math.min(100, Math.round((count / definition.threshold) * 100)),
+            label: `${count} / ${definition.threshold} themes at ${definition.accuracyThreshold}%+ across ${definition.minimum}+ positions`,
+        };
+    }
+
+    if (definition.progressType === 'accountAge') {
+        return {
+            percentage: Math.min(100, Math.round((metric / definition.threshold) * 100)),
+            label: `${Math.min(metric, definition.threshold)} / ${definition.threshold} account days`,
+        };
+    }
+
     if (definition.progressType === 'ogAccount') {
         const eligible = metric >= definition.threshold;
         return {
@@ -645,6 +778,17 @@ function isAchievementComplete(definition) {
     }
     if (definition.progressType === 'sessionAccuracy') {
         return sessionAnswers >= 10 && (sessionCorrect / sessionAnswers) * 100 >= definition.threshold;
+    }
+    if (definition.progressType === 'overallAccuracy') {
+        const stats = getOverallAccuracy();
+        return stats.total >= definition.minimum && stats.accuracy >= definition.threshold;
+    }
+    if (definition.progressType === 'bestThemeAccuracy') {
+        const theme = getBestThemeAccuracy(definition.minimum || 0);
+        return Boolean(theme && theme.accuracy >= definition.threshold);
+    }
+    if (definition.progressType === 'themeMasteryCount') {
+        return getThemeMasteryCount(definition.minimum || 0, definition.accuracyThreshold || 0) >= definition.threshold;
     }
     return getAchievementMetric(definition) >= definition.threshold;
 }
@@ -908,13 +1052,24 @@ function updatePR(difficulty, correct) {
 
 // ── Render PR display card ────────────────────────────────────────────────────
 function renderPR(delta) {
-    const valEl   = document.getElementById('pr-value');
-    const subEl   = document.getElementById('pr-puzzles');
-    const deltaEl = document.getElementById('pr-delta');
+    const valEl       = document.getElementById('pr-value');
+    const subEl       = document.getElementById('pr-puzzles');
+    const deltaEl     = document.getElementById('pr-delta');
+    const streakEl    = document.getElementById('pr-streak');
+    const streakCount = document.getElementById('pr-streak-count');
     if (!valEl) return;
 
     valEl.textContent = playerPR;
     subEl.textContent = `${totalPuzzles} puzzle${totalPuzzles !== 1 ? 's' : ''} played`;
+
+    const correctStreak = Math.max(0, currentStreak);
+    if (streakEl) {
+        const showStreak = correctStreak >= 2;
+        streakEl.hidden = !showStreak;
+        streakEl.classList.toggle('is-visible', showStreak);
+        if (showStreak && streakCount) streakCount.textContent = correctStreak;
+    }
+
     renderProvisionalNotice();
 
     if (delta !== undefined) {
@@ -1285,6 +1440,7 @@ function sendAnswer(guess) {
         sessionAnswers++;
         if (wasCorrect) sessionCorrect++;
         recordPuzzleActivity();
+        recordThemePerformance(currentPuzzle, wasCorrect);
         void (async () => {
             try {
                 await saveStatsToFirebase();
@@ -1423,10 +1579,10 @@ function updateDifficultyPanelUI() {
     const desc = document.getElementById('diff-panel-desc');
     if (desc) {
         const descriptions = {
-            Adaptive: 'Adaptive selects positions around your current Positional Rating, giving you a steady mix of attainable and stretching evaluations. It is the recommended default for most training sessions.',
-            Easy:     'Easy positions usually offer clearer structural or material clues. Use this mode to reinforce the basic positional signals that should be visible in your first impression.',
-            Medium:   'Medium positions ask you to compare several meaningful factors—activity, space, pawn structure, and king safety—before deciding which side has the better game.',
-            Hard:     'Hard positions contain quieter, competing imbalances. Your judgment may depend on long-term coordination, initiative, and recognizing which side has the more durable strategic plan.',
+            Adaptive: 'Positions matched to your current PR — a steady mix of attainable and stretching evaluations. Best for regular training.',
+            Easy:     'Clearer imbalances with more obvious structural or material clues. Reinforces the positional signals that should register immediately.',
+            Medium:   'Multiple meaningful factors compete — activity, structure, king safety. Requires weighing each before deciding who stands better.',
+            Hard:     'Subtle, competing imbalances with no clear signal. Correct judgment depends on long-term coordination and strategic depth.',
         };
         desc.textContent = descriptions[active] || '';
     }
@@ -2022,19 +2178,32 @@ document.addEventListener('keydown', function(event) {
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  DARK / LIGHT THEME TOGGLE
-//  Reading the saved theme is handled by experience.js (runs on all pages).
-//  This file only needs the toggle function since the button is index-only.
+//  DARK / LIGHT THEME
+//  Homepage source of truth. Non-home pages mirror this compact behavior in
+//  experience.js because main.js intentionally contains the puzzle-only logic.
 // ══════════════════════════════════════════════════════════════════════════════
-window.toggleTheme = function() {
-    const current = document.documentElement.getAttribute('data-theme');
-    const next = current === 'light' ? 'dark' : 'light';
-    if (next === 'dark') {
-        document.documentElement.removeAttribute('data-theme');
-    } else {
+function applyChessIQTheme(theme) {
+    if (theme === 'light') {
         document.documentElement.setAttribute('data-theme', 'light');
+    } else {
+        document.documentElement.removeAttribute('data-theme');
     }
-    localStorage.setItem('chessiq-theme', next);
+}
+
+try {
+    applyChessIQTheme(localStorage.getItem('chessiq-theme'));
+} catch (_) {
+    applyChessIQTheme('dark');
+}
+
+window.toggleTheme = function() {
+    const nextTheme = document.documentElement.getAttribute('data-theme') === 'light'
+        ? 'dark'
+        : 'light';
+    applyChessIQTheme(nextTheme);
+    try {
+        localStorage.setItem('chessiq-theme', nextTheme);
+    } catch (_) {}
 };
 
 // ══════════════════════════════════════════════════════════════════════════════

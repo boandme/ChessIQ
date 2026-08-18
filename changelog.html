@@ -10,11 +10,18 @@
     <link rel="stylesheet" href="main.css">
     <link rel="stylesheet" href="changelog.css">
     <script>
-        try {
-            if (localStorage.getItem('chessiq-theme') === 'light') {
-                document.documentElement.setAttribute('data-theme', 'light');
-            }
-        } catch (_) {}
+        (function() {
+            const applyTheme = theme => {
+                if (theme === 'light') document.documentElement.setAttribute('data-theme', 'light');
+                else document.documentElement.removeAttribute('data-theme');
+            };
+            try { applyTheme(localStorage.getItem('chessiq-theme')); } catch (_) { applyTheme('dark'); }
+            window.toggleTheme = () => {
+                const nextTheme = document.documentElement.hasAttribute('data-theme') ? 'dark' : 'light';
+                applyTheme(nextTheme);
+                try { localStorage.setItem('chessiq-theme', nextTheme); } catch (_) {}
+            };
+        })();
     </script>
 </head>
 <body>

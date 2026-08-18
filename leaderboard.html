@@ -7,6 +7,20 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="main.css">
+    <script>
+        (function() {
+            const applyTheme = theme => {
+                if (theme === 'light') document.documentElement.setAttribute('data-theme', 'light');
+                else document.documentElement.removeAttribute('data-theme');
+            };
+            try { applyTheme(localStorage.getItem('chessiq-theme')); } catch (_) { applyTheme('dark'); }
+            window.toggleTheme = () => {
+                const nextTheme = document.documentElement.hasAttribute('data-theme') ? 'dark' : 'light';
+                applyTheme(nextTheme);
+                try { localStorage.setItem('chessiq-theme', nextTheme); } catch (_) {}
+            };
+        })();
+    </script>
     <style>
         /* ── Leaderboard-specific styles ─────────────────────────────────────── */
         .lb-wrap {
@@ -224,6 +238,24 @@
             box-shadow: 0 0 14px rgba(255,212,0,0.12);
         }
         .lb-og-banner::before { content: '★'; font-size: 0.64rem; line-height: 1; }
+        .lb-coach-banner {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+            padding: 3px 7px;
+            border: 1px solid rgba(116, 201, 255, 0.42);
+            background: linear-gradient(135deg, rgba(94, 183, 255, 0.18), rgba(94, 183, 255, 0.05));
+            color: #8bd4ff;
+            font-family: var(--font-mono);
+            font-size: 0.56rem;
+            font-weight: 900;
+            letter-spacing: 0.10em;
+            line-height: 1;
+            text-transform: uppercase;
+            box-shadow: 0 0 14px rgba(94, 183, 255, 0.13);
+        }
+        .lb-coach-banner::before { content: '♞'; font-size: 0.72rem; line-height: 1; }
 
         /* ── PR cell ─────────────────────────────────────────────────────────── */
         .lb-pr {
@@ -386,6 +418,10 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
                 <span>Sign In</span>
             </a>
+            <button id="theme-btn" class="icon-btn" onclick="toggleTheme()" aria-label="Toggle light/dark mode" title="Toggle light/dark mode">
+                <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            </button>
         </div>
     </header>
 
@@ -468,6 +504,11 @@
         // Account-specific overrides take precedence over the fixed date window.
         const OG_MANUAL_EXCLUSIONS = new Set(['ronit', 'entyalt']);
         const OG_MANUAL_INCLUSIONS = new Set(['shaurya']);
+        const CHESS_COACH_USERNAMES = new Set(['coachmoses']);
+
+        function isChessCoach(username) {
+            return CHESS_COACH_USERNAMES.has(String(username || '').trim().toLowerCase());
+        }
 
         function isOGAccount(createdAt, username) {
             const accountKey = String(username || '').trim().toLowerCase();
@@ -532,6 +573,7 @@
                         correctCount: data.correctCount ?? 0,
                         wrongCount:   data.wrongCount   ?? 0,
                         isOG:         isOGAccount(createdAt, data.username),
+                        isCoach:      isChessCoach(data.username),
                     };
                 });
 
@@ -581,6 +623,7 @@
                         <div class="lb-avatar">${initial}</div>
                         <div class="lb-username">${escHtml(p.username)}</div>
                         ${p.isOG ? '<span class="lb-og-banner" title="Created a ChessIQ account between August 2025 and August 1, 2026" aria-label="ChessIQ OG">OG</span>' : ''}
+                        ${p.isCoach ? '<span class="lb-coach-banner" title="ChessIQ Chess Coach" aria-label="Chess Coach">Chess Coach</span>' : ''}
                     </div>
                     <div class="lb-pr">${p.pr}</div>
                     <div class="lb-puzzles">${p.totalPuzzles.toLocaleString()}</div>
