@@ -8,11 +8,18 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="main.css">
     <script>
-        try {
-            if (localStorage.getItem('chessiq-theme') === 'light') {
-                document.documentElement.setAttribute('data-theme', 'light');
-            }
-        } catch (_) {}
+        (function() {
+            const applyTheme = theme => {
+                if (theme === 'light') document.documentElement.setAttribute('data-theme', 'light');
+                else document.documentElement.removeAttribute('data-theme');
+            };
+            try { applyTheme(localStorage.getItem('chessiq-theme')); } catch (_) { applyTheme('dark'); }
+            window.toggleTheme = () => {
+                const nextTheme = document.documentElement.hasAttribute('data-theme') ? 'dark' : 'light';
+                applyTheme(nextTheme);
+                try { localStorage.setItem('chessiq-theme', nextTheme); } catch (_) {}
+            };
+        })();
     </script>
     <style>
         /* ══════════════════════════════════════════════════════════════════════
@@ -99,12 +106,34 @@
         .an-back-link:hover { color: var(--yellow); border-color: var(--yellow-line); }
         .an-back-link svg { width: 14px; height: 14px; }
 
-        /* ── Three-column main grid ─────────────────────────────────────────── */
+        /* ── Two-column main grid (left stats + center radar) ───────────────── */
         .an-grid {
             display: grid;
-            grid-template-columns: 340px 1fr 360px;
+            grid-template-columns: 340px 1fr;
             gap: 20px;
             align-items: start;
+            margin-bottom: 20px;
+        }
+
+        /* ── Full-width puzzle log section ──────────────────────────────────── */
+        .an-log-section {
+            width: 100%;
+            margin-top: 4px;
+        }
+        .an-log-full-card {
+            width: 100%;
+        }
+        /* Wider header with better proportions for the full-width log */
+        .an-log-full-card .an-log-header {
+            padding: 18px 24px 14px;
+        }
+        .an-log-full-card .an-log-title-group {
+            font-size: 0.68rem;
+            letter-spacing: 0.16em;
+        }
+        .an-log-full-card .an-log-title-group svg {
+            width: 15px;
+            height: 15px;
         }
 
         /* ── Shared card / panel ────────────────────────────────────────────── */
@@ -334,14 +363,14 @@
             flex-direction: column;
             align-items: center;
             gap: 20px;
-            min-height: 520px;
+            min-height: 580px;
             justify-content: center;
         }
 
         /* ── Radar SVG container ─────────────────────────────────────────────── */
         #an-radar-container {
             width: 100%;
-            max-width: 460px;
+            max-width: 540px;
             position: relative;
         }
         #an-radar-svg {
@@ -534,23 +563,29 @@
         /* ── Log column headers ──────────────────────────────────────────────── */
         .an-log-col-headers {
             display: grid;
-            grid-template-columns: 36px 28px 72px 56px 64px 60px 52px;
-            padding: 8px 16px;
+            grid-template-columns: 40px 52px 90px 72px 100px 72px 72px 1fr;
+            padding: 10px 20px;
             background: var(--surface-2);
             border-bottom: 1px solid var(--line);
+            gap: 8px;
         }
+        /* Fallback for narrow screens — hide themes column */
+        .an-log-col-themes { display: none; }
+        @media (min-width: 700px) { .an-log-col-themes { display: block; } }
+
         .an-log-col {
             font-family: var(--font-mono);
-            font-size: 0.57rem; font-weight: 700;
-            letter-spacing: 0.16em; text-transform: uppercase;
+            font-size: 0.6rem; font-weight: 700;
+            letter-spacing: 0.14em; text-transform: uppercase;
             color: var(--text-faint);
         }
         .an-log-col.right { text-align: right; }
 
         /* ── Log rows ────────────────────────────────────────────────────────── */
         #an-log-list {
-            max-height: 520px;
+            max-height: 440px;
             overflow-y: auto;
+            overflow-x: hidden;
             scrollbar-width: thin;
             scrollbar-color: var(--line-bright) transparent;
         }
@@ -559,35 +594,45 @@
 
         .an-log-row {
             display: grid;
-            grid-template-columns: 36px 28px 72px 56px 64px 60px 52px;
-            padding: 10px 16px;
+            grid-template-columns: 40px 52px 90px 72px 100px 72px 72px 1fr;
+            padding: 11px 20px;
             border-bottom: 1px solid var(--line);
             align-items: center;
             transition: background 0.12s;
+            gap: 8px;
         }
         .an-log-row:hover { background: var(--surface-2); }
-        .an-log-row.correct { border-left: 2px solid var(--ok); }
-        .an-log-row.incorrect { border-left: 2px solid var(--bad); }
+        .an-log-row.correct { border-left: 2px solid var(--ok); padding-left: 18px; }
+        .an-log-row.incorrect { border-left: 2px solid var(--bad); padding-left: 18px; }
 
         .an-log-cell {
             font-family: var(--font-mono);
-            font-size: 0.72rem;
+            font-size: 0.76rem;
             color: var(--text-dim);
         }
-        .an-log-cell.num { color: var(--text-faint); font-size: 0.65rem; }
-        .an-log-cell.result { font-size: 0.78rem; }
+        .an-log-cell.num { color: var(--text-faint); font-size: 0.68rem; }
+        .an-log-cell.result { font-size: 0.82rem; }
         .an-log-cell.result.correct { color: var(--ok); }
         .an-log-cell.result.incorrect { color: var(--bad); }
-        .an-log-cell.pr { color: var(--text); font-weight: 700; }
-        .an-log-cell.delta { font-weight: 700; }
+        .an-log-cell.pr { color: var(--text); font-weight: 700; font-size: 0.82rem; }
+        .an-log-cell.delta { font-weight: 700; font-size: 0.8rem; }
         .an-log-cell.delta.positive { color: var(--ok); }
         .an-log-cell.delta.negative { color: var(--bad); }
-        .an-log-cell.eval { font-size: 0.68rem; }
-        .an-log-cell.diff { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; }
+        .an-log-cell.eval { font-size: 0.72rem; }
+        .an-log-cell.diff { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; }
         .an-log-cell.diff.diff-easy { color: #4fc3f7; }
         .an-log-cell.diff.diff-medium { color: #ffd400; }
         .an-log-cell.diff.diff-hard { color: #ff7043; }
-        .an-log-cell.time { color: var(--text-faint); font-size: 0.65rem; }
+        .an-log-cell.time { color: var(--text-faint); font-size: 0.68rem; }
+        .an-log-cell.themes {
+            font-size: 0.64rem;
+            color: var(--text-faint);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: none;
+        }
+        @media (min-width: 700px) { .an-log-cell.themes { display: block; } }
 
         .an-log-empty {
             padding: 40px 20px;
@@ -639,27 +684,28 @@
         /* ── Responsive ──────────────────────────────────────────────────────── */
         @media (max-width: 1200px) {
             .an-grid {
-                grid-template-columns: 300px 1fr 320px;
+                grid-template-columns: 300px 1fr;
                 gap: 14px;
             }
         }
-        @media (max-width: 960px) {
+        @media (max-width: 860px) {
             .an-grid {
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: 1fr;
             }
-            /* Radar becomes full-width and goes to top */
+            /* Radar goes to top on single column */
             .an-col-center {
-                grid-column: 1 / -1;
                 order: -1;
             }
         }
         @media (max-width: 640px) {
             .analytics-page { padding-left: 16px; padding-right: 16px; }
-            .an-grid {
-                grid-template-columns: 1fr;
-            }
-            .an-col-center { order: -1; }
             .an-kpi-grid { grid-template-columns: 1fr 1fr; }
+            .an-log-col-headers {
+                grid-template-columns: 32px 44px 76px 60px 88px 60px 60px;
+            }
+            .an-log-row {
+                grid-template-columns: 32px 44px 76px 60px 88px 60px 60px;
+            }
         }
     </style>
 </head>
@@ -711,6 +757,10 @@
             <a href="analytics.html" class="active">Analytics</a>
             <a href="info.html">Information</a>
             <a href="changelog.html">Changelog</a>
+            <button id="potd-nav-btn" class="potd-nav-btn" onclick="openPOTD()" aria-label="Puzzle of the Day" title="Puzzle of the Day">
+                <span class="potd-nav-icon">📅</span>
+                <span class="potd-nav-label">Daily</span>
+            </button>
         </nav>
 
         <div class="topbar-right">
@@ -873,45 +923,46 @@
                 </div>
             </div><!-- /center -->
 
-            <!-- ══════════════════ RIGHT — PUZZLE LOG ════════════════════════ -->
-            <div class="an-col-right">
-                <div class="an-card" style="overflow:hidden;">
-                    <div class="an-log-header">
-                        <div class="an-log-title-group">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
-                            Puzzle Log
-                        </div>
-                        <div class="an-log-controls">
-                            <div class="an-log-net">
-                                <span class="an-log-net-label">Net</span>
-                                <span class="an-log-net-value" id="an-log-net">—</span>
-                            </div>
-                            <select id="an-log-select" class="an-log-select" onchange="renderAnPuzzleLog()">
-                                <option value="5">5</option>
-                                <option value="10" selected>10</option>
-                                <option value="15">15</option>
-                                <option value="20">20</option>
-                                <option value="25">25</option>
-                                <option value="50">50</option>
-                            </select>
-                        </div>
+        </div><!-- /grid -->
+
+        <!-- ══════════════════ FULL-WIDTH — PUZZLE LOG ════════════════════════ -->
+        <div class="an-log-section">
+            <div class="an-card an-log-full-card" style="overflow:hidden;">
+                <div class="an-log-header">
+                    <div class="an-log-title-group">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+                        Puzzle Log
                     </div>
-                    <div class="an-log-col-headers">
-                        <span class="an-log-col">#</span>
-                        <span class="an-log-col">—</span>
-                        <span class="an-log-col">PR</span>
-                        <span class="an-log-col">Δ PR</span>
-                        <span class="an-log-col">Eval</span>
-                        <span class="an-log-col">Tier</span>
-                        <span class="an-log-col">Time</span>
-                    </div>
-                    <div id="an-log-list">
-                        <div class="an-log-empty">Loading…</div>
+                    <div class="an-log-controls">
+                        <div class="an-log-net">
+                            <span class="an-log-net-label">Session Net</span>
+                            <span class="an-log-net-value" id="an-log-net">—</span>
+                        </div>
+                        <select id="an-log-select" class="an-log-select" onchange="renderAnPuzzleLog()">
+                            <option value="5">Last 5</option>
+                            <option value="10" selected>Last 10</option>
+                            <option value="15">Last 15</option>
+                            <option value="20">Last 20</option>
+                            <option value="25">Last 25</option>
+                            <option value="50">Last 50</option>
+                        </select>
                     </div>
                 </div>
-            </div><!-- /right -->
-
-        </div><!-- /grid -->
+                <div class="an-log-col-headers an-log-col-headers-wide">
+                    <span class="an-log-col">#</span>
+                    <span class="an-log-col">Result</span>
+                    <span class="an-log-col">PR After</span>
+                    <span class="an-log-col">Δ PR</span>
+                    <span class="an-log-col">Evaluation</span>
+                    <span class="an-log-col">Tier</span>
+                    <span class="an-log-col">Time</span>
+                    <span class="an-log-col an-log-col-themes">Themes</span>
+                </div>
+                <div id="an-log-list">
+                    <div class="an-log-empty">Loading…</div>
+                </div>
+            </div>
+        </div><!-- /puzzle log -->
     </main>
 
     <!-- ── Radar tooltip (fixed, overlays everything) ─────────────────────── -->
@@ -1326,6 +1377,9 @@
                     : '—';
                 const diff  = entry.difficulty || '—';
                 const time  = entry.ts ? fmt(entry.ts) : '—';
+                const themes = Array.isArray(entry.themes) && entry.themes.length
+                    ? entry.themes.slice(0, 3).join(' · ')
+                    : (entry.themes ? String(entry.themes) : '—');
 
                 return `<div class="an-log-row ${resultClass}">
                     <span class="an-log-cell num">#${num}</span>
@@ -1335,6 +1389,7 @@
                     <span class="an-log-cell eval">${posEval}</span>
                     <span class="an-log-cell diff diff-${diff.toLowerCase()}">${diff}</span>
                     <span class="an-log-cell time">${time}</span>
+                    <span class="an-log-cell themes">${themes}</span>
                 </div>`;
             }).join('');
         };
@@ -1511,8 +1566,8 @@
         // ── Draw radar SVG ────────────────────────────────────────────────────
         function drawRadarChart(container, data) {
             const N     = data.length;
-            const CX    = 230, CY = 230;
-            const R     = 170;   // outer radius
+            const CX    = 270, CY = 270;
+            const R     = 160;   // outer radius — slightly reduced to give labels more room
             const rings = 5;
             const tooltip = document.getElementById('an-radar-tooltip');
 
@@ -1590,13 +1645,13 @@
                 const [px, py] = dataPoints[i];
                 const color  = colors[i % colors.length];
 
-                // Axis label
-                const LABEL_R = R + 26;
+                // Axis label — pushed further out to accommodate larger font
+                const LABEL_R = R + 44;
                 const lx = CX + LABEL_R * Math.cos(angle);
                 const ly = CY + LABEL_R * Math.sin(angle);
 
                 const foreignObj = document.createElementNS(svgNS, 'foreignObject');
-                const fw = 90, fh = 36;
+                const fw = 120, fh = 46;
                 foreignObj.setAttribute('x', lx - fw / 2);
                 foreignObj.setAttribute('y', ly - fh / 2);
                 foreignObj.setAttribute('width', fw);
@@ -1609,10 +1664,10 @@
                     cursor:default;
                 `;
                 const nameLine = document.createElement('span');
-                nameLine.style.cssText = `font-size:8.5px; font-weight:700; color:rgba(243,243,245,0.75); line-height:1.2; letter-spacing:0.04em;`;
-                nameLine.textContent   = d.name.length > 14 ? d.name.slice(0, 13) + '…' : d.name;
+                nameLine.style.cssText = `font-size:13px; font-weight:700; color:rgba(243,243,245,0.88); line-height:1.25; letter-spacing:0.03em;`;
+                nameLine.textContent   = d.name.length > 16 ? d.name.slice(0, 15) + '…' : d.name;
                 const accLine = document.createElement('span');
-                accLine.style.cssText  = `font-size:9.5px; font-weight:800; color:${color}; margin-top:2px;`;
+                accLine.style.cssText  = `font-size:14px; font-weight:800; color:${color}; margin-top:3px; letter-spacing:0.02em;`;
                 accLine.textContent    = d.accuracy + '%';
                 div.appendChild(nameLine); div.appendChild(accLine);
                 foreignObj.appendChild(div);
@@ -1699,6 +1754,8 @@
         }
 
     </script>
+
+    <script type="module" src="experience.js"></script>
 
     <!-- ── Shared UI helpers (theme toggle, sidebar) ─────────────────────── -->
     <script>

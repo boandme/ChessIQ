@@ -170,8 +170,7 @@
         <!-- ── Difficulty Panel (leftmost column) ─────────────────────────── -->
         <section id="difficulty-panel" class="reveal">
             <div class="diff-panel-header">
-                <div class="diff-panel-eyebrow">Training mode</div>
-                <h3 class="diff-panel-title">Choose your challenge</h3>
+                <div class="diff-panel-section-heading">TRAINING MODE</div>
             </div>
 
             <div class="diff-panel-cards">
@@ -222,13 +221,12 @@
 
             </div>
 
-            <p class="diff-panel-desc" id="diff-panel-desc">Adaptive selects positions around your current Positional Rating, giving you a steady mix of attainable and stretching evaluations. Recommended for most training sessions.</p>
+            <p class="diff-panel-desc" id="diff-panel-desc">Positions matched to your current PR — a steady mix of attainable and stretching evaluations. Best for regular training.</p>
 
             <section id="theme-training-selector" aria-labelledby="theme-training-title">
                 <div class="theme-training-heading">
                     <div>
-                        <div class="theme-training-eyebrow">Thematic focus</div>
-                        <h4 id="theme-training-title">Choose your themes</h4>
+                        <div class="theme-section-heading">THEMATIC FOCUS</div>
                     </div>
                     <span id="theme-selection-count" class="theme-selection-count">All themes</span>
                 </div>
@@ -253,6 +251,11 @@
                 </div>
                 <div class="pr-value" id="pr-value">—</div>
                 <div class="pr-sub" id="pr-puzzles">0 puzzles played</div>
+                <div id="pr-streak" class="pr-streak" role="status" aria-live="polite" hidden>
+                    <span class="pr-streak-fire" aria-hidden="true">🔥</span>
+                    <span id="pr-streak-count">2</span>
+                    <span class="pr-streak-label">streak</span>
+                </div>
                 <div id="pr-delta" class="pr-delta"></div>
                 <div class="pr-scanline"></div>
             </div>
