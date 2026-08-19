@@ -48,7 +48,7 @@
                 </a></li>
             </ul>
         </nav>
-        <div class="sidebar-foot">v1.5 — ACTIVE</div>
+        <div class="sidebar-foot">v1.4.8 — ACTIVE</div>
     </aside>
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
 
@@ -59,7 +59,7 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
                 </span>
                 <span class="brand-text">CHESS<span>IQ</span></span>
-                <span class="brand-ver">v1.5</span>
+                <span class="brand-ver">v1.4.8</span>
             </a>
         </div>
         <nav class="topnav">
@@ -102,8 +102,8 @@
             </dl>
             <dl class="release-stat release-stats">
                 <dt>Latest feature line</dt>
-                <dd>v1.4</dd>
-                <span class="release-stat-label">Thematic training</span>
+<dd>v1.4.8</dd>
+                <span class="release-stat-label">Admin Control Center</span>
             </dl>
             <dl class="release-stat release-stats">
                 <dt>Training inventory</dt>
@@ -116,20 +116,25 @@
             <article class="release-card current">
                 <div class="release-side">
                     <div>
-                        <div class="release-version">v1.4</div>
+                        <div class="release-version">v1.4.8</div>
                         <div class="release-era">August 2026</div>
                     </div>
                     <span class="release-badge">Latest</span>
                 </div>
                 <div class="release-body">
                     <div class="release-body-top">
-                        <h2 class="release-name">Thematic Analysis &amp; Training</h2>
-                        <span class="release-meta">Targeted practice</span>
+<h2 class="release-name">Thematic Training &amp; Control Center</h2>
+                        <span class="release-meta">Targeted practice + operations</span>
                     </div>
                     <ul class="release-list">
                         <li>Introduced Thematic Focus training, allowing players to combine two or more high-frequency positional themes with their chosen difficulty.</li>
                         <li>Added a dedicated Analytics page with a theme-accuracy radar, PR trend, recent puzzle log, and positional training profile.</li>
                         <li>Normalized Gemini-generated labels into a consistent 73-theme taxonomy for reliable learning feedback and analytics.</li>
+                        <li>Overhauled the PR algorithm to make progression more meaningful: steeper post-provisional compression, provisional ceiling, moderated streak effects, and symmetric win/loss values.</li>
+                        <li>Restored manual difficulty selection to the main training panel alongside Adaptive mode. Added account security improvements for email/password sign-in.</li>
+                        <li>Introduced per-puzzle difficulty ratings on a 1–10 scale, blending static difficulty baselines with Gemini-supplied ratings and adaptive community feedback stored per puzzle in Firebase.</li>
+                        <li>UI refinements across the homepage and analytics page: stronger section headings, larger difficulty labels and risk descriptors, expanded full-width puzzle log, and improved radar chart label legibility.</li>
+                        <li>Added an access-controlled Admin Control Center for operational visibility across accounts, puzzle ratings, theme coverage, data health, and stored role recognition.</li>
                     </ul>
                 </div>
             </article>

@@ -28,6 +28,9 @@ var currentStreak = 0;
 var currentUser   = null;
 var currentUID    = null;
 var currentUsername = 'Player';
+// Canonical Firebase record for the authenticated player. It is retained so
+// privileged UI can evaluate persisted roles without another startup read.
+var currentUserRecord = null;
 var lastActiveDate  = null;   // 'YYYY-MM-DD' UTC string, updated each session
 
 // Stats tracking
@@ -185,6 +188,7 @@ import { initializeApp }                         from "https://www.gstatic.com/f
 import { getDatabase, ref, get, set, update }   from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
 import { getAnalytics }                          from "https://www.gstatic.com/firebasejs/12.1.0/firebase-analytics.js";
 import { getAuth, onAuthStateChanged, signOut, updateProfile, sendEmailVerification } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import { createAdminControlCenter } from "./admin-dashboard.js";
 
 const firebaseConfig = {
     apiKey:            "AIzaSyDtGbU8BN06Y_GNDmhV1FJFRhTvD603DN0",
@@ -201,6 +205,21 @@ const app      = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const db       = getDatabase(app);
 const auth     = getAuth(app);
+
+// The Control Center owns no Firebase listeners. It receives the existing
+// authenticated profile, remains absent for everyone else, and reads only when
+// an authorized administrator opens it.
+const adminControlCenter = createAdminControlCenter({
+    db,
+    getSession: () => ({
+        user: currentUser,
+        uid: currentUID,
+        username: currentUsername,
+        account: currentUserRecord,
+        isGuest,
+    }),
+    getPositions: () => positions,
+});
 
 // ── Guest mode state ───────────────────────────────────────────────────────────
 const GUEST_FREE_PUZZLES = 5;   // how many puzzles a signed-out visitor can try
@@ -274,6 +293,10 @@ function hydratePlayerState(data) {
 // leaderboard placement, persistent stats) require signing in.
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
+        currentUser = null;
+        currentUID = null;
+        currentUserRecord = null;
+        adminControlCenter.syncAuthorization();
         showGuestUI();
         updateDifficultyPanelUI();
         renderPR();
@@ -288,6 +311,10 @@ onAuthStateChanged(auth, async (user) => {
     // are all no-ops. They see the verification banner and nothing is persisted.
     const isEmailPasswordUser = user.providerData.some(p => p.providerId === 'password');
     if (isEmailPasswordUser && !user.emailVerified) {
+        currentUser = null;
+        currentUID = null;
+        currentUserRecord = null;
+        adminControlCenter.syncAuthorization();
         showGuestUI();
         updateDifficultyPanelUI();
         renderPR();
@@ -311,6 +338,7 @@ onAuthStateChanged(auth, async (user) => {
 
     if (snap.exists()) {
         const data = snap.val();
+        currentUserRecord = data;
         hydratePlayerState(data);
 
         // DB username is ground truth — fall back to displayName only if DB has none
@@ -338,6 +366,7 @@ onAuthStateChanged(auth, async (user) => {
 
         if (retry && retry.exists()) {
                         const data = retry.val();
+            currentUserRecord = data;
             hydratePlayerState(data);
 
             profileUsername = (typeof data.username === 'string' && data.username.trim() !== '')
@@ -349,7 +378,7 @@ onAuthStateChanged(auth, async (user) => {
             profileUsername = user.displayName || 'Player';
             const createdAt = Date.now();
             accountCreatedAt = createdAt;
-            await set(ref(db, `users/${currentUID}`), {
+            const newUserRecord = {
                 username:     profileUsername,
                 email:        user.email,
                 pr:           PR_START,
@@ -358,15 +387,16 @@ onAuthStateChanged(auth, async (user) => {
                 correctCount: 0,
                 wrongCount:   0,
                 bestStreak:   0,
-                                peakPR:       PR_START,
+                peakPR:       PR_START,
                 prHistory:    [],
                 achievements: {
                     unlocked: {},
                     activity: { puzzleDays: {}, playDayStreak: 0, lastPuzzleDate: null, totalPlaySeconds: 0, themePerformance: {} },
                 },
                 createdAt,
-
-            });
+            };
+            await set(ref(db, `users/${currentUID}`), newUserRecord);
+            currentUserRecord = newUserRecord;
         }
     }
 
@@ -382,7 +412,12 @@ onAuthStateChanged(auth, async (user) => {
     const nameEl = document.getElementById('header-username');
     if (nameEl) nameEl.textContent = profileUsername;
     currentUsername = profileUsername || 'Player';
+    currentUserRecord = { ...(currentUserRecord || {}), username: currentUsername };
+    // showSignedInUI flips isGuest to false. This must happen before the
+    // Control Center checks the active session, otherwise an authenticated
+    // bootstrap admin is incorrectly treated as a guest on first load.
     showSignedInUI(profileUsername);
+    adminControlCenter.syncAuthorization(currentUserRecord);
 
     updateDifficultyPanelUI();
     renderPR();
@@ -1247,6 +1282,7 @@ function renderPuzzle(pos) {
     correct_result = findResult(pos.Eval);
     const turnEl = document.getElementById('turn');
     if (turnEl) turnEl.innerHTML = pos.Turn;
+    void logCurrentPuzzleRating(pos);
     return true;
 }
 
@@ -1427,6 +1463,11 @@ function sendAnswer(guess) {
     const displayEval   = evaluationRaw > 0 ? `+${evaluationRaw}` : `${evaluationRaw}`;
     document.getElementById("evaluation-display").innerHTML = `Evaluation&nbsp;&nbsp;${displayEval}`;
     const wasCorrect = guess === correct_result;
+
+    // Capture PR before updatePR changes it — fire PDR update async, non-blocking
+    const playerPRAtAnswer = playerPR;
+    void updatePuzzleRatingAfterAnswer(currentPuzzle, playerPRAtAnswer, wasCorrect);
+
     updatePR(difficulty, wasCorrect);
 
     // Patch posEval into the history entry that updatePR just pushed.
@@ -2508,6 +2549,233 @@ function renderPOTDCountdown() {
     el.innerHTML = `Next puzzle in <span>${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</span>`;
 }
 setInterval(renderPOTDCountdown, 1000);
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  PUZZLE DIFFICULTY RATING SYSTEM  (v1.0)
+//
+//  Every puzzle gets a per-item difficulty score on a 1–10 scale.
+//
+//  Baseline (75% weight):
+//    Easy   → 2.50  |  Medium → 5.00  |  Hard → 8.00
+//
+//  Gemini difficultyRating (25% weight):
+//    Taken from positions/{key}/AIExplanation/difficultyRating  ← confirmed field name
+//    Validated to be a finite number in [1, 10] before use.
+//    If absent or invalid, baseline absorbs 100%.
+//
+//  Stored at:  puzzleStats/{key}/rating        (float, max 2 decimal places)
+//              puzzleStats/{key}/tier           ('Easy' | 'Medium' | 'Hard')
+//              puzzleStats/{key}/attempts
+//              puzzleStats/{key}/correctCount / wrongCount
+//              puzzleStats/{key}/correctPRSum / wrongPRSum
+//              puzzleStats/{key}/lastUpdated
+//
+//  Adaptive update (after each answer):
+//    PR → expected difficulty: clamp(1 + (PR − 500) / 325, 1, 10)
+//    Wrong → nudge rating UP   (puzzle harder than expected)
+//    Right → nudge rating DOWN (puzzle easier than expected, half magnitude)
+//    Nudge decays from 0.04 → 0.008 floor as attempts accumulate.
+//
+//  Tier boundaries:   0–3.33 → Easy  |  3.33–6.66 → Medium  |  6.66–10 → Hard
+// ══════════════════════════════════════════════════════════════════════════════
+
+const PDR_BASELINE        = { Easy: 2.50, Medium: 5.00, Hard: 8.00 };
+const PDR_GEMINI_WEIGHT   = 0.25;
+const PDR_BASELINE_WEIGHT = 0.75;
+const PDR_MAX_NUDGE       = 0.04;
+const PDR_NUDGE_FLOOR     = 0.008;
+
+function prToExpectedDifficulty(pr) {
+    return Math.max(1, Math.min(10, 1 + (pr - 500) / 325));
+}
+
+function ratingToTier(rating) {
+    if (rating < 3.33) return 'Easy';
+    if (rating < 6.66) return 'Medium';
+    return 'Hard';
+}
+
+function roundRating(r) {
+    return Math.round(r * 100) / 100;
+}
+
+// Validate the Gemini-supplied difficultyRating. Returns null if absent,
+// non-numeric, or outside [1, 10] — preventing hallucinated values from
+// corrupting the baseline.
+function extractGeminiRating(puzzle) {
+    const raw = puzzle?.AIExplanation?.difficultyRating;   // ← confirmed field name
+    if (raw === undefined || raw === null) return null;
+    const n = Number(raw);
+    if (!Number.isFinite(n) || n < 1 || n > 10) {
+        console.warn(
+            `[PDR] difficultyRating for puzzle "${puzzle._key}" is out of range or non-numeric: ${raw}. ` +
+            `Falling back to baseline-only.`
+        );
+        return null;
+    }
+    return n;
+}
+
+function computeBaselineRating(puzzle) {
+    const baseline = PDR_BASELINE[puzzle.Difficulty] ?? PDR_BASELINE.Medium;
+    const gemini   = extractGeminiRating(puzzle);
+    if (gemini !== null) {
+        return PDR_BASELINE_WEIGHT * baseline + PDR_GEMINI_WEIGHT * gemini;
+    }
+    return baseline;
+}
+
+// In-memory cache — avoids redundant Firebase reads within a session
+const _pdrCache = new Map();
+
+async function getPuzzleStats(key) {
+    if (_pdrCache.has(key)) return _pdrCache.get(key);
+    try {
+        const snap = await get(ref(db, `puzzleStats/${key}`));
+        const val  = snap.exists() ? snap.val() : null;
+        _pdrCache.set(key, val);
+        return val;
+    } catch (err) {
+        console.warn(`[PDR] Could not read puzzleStats/${key}:`, err);
+        return null;
+    }
+}
+
+// Ensure a puzzleStats record exists. Writes the initial baseline on first call
+// for this puzzle. Returns the current stats object.
+async function ensurePuzzleStats(puzzle) {
+    const key = puzzle._key;
+    if (!key) return null;
+
+    let stats = await getPuzzleStats(key);
+    if (stats) return stats;
+
+    const geminiVal = extractGeminiRating(puzzle);
+    const initialRating = roundRating(computeBaselineRating(puzzle));
+
+    stats = {
+        rating:           initialRating,
+        tier:             ratingToTier(initialRating),
+        attempts:         0,
+        correctCount:     0,
+        wrongCount:       0,
+        correctPRSum:     0,
+        wrongPRSum:       0,
+        lastUpdated:      Date.now(),
+        baseDifficulty:   puzzle.Difficulty || 'Medium',
+        geminiRatingRaw:  puzzle?.AIExplanation?.difficultyRating ?? null,
+        geminiRatingUsed: geminiVal,
+        baselineUsed:     PDR_BASELINE[puzzle.Difficulty] ?? PDR_BASELINE.Medium,
+    };
+
+    try {
+        await set(ref(db, `puzzleStats/${key}`), stats);
+        _pdrCache.set(key, stats);
+        console.log(
+            `[PDR] Initialised | key: ${key} | ` +
+            `baseDifficulty: ${stats.baseDifficulty} | ` +
+            `geminiRating: ${geminiVal ?? 'absent'} | ` +
+            `initialRating: ${stats.rating} | tier: ${stats.tier}`
+        );
+    } catch (err) {
+        console.warn(`[PDR] Could not initialise puzzleStats/${key}:`, err);
+    }
+    return stats;
+}
+
+// Called by renderPuzzle — logs current rating to console for every puzzle loaded
+async function logCurrentPuzzleRating(puzzle) {
+    if (!puzzle?._key) return;
+    const stats = await ensurePuzzleStats(puzzle);
+    if (!stats) return;
+    console.log(
+        `%c[PDR] Puzzle loaded%c | key: ${puzzle._key} | ` +
+        `staticDifficulty: ${puzzle.Difficulty} | ` +
+        `geminiDifficultyRating: ${puzzle?.AIExplanation?.difficultyRating ?? 'absent'} | ` +
+        `currentRating: ${stats.rating.toFixed(2)}/10 | ` +
+        `tier: ${stats.tier} | ` +
+        `attempts: ${stats.attempts} (✓ ${stats.correctCount} / ✗ ${stats.wrongCount})`,
+        'color:#ffd400;font-weight:700;',
+        'color:inherit;font-weight:normal;'
+    );
+}
+
+// Called by sendAnswer — adaptively nudges the puzzle's rating based on
+// the answering player's PR and whether they were correct.
+async function updatePuzzleRatingAfterAnswer(puzzle, playerPRAtAnswer, wasCorrect) {
+    const key = puzzle?._key;
+    if (!key || isGuest) return;
+
+    let stats = await ensurePuzzleStats(puzzle);
+    if (!stats) return;
+
+    const attempts     = stats.attempts || 0;
+    const expectedDiff = prToExpectedDifficulty(playerPRAtAnswer);
+    const decayFactor  = 1 - Math.min(attempts, 50) / 50;
+    const nudgeMag     = Math.max(PDR_NUDGE_FLOOR, PDR_MAX_NUDGE * decayFactor);
+
+    let newRating = stats.rating;
+    if (!wasCorrect) {
+        const surprise = Math.max(0, expectedDiff - stats.rating);
+        newRating += nudgeMag * (1 + Math.min(surprise, 3) / 3);
+    } else {
+        const surprise = Math.max(0, stats.rating - expectedDiff);
+        newRating -= nudgeMag * (0.5 + Math.min(surprise, 3) / 6);
+    }
+
+    newRating = roundRating(Math.max(1, Math.min(10, newRating)));
+    const newTier    = ratingToTier(newRating);
+    const tierChanged = newTier !== stats.tier;
+
+    const updatedStats = {
+        ...stats,
+        rating:       newRating,
+        tier:         newTier,
+        attempts:     attempts + 1,
+        correctCount: (stats.correctCount || 0) + (wasCorrect ? 1 : 0),
+        wrongCount:   (stats.wrongCount   || 0) + (wasCorrect ? 0 : 1),
+        correctPRSum: (stats.correctPRSum || 0) + (wasCorrect ? playerPRAtAnswer : 0),
+        wrongPRSum:   (stats.wrongPRSum   || 0) + (wasCorrect ? 0 : playerPRAtAnswer),
+        lastUpdated:  Date.now(),
+    };
+    _pdrCache.set(key, updatedStats);
+
+    try {
+        await update(ref(db, `puzzleStats/${key}`), {
+            rating:       newRating,
+            tier:         newTier,
+            attempts:     updatedStats.attempts,
+            correctCount: updatedStats.correctCount,
+            wrongCount:   updatedStats.wrongCount,
+            correctPRSum: updatedStats.correctPRSum,
+            wrongPRSum:   updatedStats.wrongPRSum,
+            lastUpdated:  updatedStats.lastUpdated,
+        });
+
+        const sign  = wasCorrect ? '−' : '+';
+        const delta = Math.abs(newRating - stats.rating).toFixed(2);
+        console.log(
+            `%c[PDR] Rating updated%c | key: ${key} | ` +
+            `playerPR: ${playerPRAtAnswer} → expectedDiff: ${expectedDiff.toFixed(2)} | ` +
+            `correct: ${wasCorrect} | nudge: ${sign}${delta} | ` +
+            `rating: ${stats.rating.toFixed(2)} → ${newRating.toFixed(2)} | ` +
+            `tier: ${stats.tier}${tierChanged ? ` → ${newTier} ⚡` : ''} | ` +
+            `attempts: ${updatedStats.attempts}`,
+            'color:#ffd400;font-weight:700;',
+            'color:inherit;font-weight:normal;'
+        );
+
+        if (tierChanged) {
+            console.log(
+                `%c[PDR] TIER CHANGED%c | ${key} | ${stats.tier} → ${newTier} | rating: ${newRating.toFixed(2)}`,
+                'background:#ffd400;color:#000;font-weight:700;padding:2px 6px;',
+                'color:inherit;'
+            );
+        }
+    } catch (err) {
+        console.warn(`[PDR] Could not update puzzleStats/${key}:`, err);
+    }
+}
 
 // Wire POTD init after positions load — this replaces the original initPositions
 function initPositions() {

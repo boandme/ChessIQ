@@ -256,6 +256,24 @@
             box-shadow: 0 0 14px rgba(94, 183, 255, 0.13);
         }
         .lb-coach-banner::before { content: '♞'; font-size: 0.72rem; line-height: 1; }
+        .lb-admin-banner {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+            padding: 3px 7px;
+            border: 1px solid rgba(201,149,255,0.46);
+            background: linear-gradient(135deg, rgba(201,149,255,0.18), rgba(201,149,255,0.05));
+            color: #d7b8ff;
+            font-family: var(--font-mono);
+            font-size: 0.56rem;
+            font-weight: 900;
+            letter-spacing: 0.10em;
+            line-height: 1;
+            text-transform: uppercase;
+            box-shadow: 0 0 14px rgba(201,149,255,0.14);
+        }
+        .lb-admin-banner::before { content: '⌘'; font-size: 0.72rem; line-height: 1; }
 
         /* ── PR cell ─────────────────────────────────────────────────────────── */
         .lb-pr {
@@ -383,7 +401,7 @@
                 </a></li>
             </ul>
         </nav>
-        <div class="sidebar-foot">v1.0 — BETA</div>
+        <div class="sidebar-foot">v1.4.8 — ACTIVE</div>
     </aside>
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
 
@@ -394,7 +412,7 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
                 </span>
                 <span class="brand-text">CHESS<span>IQ</span></span>
-                <span class="brand-ver">v1.0</span>
+                <span class="brand-ver">v1.4.8</span>
             </a>
         </div>
         <nav class="topnav">
@@ -505,9 +523,20 @@
         const OG_MANUAL_EXCLUSIONS = new Set(['ronit', 'entyalt']);
         const OG_MANUAL_INCLUSIONS = new Set(['shaurya']);
         const CHESS_COACH_USERNAMES = new Set(['coachmoses']);
+        // Bootstrap access preserves the original administrator while additional
+        // administrators are stored under users/{uid}/roles/admin by the control center.
+        const ADMIN_USERNAMES = new Set(['boandmeog']);
 
-        function isChessCoach(username) {
-            return CHESS_COACH_USERNAMES.has(String(username || '').trim().toLowerCase());
+        function isChessCoach(username, roles = {}) {
+            return Object.prototype.hasOwnProperty.call(roles || {}, 'coach')
+                ? roles.coach === true
+                : CHESS_COACH_USERNAMES.has(String(username || '').trim().toLowerCase());
+        }
+
+        function isAdminAccount(username, roles = {}) {
+            return Object.prototype.hasOwnProperty.call(roles || {}, 'admin')
+                ? roles.admin === true
+                : ADMIN_USERNAMES.has(String(username || '').trim().toLowerCase());
         }
 
         function isOGAccount(createdAt, username) {
@@ -572,8 +601,11 @@
                         totalPuzzles: data.totalPuzzles ?? 0,
                         correctCount: data.correctCount ?? 0,
                         wrongCount:   data.wrongCount   ?? 0,
-                        isOG:         isOGAccount(createdAt, data.username),
-                        isCoach:      isChessCoach(data.username),
+                        isOG:         Object.prototype.hasOwnProperty.call(data.roles || {}, 'og')
+                            ? data.roles.og === true
+                            : isOGAccount(createdAt, data.username),
+                        isCoach:      isChessCoach(data.username, data.roles),
+                        isAdmin:      isAdminAccount(data.username, data.roles),
                     };
                 });
 
@@ -622,6 +654,7 @@
                     <div class="lb-name-cell">
                         <div class="lb-avatar">${initial}</div>
                         <div class="lb-username">${escHtml(p.username)}</div>
+                        ${p.isAdmin ? '<span class="lb-admin-banner" title="ChessIQ administrator" aria-label="ChessIQ Admin">Admin</span>' : ''}
                         ${p.isOG ? '<span class="lb-og-banner" title="Created a ChessIQ account between August 2025 and August 1, 2026" aria-label="ChessIQ OG">OG</span>' : ''}
                         ${p.isCoach ? '<span class="lb-coach-banner" title="ChessIQ Chess Coach" aria-label="Chess Coach">Chess Coach</span>' : ''}
                     </div>
