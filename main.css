@@ -3755,3 +3755,239 @@ body.admin-modal-open { overflow: hidden; }
     .admin-icon-action, .admin-modal-actions .modal-close-btn { width: 33px; height: 33px; flex-basis: 33px; }
     .admin-kpi-grid, .admin-kpi-grid--four { grid-template-columns: 1fr; }
 }
+
+/* ── Personal review queue ─────────────────────────────────────────────────── */
+#pr-display:has(.review-queue-status:not([hidden])) { padding-bottom: 47px; }
+.review-queue-status {
+    position: absolute;
+    left: 22px;
+    bottom: 15px;
+    max-width: calc(100% - 170px);
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 23px;
+    padding: 4px 8px;
+    color: #8bd4ff;
+    background: linear-gradient(135deg, rgba(94,183,255,0.15), rgba(94,183,255,0.035));
+    border: 1px solid rgba(116,201,255,0.38);
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.035em;
+    line-height: 1.3;
+    box-shadow: 0 0 16px rgba(94,183,255,0.1);
+    animation: review-queue-in 0.22s var(--ease-snap) both;
+}
+.review-queue-status[hidden] { display: none; }
+.review-queue-status svg { width: 13px; height: 13px; flex: 0 0 13px; color: #a7ddff; }
+.review-queue-status span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.review-position-label {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    gap: 7px;
+    margin-top: -5px;
+    padding: 5px 8px;
+    color: #8bd4ff;
+    background: linear-gradient(135deg, rgba(94,183,255,0.14), rgba(94,183,255,0.035));
+    border: 1px solid rgba(116,201,255,0.38);
+    font-family: var(--font-mono);
+    font-size: 0.59rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    line-height: 1.2;
+    text-transform: uppercase;
+    box-shadow: 0 0 15px rgba(94,183,255,0.1);
+    animation: review-queue-in 0.22s var(--ease-snap) both;
+}
+.review-position-label[hidden] { display: none; }
+.review-position-label svg { width: 14px; height: 14px; flex: 0 0 14px; }
+.review-position-label em { color: var(--text-faint); font-size: 0.56rem; font-style: normal; letter-spacing: 0.03em; text-transform: none; }
+@keyframes review-queue-in {
+    from { opacity: 0; transform: translateY(4px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (max-width: 520px) {
+    #pr-display:has(.review-queue-status:not([hidden])) { padding-bottom: 44px; }
+    .review-queue-status { left: 14px; bottom: 14px; max-width: calc(100% - 142px); }
+    .review-position-label { font-size: 0.55rem; }
+    .review-position-label em { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .review-queue-status,
+    .review-position-label { animation: none; }
+}
+
+/* ── Puzzle metadata bar ──────────────────────────────────────────────────── */
+#puzzle-meta-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin-top: 6px;
+    padding: 7px 10px 7px 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    min-height: 36px;
+    position: relative;
+    overflow: visible;
+}
+#puzzle-meta-bar:empty { display: none; }
+
+.meta-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-wrap: wrap;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.meta-players {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.meta-player {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+}
+
+.meta-player.white-player { color: var(--text); }
+.meta-player.black-player { color: var(--text-dim); }
+
+.meta-king-icon {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+    opacity: 0.6;
+}
+
+.meta-vs {
+    font-size: 0.67rem;
+    font-weight: 500;
+    color: var(--text-faint);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+
+.meta-divider {
+    color: var(--line-bright);
+    font-size: 0.75rem;
+    flex-shrink: 0;
+    user-select: none;
+}
+
+.meta-event {
+    font-size: 0.74rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+    flex-shrink: 1;
+}
+
+.meta-year {
+    font-size: 0.74rem;
+    color: var(--text-faint);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+}
+
+.meta-na {
+    font-size: 0.74rem;
+    color: var(--text-faint);
+    font-style: italic;
+}
+
+/* ── Export menu ──────────────────────────────────────────────────────────── */
+.meta-export-wrap {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.meta-export-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid var(--line-bright);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-faint);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.meta-export-btn svg { width: 15px; height: 15px; }
+.meta-export-btn:hover {
+    background: var(--surface-3);
+    border-color: var(--yellow-line);
+    color: var(--text);
+}
+
+.meta-export-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    z-index: 120;
+    min-width: 210px;
+    background: var(--surface-3);
+    border: 1px solid var(--line-bright);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+    padding: 4px;
+    animation: meta-menu-in 0.14s var(--ease-snap) both;
+}
+.meta-export-menu.open { display: block; }
+
+@keyframes meta-menu-in {
+    from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.meta-export-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 9px 12px;
+    background: none;
+    border: none;
+    border-radius: 7px;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+    white-space: nowrap;
+}
+.meta-export-item svg { width: 14px; height: 14px; flex-shrink: 0; }
+.meta-export-item:hover {
+    background: var(--yellow-soft);
+    color: var(--yellow);
+}
+
+/* Responsive adjustments */
+@media (max-width: 520px) {
+    .meta-event { max-width: 110px; }
+    .meta-player { max-width: 90px; }
+    #puzzle-meta-bar { padding: 6px 8px 6px 10px; }
+}
