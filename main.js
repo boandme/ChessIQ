@@ -51,6 +51,22 @@ var totalPlaySeconds = 0;
 // with achievement activity so theme mastery can be measured from real answers.
 var themePerformance = {};
 var dailyPuzzleHistory = {};
+
+// ── Personal review queue ─────────────────────────────────────────────────────
+// Wrong answers are scheduled against completed *new* positions, rather than
+// time. This preserves the player’s normal training pace while re-exposing
+// patterns after enough intervening work to make recall meaningful.
+const REVIEW_FIRST_INTERVAL_MIN = 20;
+const REVIEW_FIRST_INTERVAL_MAX = 30;
+const REVIEW_LATER_INTERVAL_MIN = 90;
+const REVIEW_LATER_INTERVAL_MAX = 110;
+const REVIEW_MIN_NEW_BETWEEN_DUE = 4;
+var reviewQueue = {};           // puzzle key → { stage, dueAfterNew, queuedAt, lastWrongAt }
+var reviewMeta = { newPuzzleAttempts: 0, nextReviewEligibleAt: 0 };
+var seenPuzzleKeys = {};        // puzzle key → last completed non-review timestamp
+var resolvedReviewKeys = {};    // correct review keys held out while unseen puzzles remain
+var deferredReviewKeys = new Set(); // local: a skipped due review is not shown again this session
+var currentPuzzleIsReview = false;
 var leaderboardRank = null;
 var lastLeaderboardRankCheck = 0;
 var achievementToastQueue = [];
@@ -285,6 +301,13 @@ function hydratePlayerState(data) {
         ? activity.themePerformance
         : {};
     dailyPuzzleHistory = data.potd && typeof data.potd === 'object' ? data.potd : {};
+
+    const trainingData = data.training && typeof data.training === 'object' ? data.training : {};
+    reviewQueue = normalizeReviewQueue(trainingData.reviewQueue);
+    reviewMeta = normalizeReviewMeta(trainingData.reviewMeta);
+    seenPuzzleKeys = normalizeReviewKeyMap(trainingData.seenPuzzleKeys);
+    resolvedReviewKeys = normalizeReviewKeyMap(trainingData.resolvedReviewKeys);
+    deferredReviewKeys = new Set();
 }
 
 // ── Auth gate ─────────────────────────────────────────────────────────────────
@@ -392,6 +415,12 @@ onAuthStateChanged(auth, async (user) => {
                 achievements: {
                     unlocked: {},
                     activity: { puzzleDays: {}, playDayStreak: 0, lastPuzzleDate: null, totalPlaySeconds: 0, themePerformance: {} },
+                },
+                training: {
+                    reviewQueue: {},
+                    reviewMeta: { newPuzzleAttempts: 0, nextReviewEligibleAt: 0 },
+                    seenPuzzleKeys: {},
+                    resolvedReviewKeys: {},
                 },
                 createdAt,
             };
@@ -535,6 +564,12 @@ async function saveStatsToFirebase() {
                 themePerformance,
             },
         },
+        training: {
+            reviewQueue,
+            reviewMeta,
+            seenPuzzleKeys,
+            resolvedReviewKeys,
+        },
     });
 }
 
@@ -651,7 +686,7 @@ function getDailyPuzzleStreak() {
 }
 
 function recordThemePerformance(puzzle, wasCorrect) {
-    const themes = Array.isArray(puzzle?.AIExplanation?.themes) ? puzzle.AIExplanation.themes : [];
+    const themes = getPuzzleThemes(puzzle);
     const seen = new Set();
 
     themes.forEach(rawTheme => {
@@ -1212,7 +1247,7 @@ function getThemeKey(theme) {
 }
 
 function getPositionThemeKeys(position) {
-    const themes = position?.AIExplanation?.themes;
+    const themes = getPuzzleThemes(position);
     if (!Array.isArray(themes)) return [];
     return themes.map(getThemeKey).filter(Boolean);
 }
@@ -1273,15 +1308,209 @@ function choosePuzzleFromPool(pool) {
     return pool.find(position => position._key === positionKey) || pool[0];
 }
 
+// ── Personal review queue ─────────────────────────────────────────────────────
+// Scheduling is intentionally completion-based. A player must answer 20–30 new
+// positions before a first review is due, so the queue reinforces learning
+// without turning ordinary practice into a stream of recycled positions.
+function normalizeReviewKeyMap(value) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+    return Object.fromEntries(
+        Object.entries(value).filter(([key, timestamp]) =>
+            typeof key === 'string' && key.trim() && Number.isFinite(Number(timestamp)) && Number(timestamp) > 0
+        ).map(([key, timestamp]) => [key, Number(timestamp)])
+    );
+}
+
+function normalizeReviewMeta(value) {
+    const raw = value && typeof value === 'object' ? value : {};
+    return {
+        newPuzzleAttempts: Math.max(0, Math.floor(Number(raw.newPuzzleAttempts) || 0)),
+        nextReviewEligibleAt: Math.max(0, Math.floor(Number(raw.nextReviewEligibleAt) || 0)),
+    };
+}
+
+function normalizeReviewQueue(value) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+    const normalized = {};
+    Object.entries(value).forEach(([key, raw]) => {
+        if (typeof key !== 'string' || !key.trim() || !raw || typeof raw !== 'object') return;
+        const stage = Math.max(1, Math.floor(Number(raw.stage) || 1));
+        const dueAfterNew = Math.max(0, Math.floor(Number(raw.dueAfterNew) || 0));
+        if (!dueAfterNew) return;
+        normalized[key] = {
+            stage,
+            dueAfterNew,
+            queuedAt: Math.max(0, Number(raw.queuedAt) || Date.now()),
+            lastWrongAt: Math.max(0, Number(raw.lastWrongAt) || Date.now()),
+        };
+    });
+    return normalized;
+}
+
+function stableReviewOffset(key, stage, span) {
+    let hash = 2166136261;
+    const source = `${key}|${stage}`;
+    for (let index = 0; index < source.length; index++) {
+        hash ^= source.charCodeAt(index);
+        hash = Math.imul(hash, 16777619);
+    }
+    return Math.abs(hash >>> 0) % Math.max(1, span);
+}
+
+function getReviewInterval(key, stage) {
+    const minimum = stage >= 2 ? REVIEW_LATER_INTERVAL_MIN : REVIEW_FIRST_INTERVAL_MIN;
+    const maximum = stage >= 2 ? REVIEW_LATER_INTERVAL_MAX : REVIEW_FIRST_INTERVAL_MAX;
+    return minimum + stableReviewOffset(key, stage, (maximum - minimum) + 1);
+}
+
+function getPuzzleKey(puzzle) {
+    return typeof puzzle?._key === 'string' && puzzle._key ? puzzle._key : null;
+}
+
+function getDueReviewCandidates(pool) {
+    const byKey = new Map(pool.map(position => [getPuzzleKey(position), position]));
+    const completedNew = reviewMeta.newPuzzleAttempts;
+    const gateOpen = completedNew >= reviewMeta.nextReviewEligibleAt;
+    if (!gateOpen) return [];
+
+    return Object.entries(reviewQueue)
+        .filter(([key, review]) =>
+            !deferredReviewKeys.has(key) &&
+            review.dueAfterNew <= completedNew &&
+            byKey.has(key)
+        )
+        .map(([key, review]) => ({ key, review, position: byKey.get(key) }))
+        .sort((a, b) =>
+            a.review.dueAfterNew - b.review.dueAfterNew ||
+            a.review.lastWrongAt - b.review.lastWrongAt ||
+            a.key.localeCompare(b.key)
+        );
+}
+
+function getFreshPuzzlePool(pool) {
+    const unqueued = pool.filter(position => !reviewQueue[getPuzzleKey(position)]);
+    // If every item in a very small active pool is awaiting review, keep the
+    // player training rather than showing an empty board while the first review
+    // interval is still counting down.
+    if (!unqueued.length) return pool;
+    const unseen = unqueued.filter(position => !seenPuzzleKeys[getPuzzleKey(position)]);
+    if (unseen.length) return unseen;
+
+    // A correctly reviewed position stays out while the active difficulty/theme
+    // pool still contains unseen material. Once that pool has been exhausted,
+    // ordinary selection can naturally cycle back through it.
+    const activeKeys = new Set(pool.map(getPuzzleKey).filter(Boolean));
+    Object.keys(resolvedReviewKeys).forEach(key => {
+        if (activeKeys.has(key)) delete resolvedReviewKeys[key];
+    });
+    return unqueued;
+}
+
+function chooseScheduledPuzzle() {
+    const activePool = getActivePuzzlePool();
+    if (!activePool.length) {
+        currentPuzzleIsReview = false;
+        return null;
+    }
+
+    if (!isGuest) {
+        const dueReviews = getDueReviewCandidates(activePool);
+        if (dueReviews.length) {
+            currentPuzzleIsReview = true;
+            reviewMeta.nextReviewEligibleAt = reviewMeta.newPuzzleAttempts + REVIEW_MIN_NEW_BETWEEN_DUE;
+            return dueReviews[0].position;
+        }
+    }
+
+    currentPuzzleIsReview = false;
+    return choosePuzzleFromPool(isGuest ? activePool : getFreshPuzzlePool(activePool));
+}
+
+function recordNewPuzzleCompletion(puzzle) {
+    const key = getPuzzleKey(puzzle);
+    if (!key) return;
+    seenPuzzleKeys[key] = Date.now();
+    reviewMeta.newPuzzleAttempts += 1;
+}
+
+function scheduleWrongAnswerForReview(puzzle) {
+    const key = getPuzzleKey(puzzle);
+    if (!key) return;
+
+    const existing = reviewQueue[key];
+    const stage = currentPuzzleIsReview
+        ? Math.max(2, (Number(existing?.stage) || 1) + 1)
+        : 1;
+    const dueAfterNew = reviewMeta.newPuzzleAttempts + getReviewInterval(key, stage);
+    const now = Date.now();
+
+    reviewQueue[key] = {
+        stage,
+        dueAfterNew,
+        queuedAt: Number(existing?.queuedAt) || now,
+        lastWrongAt: now,
+    };
+    delete resolvedReviewKeys[key];
+    deferredReviewKeys.delete(key);
+}
+
+function retireCorrectReview(puzzle) {
+    const key = getPuzzleKey(puzzle);
+    if (!key) return;
+    const now = Date.now();
+    delete reviewQueue[key];
+    // Preserve the "wait until unseen material is exhausted" guarantee even
+    // for queue records created by an older session without a seen-key entry.
+    seenPuzzleKeys[key] = now;
+    resolvedReviewKeys[key] = now;
+    deferredReviewKeys.delete(key);
+}
+
+function getReviewQueueSummary() {
+    const entries = Object.entries(reviewQueue);
+    if (!entries.length) return null;
+    const nextDueAfter = Math.min(...entries.map(([, review]) => review.dueAfterNew));
+    const remaining = Math.max(0, nextDueAfter - reviewMeta.newPuzzleAttempts);
+    const dueCount = entries.filter(([, review]) => review.dueAfterNew <= reviewMeta.newPuzzleAttempts).length;
+    return { total: entries.length, remaining, dueCount };
+}
+
+function updateReviewQueueUI() {
+    const status = document.getElementById('review-queue-status');
+    const statusText = document.getElementById('review-queue-text');
+    const positionLabel = document.getElementById('review-position-label');
+
+    if (positionLabel) positionLabel.hidden = !currentPuzzleIsReview;
+    if (!status || !statusText) return;
+
+    const summary = !isGuest ? getReviewQueueSummary() : null;
+    status.hidden = !summary;
+    if (!summary) return;
+
+    if (currentPuzzleIsReview) {
+        statusText.textContent = `${summary.total} review${summary.total === 1 ? '' : 's'} in your queue · revisiting a missed pattern`;
+    } else if (summary.dueCount > 0) {
+        statusText.textContent = `${summary.total} review${summary.total === 1 ? '' : 's'} queued · one will appear after fresh work`;
+    } else {
+        statusText.textContent = `${summary.total} review${summary.total === 1 ? '' : 's'} queued · next in ${summary.remaining} new position${summary.remaining === 1 ? '' : 's'}`;
+    }
+}
+
 function renderPuzzle(pos) {
-    if (!pos) return false;
+    if (!pos) {
+        currentPuzzleIsReview = false;
+        updateReviewQueueUI();
+        return false;
+    }
     current_position = positions.indexOf(pos);
     currentPuzzle = pos;
     currentPuzzleDifficulty = pos.Difficulty || getActiveDifficulty();
-    renderSVG(pos.SVG);
+    renderSVG(getPuzzleSVG(pos));
     correct_result = findResult(pos.Eval);
     const turnEl = document.getElementById('turn');
     if (turnEl) turnEl.innerHTML = pos.Turn;
+    renderPuzzleMetadata(pos);
+    updateReviewQueueUI();
     void logCurrentPuzzleRating(pos);
     return true;
 }
@@ -1300,7 +1529,7 @@ function renderNoMatchingPuzzleState() {
 }
 
 function loadPuzzleForPR() {
-    const pos = choosePuzzleFromPool(getActivePuzzlePool());
+    const pos = chooseScheduledPuzzle();
     if (!renderPuzzle(pos)) renderNoMatchingPuzzleState();
     updateThemeTrainingUI();
 }
@@ -1311,7 +1540,14 @@ window.nextPosition = function() {
         return;
     }
 
-    const pos = choosePuzzleFromPool(getActivePuzzlePool());
+    // Skipping a due review should not cause that same position to repeat on
+    // the next click. It remains due and returns on a later session if skipped.
+    if (currentPuzzleIsReview && !answered && currentPuzzle) {
+        const skippedKey = getPuzzleKey(currentPuzzle);
+        if (skippedKey) deferredReviewKeys.add(skippedKey);
+    }
+
+    const pos = chooseScheduledPuzzle();
     if (!renderPuzzle(pos)) {
         renderNoMatchingPuzzleState();
         return;
@@ -1337,7 +1573,7 @@ function buildThemeTrainingOptions() {
     const counts = new Map();
     positions.forEach(position => {
         const seenForPosition = new Set();
-        const rawThemes = Array.isArray(position?.AIExplanation?.themes) ? position.AIExplanation.themes : [];
+        const rawThemes = getPuzzleThemes(position);
         rawThemes.forEach(theme => {
             const key = getThemeKey(theme);
             if (!key || seenForPosition.has(key)) return;
@@ -1470,6 +1706,20 @@ function sendAnswer(guess) {
 
     updatePR(difficulty, wasCorrect);
 
+    // Only authenticated players have a persistent review queue. New positions
+    // advance the spacing clock; a review answer never does. A correct review
+    // retires the position until the player exhausts the remaining unseen pool.
+    if (!isGuest) {
+        if (currentPuzzleIsReview) {
+            if (wasCorrect) retireCorrectReview(currentPuzzle);
+            else scheduleWrongAnswerForReview(currentPuzzle);
+        } else {
+            recordNewPuzzleCompletion(currentPuzzle);
+            if (!wasCorrect) scheduleWrongAnswerForReview(currentPuzzle);
+        }
+        updateReviewQueueUI();
+    }
+
     // Patch posEval into the history entry that updatePR just pushed.
     if (prHistory.length > 0) {
         prHistory[prHistory.length - 1].posEval = evaluationRaw;
@@ -1523,7 +1773,7 @@ function revealAIExplanation(puzzle) {
 
     // Populate theme pills
     themesEl.innerHTML = '';
-    const themes = (exp && Array.isArray(exp.themes)) ? exp.themes : [];
+    const themes = getPuzzleThemes(puzzle);
     themes.forEach(theme => {
         if (!theme || typeof theme !== 'string') return;
         const pill = document.createElement('span');
@@ -1559,11 +1809,252 @@ function findResult(evaluation) {
     return "Black Winning";
 }
 
+// ── Data normalisation helpers ─────────────────────────────────────────────────
+// Handles the two Firebase position formats:
+//   Old (first 538): top-level SVG field, AIExplanation.themes (lowercase)
+//   New (last  668): board.svg nested field, AIExplanation.Themes (capital T),
+//                    plus gameMetadata object with tournament/player/year info.
+
+function getPuzzleSVG(pos) {
+    // Old format: pos.SVG  |  New format: pos.board.svg
+    return (pos && (pos.SVG || (pos.board && pos.board.svg))) || '';
+}
+
+function getPuzzleFEN(pos) {
+    // Both formats use top-level FEN field
+    return (pos && pos.FEN) || '';
+}
+
+function getPuzzleThemes(pos) {
+    // Old: AIExplanation.themes (lowercase array)
+    // New: AIExplanation.Themes (capital T array)
+    const exp = pos && pos.AIExplanation;
+    if (!exp) return [];
+    const themes = Array.isArray(exp.themes) ? exp.themes
+                 : Array.isArray(exp.Themes)  ? exp.Themes
+                 : [];
+    return themes;
+}
+
+function getPuzzleMetadata(pos) {
+    // New format has gameMetadata; old format has none.
+    // Returns a normalised object with consistent keys.
+    const gm = pos && pos.gameMetadata;
+    const pgnEvent = extractPGNEvent(pos && pos.pgn);
+    if (!gm && !pgnEvent) return null;
+
+    const tournament = normaliseTournamentName(
+        (gm && (gm.event || gm.tournament)) ||
+        parseTournamentFromGameId(gm && gm.gameId) ||
+        pgnEvent ||
+        ''
+    );
+
+    return {
+        tournament,
+        white:      ((gm && gm.white) || '').trim(),
+        black:      ((gm && gm.black) || '').trim(),
+        date:       ((gm && gm.date) || '').trim(),
+        year:       (((gm && gm.date) || '').split('.')[0]).trim(),
+        opening:    ((gm && gm.opening) || '').trim(),
+        source:     ((gm && gm.source) || '').trim(),
+        gameUrl:    (gm && gm.gameUrl) || null,
+    };
+}
+
+function extractPGNEvent(pgn) {
+    if (!pgn) return '';
+    const match = pgn.match(/\[Event\s+"([^"]+)"\]/);
+    return match ? match[1].trim() : '';
+}
+
+function normaliseTournamentName(value) {
+    return String(value || '').replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function parseTournamentFromGameId(gameId) {
+    if (!gameId) return '';
+
+    const raw = String(gameId).trim();
+    const vsIndex = raw.lastIndexOf('_vs_');
+    const prefix = vsIndex >= 0 ? raw.slice(0, vsIndex) : raw;
+    const tokens = prefix.split('_').filter(Boolean);
+
+    const isYear = (token) => /^\d{4}$/.test(token);
+    const isRound = (token) => /^\d+\.\d+$/.test(token) || /^\d+$/.test(token);
+    const isPlayerToken = (token) => /[,]/.test(token) || /[A-Za-z]+,[A-Za-z]/.test(token);
+
+    let end = tokens.length - 1;
+
+    while (end >= 0 && isPlayerToken(tokens[end])) {
+        end -= 1;
+    }
+    if (end >= 0 && isRound(tokens[end])) {
+        end -= 1;
+    }
+    if (end >= 0 && isYear(tokens[end])) {
+        end -= 1;
+    }
+    while (end >= 0 && isPlayerToken(tokens[end])) {
+        end -= 1;
+    }
+
+    const tournamentTokens = tokens.slice(0, end + 1);
+    return normaliseTournamentName(tournamentTokens.join(' '));
+}
+
 function renderSVG(svg) {
     const boardEl = document.getElementById('board');
     if (!boardEl) return;
     boardEl.innerHTML = svg;
 }
+
+// ── Puzzle metadata bar (below board) ─────────────────────────────────────────
+function renderPuzzleMetadata(pos) {
+    const bar = document.getElementById('puzzle-meta-bar');
+    if (!bar) return;
+
+    const meta = getPuzzleMetadata(pos);
+    const fen  = getPuzzleFEN(pos);
+
+    // Store FEN on the bar for the export menu to pick up
+    bar.dataset.fen = fen;
+
+    if (!meta) {
+        // Old-format puzzle — no game data
+        bar.innerHTML = buildMetaBarHTML(null, fen);
+        return;
+    }
+
+    bar.innerHTML = buildMetaBarHTML(meta, fen);
+
+    // Close menu on outside click (re-attach each render since innerHTML replaces DOM)
+    bar.querySelector('.meta-export-btn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleMetaExportMenu(bar);
+    });
+}
+
+function buildMetaBarHTML(meta, fen) {
+    const hasMeta = !!(meta && (meta.white || meta.black || meta.tournament || meta.year));
+    const isOnline = !hasMeta || (!meta.tournament && meta.source && meta.source.toLowerCase().includes('lichess'));
+
+    let playersHTML = '';
+    let infoHTML    = '';
+    let exportBtn   = '';
+
+    if (hasMeta) {
+        const white = meta.white || 'Unknown';
+        const black = meta.black || 'Unknown';
+        const year  = meta.year  || 'N/A';
+        const event = meta.tournament || (isOnline ? 'Online game (Lichess)' : 'N/A');
+
+        playersHTML = `
+            <span class="meta-players">
+                <span class="meta-player white-player">
+                    <svg class="meta-king-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.5 6.5V4H10V2h4v2h-1.5v2.5h.5l.9.5 2.6 5.5.3.5H19a2 2 0 0 1 2 2v1H3v-1a2 2 0 0 1 2-2h1.7l.3-.5 2.6-5.5.9-.5h.5zM5 16h14l-1 6H6z"/></svg>
+                    ${escapeHTML(white)}
+                </span>
+                <span class="meta-vs">vs</span>
+                <span class="meta-player black-player">
+                    <svg class="meta-king-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.5 6.5V4H10V2h4v2h-1.5v2.5h.5l.9.5 2.6 5.5.3.5H19a2 2 0 0 1 2 2v1H3v-1a2 2 0 0 1 2-2h1.7l.3-.5 2.6-5.5.9-.5h.5zM5 16h14l-1 6H6z"/></svg>
+                    ${escapeHTML(black)}
+                </span>
+            </span>`;
+        infoHTML = `
+            <span class="meta-divider" aria-hidden="true">·</span>
+            <span class="meta-event" title="${escapeHTML(event)}">${escapeHTML(event)}</span>
+            <span class="meta-divider" aria-hidden="true">·</span>
+            <span class="meta-year">${escapeHTML(year)}</span>`;
+    } else {
+        playersHTML = `<span class="meta-na">Online game (Lichess)</span>`;
+        infoHTML = `<span class="meta-note" title="Older archive entries do not include game metadata, so this is shown as a live online position.">Historical metadata unavailable</span>`;
+    }
+
+    if (fen) {
+        exportBtn = `
+        <div class="meta-export-wrap">
+            <button class="meta-export-btn" aria-label="Export position" title="Export position">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+            </button>
+            <div class="meta-export-menu" role="menu" aria-label="Export options">
+                <button class="meta-export-item" onclick="exportToLichessAnalysis()" role="menuitem">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    Open in Lichess Analysis
+                </button>
+                <button class="meta-export-item" onclick="copyFENToClipboard()" role="menuitem">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    Copy FEN
+                </button>
+            </div>
+        </div>`;
+    }
+
+    return `
+        <div class="meta-bar-left">
+            ${playersHTML}
+            ${infoHTML}
+        </div>
+        ${exportBtn}`;
+}
+
+function escapeHTML(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function toggleMetaExportMenu(bar) {
+    const menu = bar.querySelector('.meta-export-menu');
+    if (!menu) return;
+    const isOpen = menu.classList.contains('open');
+    // Close any other open menus first
+    document.querySelectorAll('.meta-export-menu.open').forEach(m => m.classList.remove('open'));
+    if (!isOpen) {
+        menu.classList.add('open');
+    }
+}
+
+// Close export menu when clicking elsewhere
+document.addEventListener('click', () => {
+    document.querySelectorAll('.meta-export-menu.open').forEach(m => m.classList.remove('open'));
+});
+
+// ── Export actions ─────────────────────────────────────────────────────────────
+window.exportToLichessAnalysis = function() {
+    const fen = getPuzzleFEN(currentPuzzle);
+    if (!fen) return;
+    // Use encodeURIComponent so spaces are percent-encoded (Lichess requires %20)
+    const encodedFen = encodeURIComponent(fen);
+    const lichessUrl = `https://lichess.org/analysis?fen=${encodedFen}`;
+
+    window.open(lichessUrl, '_blank', 'noopener,noreferrer');
+    document.querySelectorAll('.meta-export-menu.open').forEach(m => m.classList.remove('open'));
+};
+
+window.copyFENToClipboard = async function() {
+    const fen = getPuzzleFEN(currentPuzzle);
+    if (!fen) return;
+    try {
+        await navigator.clipboard.writeText(fen);
+        // Show brief confirmation on the button
+        const btn = document.querySelector('.meta-export-item:last-child');
+        if (btn) {
+            const orig = btn.innerHTML;
+            btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
+            setTimeout(() => { btn.innerHTML = orig; }, 1500);
+        }
+    } catch {
+        // Fallback for browsers without clipboard API
+        const ta = document.createElement('textarea');
+        ta.value = fen;
+        ta.style.position = 'fixed';
+        ta.style.opacity  = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+    }
+};
 
 // ── Help modal ────────────────────────────────────────────────────────────────
 window.onload = function() {
@@ -1724,10 +2215,17 @@ window.confirmResetPR = async function() {
     bestStreak    = 0;
     peakPR        = PR_START;
     prHistory     = [];
+    reviewQueue = {};
+    reviewMeta = { newPuzzleAttempts: 0, nextReviewEligibleAt: 0 };
+    seenPuzzleKeys = {};
+    resolvedReviewKeys = {};
+    deferredReviewKeys = new Set();
+    currentPuzzleIsReview = false;
 
     await saveStatsToFirebase();
     renderPR();
     renderProvisionalNotice();
+    updateReviewQueueUI();
 
     const prDisplay = document.getElementById('settings-pr-display');
     if (prDisplay) {
@@ -2340,7 +2838,7 @@ async function initPOTD() {
         potdData   = {
             date:          today,
             positionKey:   key,
-            svg:           pick.SVG,
+            svg:           getPuzzleSVG(pick),
             turn:          pick.Turn,
             eval:          pick.Eval,
             correctAnswer: findResult(pick.Eval),

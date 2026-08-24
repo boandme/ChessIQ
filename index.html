@@ -65,7 +65,7 @@
                 </a></li>
             </ul>
         </nav>
-        <div class="sidebar-foot">v1.4.8 — ACTIVE</div>
+        <div class="sidebar-foot">v1.5 — ACTIVE</div>
     </aside>
 
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
@@ -78,7 +78,7 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
                 </span>
                 <span class="brand-text">CHESS<span>IQ</span></span>
-                <span class="brand-ver">v1.4.8</span>
+                <span class="brand-ver">v1.5</span>
             </a>
         </div>
 
@@ -256,6 +256,10 @@
                     <span id="pr-streak-count">2</span>
                     <span class="pr-streak-label">streak</span>
                 </div>
+                <div id="review-queue-status" class="review-queue-status" role="status" aria-live="polite" hidden>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.9-3L3 10"/><path d="M3 4v6h6"/><path d="M4 13a8 8 0 0 0 14.9 3L21 14"/><path d="M21 20v-6h-6"/></svg>
+                    <span id="review-queue-text"></span>
+                </div>
                 <div id="pr-delta" class="pr-delta"></div>
                 <div class="pr-scanline"></div>
             </div>
@@ -278,6 +282,9 @@
                 </div>
             </div>
 
+            <!-- ── Puzzle metadata bar ──────────────────────────────────────── -->
+            <div id="puzzle-meta-bar" class="puzzle-meta-bar" aria-label="Game information"></div>
+
         </section>
 
         <section id="right-panel" class="reveal">
@@ -286,6 +293,10 @@
             <div id="guess-section">
                 <div id="guess-section-inner">
                     <div class="panel-heading">Make your call</div>
+                    <div id="review-position-label" class="review-position-label" role="status" aria-live="polite" hidden>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.9-3L3 10"/><path d="M3 4v6h6"/><path d="M4 13a8 8 0 0 0 14.9 3L21 14"/><path d="M21 20v-6h-6"/></svg>
+                        <span>Review position <em>· revisit a missed pattern</em></span>
+                    </div>
                     <h3 id="turn"></h3>
 
                     <div id="actionRow">
@@ -444,7 +455,7 @@
                 <div class="modal-section settings-col-half">
                     <h3>About</h3>
                     <ul class="modal-list">
-                        <li><strong>Version</strong> — ChessIQ v1.4.8</li>
+                        <li><strong>Version</strong> — ChessIQ v1.5</li>
                         <li><strong>Status</strong> — Beta, active development</li>
                     </ul>
                 </div>

@@ -1,3 +1,4 @@
+
 ♟️ ChessIQ
 
 ChessIQ is a Firebase-backed positional training tool for intermediate and advanced chess players who want to improve their ability to visualize, evaluate, and understand chess positions beyond tactics.
@@ -255,6 +256,11 @@ v1.4.8 – Puzzle Intelligence, Analytics & Admin Control Center (August 2026)
 - Introduced per-puzzle difficulty ratings on a 1–10 scale. Each puzzle receives a baseline rating derived from its static difficulty tier (Easy 2.5 / Medium 5.0 / Hard 8.0), blended with Gemini-supplied difficulty ratings at 25% weight, then updated adaptively over time based on community performance relative to player PR 
 - UI refinements across the homepage and analytics page: stronger TRAINING MODE and THEMATIC FOCUS section headings, increased difficulty label and risk descriptor font sizes, full-width puzzle log eliminating horizontal scroll, and improved radar chart label legibility at 1.5× scale. 
 - Added admin dashboard
+- Added spaced repetition algorithms that ensure missed puzzles re-appear in the queue 10-20 puzzles later for improvement
+
+v1.5 - Expanded Database update
+- 1200+ positions in total in the app, half drawn from lichess and half from international games in the early 2000s
+- Improve training using gameMetadata to display various details about the position you're playing
 
 
 
