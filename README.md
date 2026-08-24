@@ -14,7 +14,7 @@ ChessIQ's Multiple Uses
 
 ChessIQ scales with your level. Beginners start by counting material — learning which side simply has more pieces — and that alone builds a foundation for reading positions. As your rating climbs, the puzzles shift toward what ChessIQ was originally built for: recognizing positional imbalances, space, piece activity, and structural advantages that don't show up in a piece count. One tool, two very different kinds of chess thinking, on a single continuous ladder.
 
-Status: ✅ v1.4.8 — actively developed.
+Status: ✅ v1.5 — actively developed.
 
 
 
@@ -267,10 +267,7 @@ v1.5 - Expanded Database update
 
 🔜 Planned Updates
 
-v1.5 - Puzzle ranking & adaptive difficulty - changing scores assigned to individual puzzles
 
-•
-some experimentation
 
 **v1.6 – Ranked & Rush Modes / seperate from gameplay" - August 2026
 New Rush gamemode: 3 or 5 minutes, maximum puzzles correct. Separate leaderboard for Rush. Ability to switch between regular rated play and Rush on the homescreen.
