@@ -1917,16 +1917,17 @@ function renderPuzzleMetadata(pos) {
     const meta = getPuzzleMetadata(pos);
     const fen  = getPuzzleFEN(pos);
 
-    // Store FEN on the bar for the export menu to pick up
+    // Store FEN and PGN on the bar for the export menu to pick up
     bar.dataset.fen = fen;
+    bar.dataset.pgn = (pos && pos.pgn) || '';
 
     if (!meta) {
         // Old-format puzzle — no game data
-        bar.innerHTML = buildMetaBarHTML(null, fen);
+        bar.innerHTML = buildMetaBarHTML(null, fen, bar.dataset.pgn);
         return;
     }
 
-    bar.innerHTML = buildMetaBarHTML(meta, fen);
+    bar.innerHTML = buildMetaBarHTML(meta, fen, bar.dataset.pgn);
 
     // Close menu on outside click (re-attach each render since innerHTML replaces DOM)
     bar.querySelector('.meta-export-btn')?.addEventListener('click', (e) => {
@@ -1935,7 +1936,7 @@ function renderPuzzleMetadata(pos) {
     });
 }
 
-function buildMetaBarHTML(meta, fen) {
+function buildMetaBarHTML(meta, fen, pgn) {
     const hasMeta = !!(meta && (meta.white || meta.black || meta.tournament || meta.year));
     const isOnline = !hasMeta || (!meta.tournament && meta.source && meta.source.toLowerCase().includes('lichess'));
 
@@ -1972,6 +1973,11 @@ function buildMetaBarHTML(meta, fen) {
     }
 
     if (fen) {
+        const pgnViewerBtn = pgn ? `
+                <button class="meta-export-item" onclick="exportToPGNLichess()" role="menuitem">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/><path d="M8 6H6a2 2 0 0 0-2 2v10"/></svg>
+                    View Full Game on Lichess
+                </button>` : '';
         exportBtn = `
         <div class="meta-export-wrap">
             <button class="meta-export-btn" aria-label="Export position" title="Export position">
@@ -1982,6 +1988,10 @@ function buildMetaBarHTML(meta, fen) {
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                     Open in Lichess Analysis
                 </button>
+                <button class="meta-export-item" onclick="exportToChesscomAnalysis()" role="menuitem">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    Open in Chess.com Analysis
+                </button>${pgnViewerBtn}
                 <button class="meta-export-item" onclick="copyFENToClipboard()" role="menuitem">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                     Copy FEN
@@ -2023,12 +2033,63 @@ document.addEventListener('click', () => {
 window.exportToLichessAnalysis = function() {
     const fen = getPuzzleFEN(currentPuzzle);
     if (!fen) return;
-    // Use encodeURIComponent so spaces are percent-encoded (Lichess requires %20)
-    const encodedFen = encodeURIComponent(fen);
-    const lichessUrl = `https://lichess.org/analysis?fen=${encodedFen}`;
+
+    // Confirmed from Lichess open source (lila/UserAnalysis.scala + routes):
+    //   Route: GET /analysis/*something -> parseArg(something)
+    //   parseArg splits 'standard/<fen>' on '/' with limit 2
+    //   readFen calls decodeUriPath: decodes %20->space, keeps '/' as separator
+    //
+    //   CORRECT:  slashes stay literal, spaces become %20
+    //   WRONG:    encodeURIComponent (turns '/' into '%2F' -> malformed FEN)
+    //   WRONG:    replace(' ','_') (underscores are never decoded to spaces
+    //             in the FEN path; only the /analysis/pgn/ route does that)
+    const fenPath = fen.trim().replace(/ /g, '%20');
+    const lichessUrl = 'https://lichess.org/analysis/standard/' + fenPath;
 
     window.open(lichessUrl, '_blank', 'noopener,noreferrer');
     document.querySelectorAll('.meta-export-menu.open').forEach(m => m.classList.remove('open'));
+};
+
+// ── Chess.com analysis (FEN) ──────────────────────────────────────────────────
+window.exportToChesscomAnalysis = function() {
+    const fen = getPuzzleFEN(currentPuzzle);
+    if (!fen) return;
+
+    // Chess.com analysis board accepts ?fen= with a fully encoded FEN.
+    // All special characters (spaces, slashes) must be percent-encoded.
+    const chesscomUrl = 'https://www.chess.com/analysis?fen=' + encodeURIComponent(fen.trim());
+
+    window.open(chesscomUrl, '_blank', 'noopener,noreferrer');
+    document.querySelectorAll('.meta-export-menu.open').forEach(m => m.classList.remove('open'));
+};
+
+// ── Lichess PGN viewer (full game, TWIC/OTB positions only) ──────────────────
+// Method 2 — API import via form POST:
+// POST the PGN to /api/import in a hidden form with target="_blank".
+// Lichess responds with a 301 redirect to /{gameId}; the browser follows it
+// natively as a tab navigation — no fetch, no CORS, lands on the game page.
+window.exportToPGNLichess = function() {
+    const pgn = currentPuzzle && currentPuzzle.pgn;
+    if (!pgn) return;
+
+    document.querySelectorAll('.meta-export-menu.open').forEach(m => m.classList.remove('open'));
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = 'https://lichess.org/api/import';
+    form.target = '_blank';
+    form.rel    = 'noopener noreferrer';
+    form.style.display = 'none';
+
+    const input = document.createElement('input');
+    input.type  = 'hidden';
+    input.name  = 'pgn';
+    input.value = pgn.trim();
+    form.appendChild(input);
+
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
 };
 
 window.copyFENToClipboard = async function() {
@@ -3169,12 +3230,7 @@ async function ensurePuzzleStats(puzzle) {
     try {
         await set(ref(db, `puzzleStats/${key}`), stats);
         _pdrCache.set(key, stats);
-        console.log(
-            `[PDR] Initialised | key: ${key} | ` +
-            `baseDifficulty: ${stats.baseDifficulty} | ` +
-            `geminiRating: ${geminiVal ?? 'absent'} | ` +
-            `initialRating: ${stats.rating} | tier: ${stats.tier}`
-        );
+        
     } catch (err) {
         console.warn(`[PDR] Could not initialise puzzleStats/${key}:`, err);
     }
