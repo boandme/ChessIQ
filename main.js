@@ -1921,19 +1921,17 @@ function renderPuzzleMetadata(pos) {
     bar.dataset.fen = fen;
     bar.dataset.pgn = (pos && pos.pgn) || '';
 
-    if (!meta) {
-        // Old-format puzzle — no game data
-        bar.innerHTML = buildMetaBarHTML(null, fen, bar.dataset.pgn);
-        return;
-    }
-
+    // Render the same export control for every FEN-bearing puzzle, including
+    // legacy entries that do not carry tournament metadata or a source PGN.
     bar.innerHTML = buildMetaBarHTML(meta, fen, bar.dataset.pgn);
 
-    // Close menu on outside click (re-attach each render since innerHTML replaces DOM)
+    // Re-attach after each render because innerHTML replaces the button node.
+    // This must run for metadata-free positions too, so their FEN handoffs work.
     bar.querySelector('.meta-export-btn')?.addEventListener('click', (e) => {
         e.stopPropagation();
         toggleMetaExportMenu(bar);
     });
+
 }
 
 function buildMetaBarHTML(meta, fen, pgn) {
@@ -1980,10 +1978,13 @@ function buildMetaBarHTML(meta, fen, pgn) {
                 </button>` : '';
         exportBtn = `
         <div class="meta-export-wrap">
-            <button class="meta-export-btn" aria-label="Export position" title="Export position">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+            <button class="meta-export-btn" type="button" aria-label="Export position" title="Export position" aria-haspopup="menu" aria-controls="meta-export-menu" aria-expanded="false">
+                <svg class="meta-export-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>
+                <span class="meta-export-label">Export</span>
+                <svg class="meta-export-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
             </button>
-            <div class="meta-export-menu" role="menu" aria-label="Export options">
+            <div id="meta-export-menu" class="meta-export-menu" role="menu" aria-label="Export options">
+
                 <button class="meta-export-item" onclick="exportToLichessAnalysis()" role="menuitem">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                     Open in Lichess Analysis
@@ -2013,21 +2014,28 @@ function escapeHTML(str) {
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+function closeMetaExportMenus() {
+    document.querySelectorAll('.meta-export-menu.open').forEach(menu => {
+        menu.classList.remove('open');
+        menu.closest('.meta-export-wrap')?.querySelector('.meta-export-btn')?.setAttribute('aria-expanded', 'false');
+    });
+}
+
 function toggleMetaExportMenu(bar) {
     const menu = bar.querySelector('.meta-export-menu');
-    if (!menu) return;
+    const trigger = bar.querySelector('.meta-export-btn');
+    if (!menu || !trigger) return;
+
     const isOpen = menu.classList.contains('open');
-    // Close any other open menus first
-    document.querySelectorAll('.meta-export-menu.open').forEach(m => m.classList.remove('open'));
+    closeMetaExportMenus();
     if (!isOpen) {
         menu.classList.add('open');
+        trigger.setAttribute('aria-expanded', 'true');
     }
 }
 
 // Close export menu when clicking elsewhere
-document.addEventListener('click', () => {
-    document.querySelectorAll('.meta-export-menu.open').forEach(m => m.classList.remove('open'));
-});
+document.addEventListener('click', closeMetaExportMenus);
 
 // ── Export actions ─────────────────────────────────────────────────────────────
 window.exportToLichessAnalysis = function() {
@@ -2047,10 +2055,11 @@ window.exportToLichessAnalysis = function() {
     const lichessUrl = 'https://lichess.org/analysis/standard/' + fenPath;
 
     window.open(lichessUrl, '_blank', 'noopener,noreferrer');
-    document.querySelectorAll('.meta-export-menu.open').forEach(m => m.classList.remove('open'));
+    closeMetaExportMenus();
 };
 
 // ── Chess.com analysis (FEN) ──────────────────────────────────────────────────
+
 window.exportToChesscomAnalysis = function() {
     const fen = getPuzzleFEN(currentPuzzle);
     if (!fen) return;
@@ -2060,10 +2069,11 @@ window.exportToChesscomAnalysis = function() {
     const chesscomUrl = 'https://www.chess.com/analysis?fen=' + encodeURIComponent(fen.trim());
 
     window.open(chesscomUrl, '_blank', 'noopener,noreferrer');
-    document.querySelectorAll('.meta-export-menu.open').forEach(m => m.classList.remove('open'));
+    closeMetaExportMenus();
 };
 
 // ── Lichess PGN viewer (full game, TWIC/OTB positions only) ──────────────────
+
 // Method 2 — API import via form POST:
 // POST the PGN to /api/import in a hidden form with target="_blank".
 // Lichess responds with a 301 redirect to /{gameId}; the browser follows it
@@ -2072,9 +2082,10 @@ window.exportToPGNLichess = function() {
     const pgn = currentPuzzle && currentPuzzle.pgn;
     if (!pgn) return;
 
-    document.querySelectorAll('.meta-export-menu.open').forEach(m => m.classList.remove('open'));
+    closeMetaExportMenus();
 
     const form = document.createElement('form');
+
     form.method = 'POST';
     form.action = 'https://lichess.org/api/import';
     form.target = '_blank';
