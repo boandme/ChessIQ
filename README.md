@@ -5,7 +5,7 @@ ChessIQ is a Firebase-backed positional training tool for intermediate and advan
 
 Instead of finding a forced move like in traditional tactical puzzles, ChessIQ asks players to judge the position itself using strategic concepts such as material balance, space, initiative, king safety, pawn structure, and piece activity. After every guess, players receive an engine evaluation alongside a pre-generated AI explanation that highlights the key positional ideas, common mistakes, strategic plans, and best-move reasoning — turning every puzzle into a learning opportunity rather than just another rating gain.
 
-Think of ChessIQ as tactical puzzles for positional thinking. The homepage supports adaptive or manual difficulty training, while the Thematic Focus picker lets players combine two or more high-frequency positional themes for targeted practice.
+Think of ChessIQ as tactical puzzles for positional thinking. The homepage supports adaptive or manual difficulty training, while the Thematic Focus picker lets players combine two or more high-frequency positional themes for targeted practice. Where source data is available, each puzzle also connects its board position to the game behind it: players can inspect the game metadata, copy the FEN, open the exact position in Lichess or Chess.com analysis, and view the full source game on Lichess when a PGN is stored.
 
 
 
@@ -69,6 +69,15 @@ Instant Stockfish-powered evaluation after every guess
 
 •
 Randomized puzzle selection for endless practice
+
+•
+Game context beneath the board: player names, event, and year for positions sourced from stored tournament games, with Lichess-sourced positions identified as online games
+
+•
+Position export and analysis handoff: copy a puzzle's FEN or open its exact position directly in Lichess Analysis or Chess.com Analysis
+
+•
+Full-game review on Lichess: for positions with a stored PGN, open the source game in Lichess to replay it in full
 
 •
 Thematic Focus training: select two or more of the ten most common positional themes to draw from positions matching any selected theme
@@ -261,6 +270,7 @@ v1.4.8 – Puzzle Intelligence, Analytics & Admin Control Center (August 2026)
 v1.5 - Expanded Database update
 - 1200+ positions in total in the app, half drawn from lichess and half from international games in the early 2000s
 - Improve training using gameMetadata to display various details about the position you're playing
+- Export position to lichess/chess.com analysis, export to lichess for full game coverage
 
 
 
