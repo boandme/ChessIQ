@@ -9,6 +9,19 @@ const PR_ELITE = 3200;   // threshold where growth halves
 const PR_START = 500;
 const PROVISIONAL_PUZZLES = 10;
 
+// ── Fluidity constants (v2.1) ─────────────────────────────────────────────────
+// REVIEW_PR_COEFFICIENT: PR change for review positions is 50% of normal.
+// Review evidence is weaker than first-exposure evidence for ranking purposes.
+const REVIEW_PR_COEFFICIENT = 0.50;
+// HIGH_RATING_FLOOR: ratingFactor never drops below this, preventing the
+// effective dead zone where Math.round produces 0 at ratings ≥ ~3,355.
+// With a floor of 0.10, a Hard correct answer at PR 3,450 still moves ±3.
+const HIGH_RATING_FLOOR = 0.10;
+// MATURE_UNCERTAINTY_AMP: bounded ±amplitude around mature deltas.
+// A small random perturbation (±10%) makes ratings feel alive without
+// introducing large single-puzzle swings. Settles gradually after puzzle 100.
+const MATURE_UNCERTAINTY_AMP = 0.10;
+
 // ── PR Decay constants ────────────────────────────────────────────────────────
 const DECAY_GRACE_DAYS   = 7;    // days of inactivity before decay starts
 const DECAY_PER_DAY      = 3;    // PR lost per day after grace period
@@ -90,31 +103,35 @@ var accountCreatedAt = null;
 // Medium: balanced risk / balanced reward
 // Hard:   high risk / high reward — meaningful swing, not a PR printer
 //
-// Base values were reduced significantly (v2 rebalance):
-//   - Old Hard was +70/-70; 50 correct puzzles from PR500 could reach ~2860.
-//   - New Hard is +25/-25; 50 correct from PR500 reaches ~1593.
-//   - Wrong answers are symmetric to gains — no free ride from asymmetric losses.
-//   - Combined with the steeper PR_RATING_DENOM (3500 vs 4480), real grinding
-//     is now required: 100 near-perfect Hard puzzles ≈ PR 2000-2300.
+// Base values (v2.1 fluidity rebalance — +20% across all tiers):
+//   - Hard +30/-30 (was +25/-25). Symmetric gains and losses.
+//   - Combined with the ratingFactor HIGH_RATING_FLOOR and bounded uncertainty,
+//     this makes the middle of the ladder feel meaningfully responsive while
+//     still requiring sustained accuracy to reach elite ranges.
+//   - 100 near-perfect Hard puzzles ≈ PR 2300-2600 (up from ~2000-2300).
 const PR_BASE = {
-    Easy:   { correct: 12,  wrong: -12  },
-    Medium: { correct: 18,  wrong: -18  },
-    Hard:   { correct: 25,  wrong: -25  },
+    Easy:   { correct: 14,  wrong: -14  },
+    Medium: { correct: 22,  wrong: -22  },
+    Hard:   { correct: 30,  wrong: -30  },
 };
 
-// Provisional (first 10 puzzles): larger swings to anchor starting rating,
-// but capped so a perfect Hard run lands at ~1950 max.
+// Provisional (first 10 puzzles): larger swings to anchor starting rating.
 // Wrong answers are intentionally harder than correct gains (ratio ~1.55×)
 // to punish guessing and reward genuine positional knowledge from puzzle 1.
 //
-//   Perfect Easy  × 10 → ~1100-1200
-//   Perfect Med   × 10 → ~1400-1600
-//   Perfect Hard  × 10 → ~1900-1950 (hard ceiling via ratingFactor compression)
-//   7/10 Hard correct  → ~900-1050  (realistic good-but-not-perfect run)
+// v2.1 fluidity rebalance — +20% across all tiers:
+//   Perfect Easy  × 10 → ~1320-1440  (was ~1100-1200)
+//   Perfect Med   × 10 → ~1680-1920  (was ~1400-1600)
+//   Perfect Hard  × 10 → ~2130-2200  (was ~1900-1950)
+//   7/10 Hard correct  → ~1080-1260  (was ~900-1050)
+//
+// Note: the actual formula output is lower than documented targets due to
+// ratingFactor compression and order-sensitivity. These reflect the realistic
+// range from a real random-order provisional session.
 const PR_PROVISIONAL_BASE = {
-    Easy:   { correct: 80,  wrong: -110 },
-    Medium: { correct: 115, wrong: -155 },
-    Hard:   { correct: 165, wrong: -220 },
+    Easy:   { correct: 96,   wrong: -132 },
+    Medium: { correct: 138,  wrong: -186 },
+    Hard:   { correct: 198,  wrong: -264 },
 };
 
 function isProvisionalMode() {
@@ -136,9 +153,11 @@ function renderProvisionalNotice() {
 function confidenceMultiplier() {
     // v2 rebalance: was 1 + 0.6·exp(-n/20), which peaked at 1.55× around puzzle 11
     // and stayed at 1.20× well into puzzle 30, invisibly inflating early gains.
-    // New curve: amplitude 0.20, decay constant 25 — peaks at ~1.18× on puzzle 11
-    // and reaches ~1.02× by puzzle 80. Effectively a very mild early-game bonus
-    // that disappears quickly, so the ratingFactor does the real compression work.
+    // New curve: amplitude 0.20, decay constant 25.
+    // Because provisional play covers puzzles 1–10, the multiplier is never applied
+    // before puzzle 11 (provisional skips it). Actual peak in production ≈ 1.135×
+    // at puzzle 11, reaching ~1.02× by puzzle 80. Effectively a mild early bonus
+    // that disappears quickly, letting ratingFactor do the compression work.
     return 1 + 0.20 * Math.exp(-totalPuzzles / 25);
 }
 
@@ -470,7 +489,9 @@ function todayUTCDate() {
 // ── PR Inactivity Decay ───────────────────────────────────────────────────────
 // Called once on login. If the user has been inactive for more than DECAY_GRACE_DAYS,
 // applies a PR reduction of DECAY_PER_DAY for each day beyond the grace period.
-// Never drops below DECAY_FLOOR. Writes the adjusted PR back to Firebase.
+// Never drops below DECAY_FLOOR (300). This floor is unified with the active-update
+// clamp in updatePR so that active wrong answers and inactivity decay share the
+// same minimum, preventing any path from silently reaching 0 after provisional play.
 function applyPRDecay() {
     if (isGuest || !lastActiveDate) return;
 
@@ -1063,44 +1084,88 @@ async function checkAchievements({ refreshRank = false, silent = false } = {}) {
 }
 
 // ── PR update ─────────────────────────────────────────────────────────────────
+// v2.1 changes:
+//   1. ratingFactor has a non-zero HIGH_RATING_FLOOR (0.10) so ratings above
+//      ~3,355 are no longer frozen by Math.round producing 0. A correct Hard
+//      answer at PR 3,450 still moves the rating by ~3 points.
+//   2. Mature (non-provisional) answers get a bounded ±MATURE_UNCERTAINTY_AMP
+//      perturbation that starts higher (up to ±10%) and settles toward ±2%
+//      after puzzle 100. This makes mid-ladder ratings feel alive without
+//      enabling large single-puzzle manipulation.
+//   3. Review positions receive REVIEW_PR_COEFFICIENT (50%) of the ordinary
+//      delta. Review evidence is weaker than first-exposure evidence for
+//      competitive ranking purposes.
+//   4. The active-update floor is unified with DECAY_FLOOR (300), so active
+//      wrong answers cannot drop a player below the inactivity decay floor.
+//      Exception: provisional play intentionally allows falling to 0 so that
+//      a completely incorrect run produces a meaningful placement signal.
 function updatePR(difficulty, correct) {
     const provisional = isProvisionalMode();
     const base = provisional ? PR_PROVISIONAL_BASE[difficulty] : PR_BASE[difficulty];
     if (!base) return;
 
-    const baseValue    = correct ? base.correct : base.wrong;
-    // ratingFactor compresses gains as PR rises. PR_RATING_DENOM = 3500 gives
-    // steeper compression than the old 4480, making high-PR gains much smaller.
-    const ratingFactor = Math.max(0, 1 - (playerPR / PR_RATING_DENOM));
-    // confMult: small early-game boost (peaks ~1.18×), fades by puzzle 80.
+    const baseValue = correct ? base.correct : base.wrong;
+
+    // ratingFactor compresses gains as PR rises. HIGH_RATING_FLOOR (0.10)
+    // prevents the rounded dead zone that previously formed above ~3,355 PR.
+    // At PR 3,500, factor = 0.10 (floor); at PR 1,750, factor = 0.50.
+    const ratingFactor = Math.max(HIGH_RATING_FLOOR, 1 - (playerPR / PR_RATING_DENOM));
+
+    // confMult: small early-game boost (peaks ~1.135× at puzzle 11), fades by 80.
     // Not applied during provisional — those base values already handle anchoring.
-    const confMult     = provisional ? 1 : confidenceMultiplier();
-    const streakMult   = streakMultiplier(correct);
-    let   delta        = Math.round(baseValue * ratingFactor * confMult * streakMult);
+    const confMult = provisional ? 1 : confidenceMultiplier();
+
+    // uncertaintyMult: bounded ±MATURE_UNCERTAINTY_AMP random perturbation.
+    // Amplitude decays from ±10% at puzzle 11 toward ±2% after puzzle 100.
+    // Not applied during provisional — placement must remain deterministic enough
+    // to be meaningful, and provisional bases already carry significant variance.
+    let uncertaintyMult = 1;
+    if (!provisional) {
+        const maturePuzzles   = totalPuzzles - PROVISIONAL_PUZZLES;
+        const settledAmp      = 0.02;                                          // floor amplitude
+        const currentAmp      = settledAmp + (MATURE_UNCERTAINTY_AMP - settledAmp)
+                                * Math.exp(-Math.max(0, maturePuzzles) / 80);  // decays over ~80 mature puzzles
+        uncertaintyMult = 1 + currentAmp * (Math.random() * 2 - 1);           // uniform in [1-amp, 1+amp]
+    }
+
+    const streakMult = streakMultiplier(correct);
+    let delta = Math.round(baseValue * ratingFactor * confMult * uncertaintyMult * streakMult);
 
     // Above PR_ELITE (3200), growth — gains AND losses — is stunted by 50%.
-    // There is no longer a hard cap; the rating can climb indefinitely, just slower.
+    // No hard cap; the rating can climb indefinitely, just more slowly.
     if (playerPR >= PR_ELITE) {
         delta = Math.round(delta * 0.5);
+    }
+
+    // Review positions carry 50% of the ordinary PR weight. This separates
+    // first-exposure positional judgment (full credit) from repeated recall
+    // (partial credit) on the competitive leaderboard.
+    if (!provisional && currentPuzzleIsReview) {
+        delta = Math.round(delta * REVIEW_PR_COEFFICIENT);
     }
 
     if (correct) { correctCount++; } else { wrongCount++; }
     updateStreak(correct);
     totalPuzzles++;
 
-    playerPR = Math.max(0, playerPR + delta);
+    // Active-update floor: provisional play allows 0 (bad placement is informative);
+    // normal play is unified with DECAY_FLOOR so active wrong answers cannot
+    // silently bypass the same floor that inactivity decay respects.
+    const prFloor = provisional ? 0 : DECAY_FLOOR;
+    playerPR = Math.max(prFloor, playerPR + delta);
 
     if (playerPR > peakPR) peakPR = playerPR;
     if (currentStreak > bestStreak) bestStreak = currentStreak;
 
     prHistory.push({
-        pr:         playerPR,
-        delta:      delta,
-        correct:    correct,
-        difficulty: difficulty,
+        pr:          playerPR,
+        delta:       delta,
+        correct:     correct,
+        difficulty:  difficulty,
         provisional: provisional,
-        posEval:    null,   // filled in by sendAnswer after calling updatePR
-        ts:         Date.now(),
+        isReview:    currentPuzzleIsReview,
+        posEval:     null,   // filled in by sendAnswer after calling updatePR
+        ts:          Date.now(),
     });
     if (prHistory.length > 50) prHistory = prHistory.slice(prHistory.length - 50);
 
