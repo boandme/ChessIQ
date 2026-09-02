@@ -2000,11 +2000,13 @@ function renderPuzzleMetadata(pos) {
 }
 
 function buildMetaBarHTML(meta, fen, pgn) {
-    const hasMeta = !!(meta && (meta.white || meta.black || meta.tournament || meta.year));
+        const hasMeta = !!(meta && (meta.white || meta.black || meta.tournament || meta.year || meta.opening));
+
     const isOnline = !hasMeta || (!meta.tournament && meta.source && meta.source.toLowerCase().includes('lichess'));
 
     let playersHTML = '';
     let infoHTML    = '';
+    let openingHTML = '';
     let exportBtn   = '';
 
     if (hasMeta) {
@@ -2029,8 +2031,17 @@ function buildMetaBarHTML(meta, fen, pgn) {
             <span class="meta-divider" aria-hidden="true">·</span>
             <span class="meta-event" title="${escapeHTML(event)}">${escapeHTML(event)}</span>
             <span class="meta-divider" aria-hidden="true">·</span>
-            <span class="meta-year">${escapeHTML(year)}</span>`;
+                        <span class="meta-year">${escapeHTML(year)}</span>`;
+        if (meta.opening) {
+            openingHTML = `
+                <div class="meta-opening" title="Opening: ${escapeHTML(meta.opening)}">
+                    <svg class="meta-opening-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18"/><path d="M4 7h16"/><path d="M6 7v4a6 6 0 0 0 12 0V7"/><path d="M8 3h8"/><path d="M8 21h8"/></svg>
+                    <span class="meta-opening-label">Opening</span>
+                    <span class="meta-opening-value">${escapeHTML(meta.opening)}</span>
+                </div>`;
+        }
     } else {
+
         playersHTML = `<span class="meta-na">Online game (Lichess)</span>`;
         infoHTML = `<span class="meta-note" title="Older archive entries do not include game metadata, so this is shown as a live online position.">Historical metadata unavailable</span>`;
     }
@@ -2066,12 +2077,16 @@ function buildMetaBarHTML(meta, fen, pgn) {
         </div>`;
     }
 
-    return `
+        return `
         <div class="meta-bar-left">
-            ${playersHTML}
-            ${infoHTML}
+            <div class="meta-bar-main">
+                ${playersHTML}
+                ${infoHTML}
+            </div>
+            ${openingHTML}
         </div>
         ${exportBtn}`;
+
 }
 
 function escapeHTML(str) {
