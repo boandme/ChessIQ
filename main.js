@@ -4,19 +4,62 @@ var answered = false;
 var evaluation;
 
 // ── Positional Rating constants ───────────────────────────────────────────────
-// No hard cap — growth above PR_ELITE is stunted by 50% globally instead.
-const PR_ELITE = 3200;   // threshold where growth halves
+// No hard cap — growth above PR_ELITE is stunted globally instead.
+const PR_ELITE = 3200;   // threshold where growth is throttled
 const PR_START = 500;
 const PROVISIONAL_PUZZLES = 10;
+
+// ── Near-miss scoring (v2.2) ──────────────────────────────────────────────────
+// A position evaluated at +1.10 is not meaningfully different from one at +0.90,
+// but the old scoring treated calling the first "Equal" exactly as wrong as
+// calling it a win for Black. PR loss is now scaled by how far the true
+// evaluation lies outside the band the player actually picked, in pawns:
+//
+//     Black (-inf, -1)      Equal [-1, +1]      White (+1, +inf)
+//
+// A miss of 0.1 pawns means the player read the position correctly and only
+// disagreed with the engine about where the line falls. A sign flip — calling
+// White when Black is winning — always clears the tolerance and costs full PR,
+// because the nearest such error is still 2.0 pawns outside the chosen band.
+const PR_NEAR_MISS_TOLERANCE   = 1.5;   // pawns outside the band that counts as fully wrong
+const PR_NEAR_MISS_MIN_PENALTY = 0.25;  // a hair over the line costs 25% of the normal loss
+
+// The symmetric, deliberately much smaller counterpart: getting a position right
+// when its evaluation sits on a band edge is the hardest call in the app.
+const PR_EDGE_CALL_WINDOW = 0.35;   // pawns from a band edge that counts as a knife-edge call
+const PR_EDGE_CALL_BONUS  = 0.10;   // up to +10% PR for a perfectly judged edge call
+
+// ── Elite engagement (v2.2) ───────────────────────────────────────────────────
+// Above 3,000 PR the compression curve had flattened gains to 1–4 points while
+// losses stayed the same size, which reads as a treadmill rather than a ladder.
+// Three changes, all confined to the top of the range — nothing below PR 2,800
+// scores differently than it did in v2.1:
+//
+//   • HIGH_RATING_FLOOR 0.10 → 0.20, so elite deltas are legible at all.
+//   • The flat halving above PR_ELITE softened 0.50 → 0.85.
+//   • A capped gain-only assist ramping across 2,800 → 3,500.
+//
+// Worked example, Hard, non-review, ~200 puzzles played:
+//   PR 3,300 correct  +6   (was +1.5)      PR 3,300 wrong  −5  (was −1.5)
+//   PR 3,500 correct  +7                   PR 3,500 wrong  −5
+// Break-even accuracy at the top of the ladder moves from 50% to roughly 43-46%
+// before near-miss credit is counted — climbing still needs real accuracy, but
+// a strong session now visibly moves the number.
+const PR_ELITE_ASSIST_START = 2800;
+const PR_ELITE_ASSIST_FULL  = 3500;
+const PR_ELITE_GAIN_ASSIST  = 0.30;   // up to +30% on gains at 3,500+
+const PR_ELITE_STUNT        = 0.85;   // was 0.50
 
 // ── Fluidity constants (v2.1) ─────────────────────────────────────────────────
 // REVIEW_PR_COEFFICIENT: PR change for review positions is 50% of normal.
 // Review evidence is weaker than first-exposure evidence for ranking purposes.
 const REVIEW_PR_COEFFICIENT = 0.50;
 // HIGH_RATING_FLOOR: ratingFactor never drops below this, preventing the
-// effective dead zone where Math.round produces 0 at ratings ≥ ~3,355.
-// With a floor of 0.10, a Hard correct answer at PR 3,450 still moves ±3.
-const HIGH_RATING_FLOOR = 0.10;
+// effective dead zone where Math.round produces 0 at very high ratings.
+// v2.2 raised this from 0.10 to 0.20. The floor now binds from PR 2,800 up
+// (3500 × (1 − 0.20)), so the whole elite range moves by a legible amount
+// instead of asymptotically freezing.
+const HIGH_RATING_FLOOR = 0.20;
 // MATURE_UNCERTAINTY_AMP: bounded ±amplitude around mature deltas.
 // A small random perturbation (±10%) makes ratings feel alive without
 // introducing large single-puzzle swings. Settles gradually after puzzle 100.
@@ -173,6 +216,61 @@ function streakMultiplier(correct) {
     if (!correct && currentStreak < 0)
         return 1 + Math.min(Math.abs(currentStreak), 3) * 0.03;
     return 1.0;
+}
+
+// ── Evaluation proximity ──────────────────────────────────────────────────────
+// The pawn interval each answer claims. These mirror findResult()'s ±1.00
+// thresholds — change one and you must change the other.
+const ANSWER_BANDS = {
+    'White Winning': { min: 1,         max: Infinity },
+    'Equal':         { min: -1,        max: 1 },
+    'Black Winning': { min: -Infinity, max: -1 },
+};
+
+// How far, in pawns, the true evaluation sits outside the band the player chose.
+// 0 means the answer was right; null means the inputs were not usable.
+function evaluationMissDistance(guess, evalPawns) {
+    const band = ANSWER_BANDS[guess];
+    if (!band || !Number.isFinite(evalPawns)) return null;
+    if (evalPawns < band.min) return band.min - evalPawns;
+    if (evalPawns > band.max) return evalPawns - band.max;
+    return 0;
+}
+
+// Fraction of the normal PR loss a wrong answer should cost. Ramps linearly from
+// PR_NEAR_MISS_MIN_PENALTY for a call that missed the boundary by a whisker up to
+// the full 1.0 once the evaluation is PR_NEAR_MISS_TOLERANCE pawns clear of the
+// chosen band. Unusable inputs fall back to the full penalty.
+function nearMissPenaltyFactor(guess, evalPawns) {
+    const miss = evaluationMissDistance(guess, evalPawns);
+    if (miss === null || miss <= 0) return 1;
+    const severity = Math.min(1, miss / PR_NEAR_MISS_TOLERANCE);
+    return PR_NEAR_MISS_MIN_PENALTY + (1 - PR_NEAR_MISS_MIN_PENALTY) * severity;
+}
+
+// Distance from the true evaluation to the nearest band edge (±1.00). Small
+// values mean the position sat on the line between two verdicts.
+function evaluationEdgeDistance(evalPawns) {
+    if (!Number.isFinite(evalPawns)) return Infinity;
+    return Math.min(Math.abs(evalPawns - 1), Math.abs(evalPawns + 1));
+}
+
+// Small bonus multiplier for a correct answer on a knife-edge position — the
+// evaluations where the right call is genuinely hard rather than obvious.
+function edgeCallBonusFactor(evalPawns) {
+    const edge = evaluationEdgeDistance(evalPawns);
+    if (edge >= PR_EDGE_CALL_WINDOW) return 1;
+    return 1 + PR_EDGE_CALL_BONUS * (1 - edge / PR_EDGE_CALL_WINDOW);
+}
+
+// Bounded assist on gains only, ramping in across PR_ELITE_ASSIST_START →
+// PR_ELITE_ASSIST_FULL. Losses are untouched, so the tilt is a deliberate,
+// capped nudge rather than a licence to climb on coin flips.
+function eliteGainAssist() {
+    if (playerPR <= PR_ELITE_ASSIST_START) return 1;
+    const span = PR_ELITE_ASSIST_FULL - PR_ELITE_ASSIST_START;
+    const ramp = Math.min(1, (playerPR - PR_ELITE_ASSIST_START) / span);
+    return 1 + PR_ELITE_GAIN_ASSIST * ramp;
 }
 
 function updateStreak(correct) {
@@ -375,8 +473,6 @@ onAuthStateChanged(auth, async (user) => {
     // right after createUserWithEmailAndPassword + updateProfile, so we never
     // fall back to it for an existing record or for new writes.
     let profileUsername = null;
-    console.log("AUTH displayName:", user.displayName);
-    console.log("AUTH uid:", user.uid);
 
     if (snap.exists()) {
         const data = snap.val();
@@ -448,9 +544,6 @@ onAuthStateChanged(auth, async (user) => {
         }
     }
 
-    // ── Apply inactivity decay before showing PR ───────────────────────────────
-    applyPRDecay();
-
     // ── Self-heal: if DB still has 'Player' but Auth has a real displayName, fix it
     if (profileUsername === 'Player' && user.displayName && user.displayName !== 'Player') {
         profileUsername = user.displayName;
@@ -467,6 +560,17 @@ onAuthStateChanged(auth, async (user) => {
     showSignedInUI(profileUsername);
     adminControlCenter.syncAuthorization(currentUserRecord);
 
+    // ── Apply inactivity decay before showing PR ───────────────────────────────
+    // This must run *after* showSignedInUI, which is what clears isGuest.
+    // Called any earlier and applyPRDecay's own guest guard returned immediately,
+    // so decay silently never applied to anyone.
+    applyPRDecay();
+
+    // Every milestone at or below the player's all-time peak is already earned.
+    // Seeding before the first renderPR is what stops old milestones from being
+    // re-announced on a fresh browser or after site data is cleared.
+    seedShownMilestones();
+
     updateDifficultyPanelUI();
     renderPR();
     initPositions();
@@ -474,10 +578,17 @@ onAuthStateChanged(auth, async (user) => {
     // before reconciling unlocks. The OG account achievement is then the one
     // account-based milestone that should announce itself.
     await reconcileOGAchievement();
-    void checkAchievements({ refreshRank: true, silent: true }).then(newUnlocks => {
-        const ogUnlock = newUnlocks.find(achievement => achievement.id === 'og_early_member');
-        if (ogUnlock) enqueueAchievementToast(ogUnlock);
-    });
+    // Retroactive unlocks are granted silently: an account that predates an
+    // achievement, or that earned it on another device, should not be spammed
+    // with toasts on sign-in. The promise is retained so a puzzle answered while
+    // this is still in flight cannot race it and announce those same unlocks.
+    achievementBootstrap = checkAchievements({ refreshRank: true, silent: true })
+        .then(newUnlocks => {
+            const ogUnlock = newUnlocks.find(achievement => achievement.id === 'og_early_member');
+            if (ogUnlock) enqueueAchievementToast(ogUnlock);
+        })
+        .catch(() => {});
+    void achievementBootstrap;
 });
 
 // ── Date helper (UTC) ─────────────────────────────────────────────────────────
@@ -518,11 +629,6 @@ function applyPRDecay() {
 
         // Save immediately so the adjusted PR is persisted
         saveStatsToFirebase();
-
-        console.log(
-            `PR decay applied | days inactive: ${daysSince} | grace: ${DECAY_GRACE_DAYS} | ` +
-            `decay days: ${decayDays} | lost: -${lost} | new PR: ${playerPR}`
-        );
     }
 }
 
@@ -575,15 +681,16 @@ async function saveStatsToFirebase() {
         peakPR:         peakPR,
         prHistory:      prHistory,
         lastActiveDate: todayUTCDate(),
-        achievements: {
-            unlocked: unlockedAchievements,
-            activity: {
-                puzzleDays: puzzleActivityDays,
-                playDayStreak,
-                lastPuzzleDate,
-                totalPlaySeconds: getCurrentTotalPlaySeconds(),
-                themePerformance,
-            },
+        // Path-style key: writing `achievements` as an object would replace the
+        // whole node, including `unlocked`. Unlocks are owned exclusively by
+        // checkAchievements, which patches them id-by-id; a stats save must never
+        // be able to overwrite them with a stale in-memory copy.
+        'achievements/activity': {
+            puzzleDays: puzzleActivityDays,
+            playDayStreak,
+            lastPuzzleDate,
+            totalPlaySeconds: getCurrentTotalPlaySeconds(),
+            themePerformance,
         },
         training: {
             reviewQueue,
@@ -698,6 +805,13 @@ function getCurrentPlayDayStreak() {
 function getDailyPuzzleStreak() {
     const dates = Object.keys(dailyPuzzleHistory || {}).sort().reverse();
     if (!dates.length) return 0;
+
+    // A run that ended months ago is not a current streak. Only today or
+    // yesterday keeps it live — otherwise an abandoned 30-day run kept
+    // satisfying the streak achievements forever.
+    const sinceLatest = dateDistance(dates[0], todayUTCDate());
+    if (!Number.isFinite(sinceLatest) || sinceLatest > 1) return 0;
+
     let streak = 1;
     for (let i = 1; i < dates.length; i++) {
         if (dateDistance(dates[i], dates[i - 1]) === 1) streak++;
@@ -907,29 +1021,53 @@ async function reconcileOGAchievement() {
     }
 }
 
-async function refreshLeaderboardRank() {
-    if (isGuest || !currentUID) return null;
-    const now = Date.now();
-    if (leaderboardRank !== null && now - lastLeaderboardRankCheck < 45000) return leaderboardRank;
+// Ranking requires reading the whole users node, so it is the single most
+// expensive thing an achievement check can do. It is skipped entirely once every
+// rank achievement is unlocked, cached for RANK_CACHE_MS, and de-duplicated so
+// two overlapping checks share one read instead of issuing two.
+const RANK_CACHE_MS = 180000;
+var leaderboardRankInFlight = null;
 
-    try {
-        const snapshot = await get(ref(db, 'users'));
-        if (!snapshot.exists()) return null;
-        const users = snapshot.val();
-        const players = Object.entries(users).map(([uid, data]) => ({
-            uid,
-            pr: data.pr ?? PR_START,
-            totalPuzzles: data.totalPuzzles ?? 0,
-        }));
-        players.sort((a, b) => b.pr - a.pr || b.totalPuzzles - a.totalPuzzles);
-        const index = players.findIndex(player => player.uid === currentUID);
-        leaderboardRank = index >= 0 ? index + 1 : null;
-        lastLeaderboardRankCheck = now;
-        return leaderboardRank;
-    } catch (error) {
-        console.warn('Achievement rank check failed:', error);
+function rankAchievementsOutstanding() {
+    return ACHIEVEMENTS.some(achievement =>
+        achievement.progressType === 'rank' && !unlockedAchievements[achievement.id]
+    );
+}
+
+async function refreshLeaderboardRank({ force = false } = {}) {
+    if (isGuest || !currentUID) return null;
+    if (!force && !rankAchievementsOutstanding()) return leaderboardRank;
+
+    const now = Date.now();
+    if (!force && leaderboardRank !== null && now - lastLeaderboardRankCheck < RANK_CACHE_MS) {
         return leaderboardRank;
     }
+    if (leaderboardRankInFlight) return leaderboardRankInFlight;
+
+    leaderboardRankInFlight = (async () => {
+        try {
+            const snapshot = await get(ref(db, 'users'));
+            if (!snapshot.exists()) return leaderboardRank;
+            const users = snapshot.val();
+            const players = Object.entries(users).map(([uid, data]) => ({
+                uid,
+                pr: data.pr ?? PR_START,
+                totalPuzzles: data.totalPuzzles ?? 0,
+            }));
+            players.sort((a, b) => b.pr - a.pr || b.totalPuzzles - a.totalPuzzles);
+            const index = players.findIndex(player => player.uid === currentUID);
+            leaderboardRank = index >= 0 ? index + 1 : null;
+            lastLeaderboardRankCheck = Date.now();
+            return leaderboardRank;
+        } catch (error) {
+            console.warn('Achievement rank check failed:', error);
+            return leaderboardRank;
+        } finally {
+            leaderboardRankInFlight = null;
+        }
+    })();
+
+    return leaderboardRankInFlight;
 }
 
 function enqueueAchievementToast(achievement) {
@@ -1017,7 +1155,7 @@ function renderAchievementsModal() {
                         <span class="achievement-status">${isUnlocked ? 'Unlocked' : 'Locked'}</span>
                     </div>
                     <div class="achievement-progress">
-                        <div class="achievement-progress-top"><span>Progress</span><span class="achievement-progress-value">${progress.label}</span></div>
+                        <div class="achievement-progress-top"><span>Progress</span><span class="achievement-progress-value">${escapeHTML(progress.label)}</span></div>
                         <div class="achievement-progress-track"><span class="achievement-progress-fill" style="width:0%" data-progress="${progress.percentage}"></span></div>
                     </div>
                 </article>`;
@@ -1053,7 +1191,24 @@ window.closeAchievements = function() {
     if (modal) modal.style.display = 'none';
 };
 
-async function checkAchievements({ refreshRank = false, silent = false } = {}) {
+// Achievement evaluation is serialised. Two runs overlapping — the silent
+// sign-in backfill and a puzzle answered a moment later, for instance — would
+// each diff against the same pre-write state, and the second would announce
+// unlocks the first had already granted. Chaining guarantees the second run
+// always sees the first run's writes.
+var achievementCheckChain = Promise.resolve();
+var achievementBootstrap = null;
+
+function checkAchievements(options = {}) {
+    const run = achievementCheckChain.then(
+        () => runAchievementCheck(options),
+        () => runAchievementCheck(options),
+    );
+    achievementCheckChain = run.catch(() => {});
+    return run;
+}
+
+async function runAchievementCheck({ refreshRank = false, silent = false } = {}) {
     if (isGuest || !currentUID) return [];
     if (refreshRank) await refreshLeaderboardRank();
 
@@ -1067,14 +1222,25 @@ async function checkAchievements({ refreshRank = false, silent = false } = {}) {
     }
 
     const unlockedAt = Date.now();
+    // Only the newly-unlocked ids are written. Re-sending the whole map on every
+    // puzzle re-uploaded unchanged records and risked clobbering an unlock that
+    // another open tab had just added.
+    const unlockPatch = {};
     newUnlocks.forEach(achievement => {
-        unlockedAchievements[achievement.id] = { unlockedAt };
+        const record = { unlockedAt };
+        unlockedAchievements[achievement.id] = record;
+        unlockPatch[achievement.id] = record;
     });
 
     try {
-        await update(ref(db, `users/${currentUID}/achievements/unlocked`), unlockedAchievements);
+        await update(ref(db, `users/${currentUID}/achievements/unlocked`), unlockPatch);
     } catch (error) {
         console.error('Achievement unlock save failed:', error);
+        // The write failed, so these are not actually unlocked. Roll the
+        // in-memory state back rather than silently swallowing them — otherwise
+        // the player never sees the achievement and it is never retried.
+        newUnlocks.forEach(achievement => { delete unlockedAchievements[achievement.id]; });
+        return [];
     }
 
     const modal = document.getElementById('achievements-modal');
@@ -1084,10 +1250,9 @@ async function checkAchievements({ refreshRank = false, silent = false } = {}) {
 }
 
 // ── PR update ─────────────────────────────────────────────────────────────────
-// v2.1 changes:
-//   1. ratingFactor has a non-zero HIGH_RATING_FLOOR (0.10) so ratings above
-//      ~3,355 are no longer frozen by Math.round producing 0. A correct Hard
-//      answer at PR 3,450 still moves the rating by ~3 points.
+// v2.1 behaviour:
+//   1. ratingFactor has a non-zero HIGH_RATING_FLOOR so very high ratings are
+//      not frozen by Math.round producing 0.
 //   2. Mature (non-provisional) answers get a bounded ±MATURE_UNCERTAINTY_AMP
 //      perturbation that starts higher (up to ±10%) and settles toward ±2%
 //      after puzzle 100. This makes mid-ladder ratings feel alive without
@@ -1099,16 +1264,30 @@ async function checkAchievements({ refreshRank = false, silent = false } = {}) {
 //      wrong answers cannot drop a player below the inactivity decay floor.
 //      Exception: provisional play intentionally allows falling to 0 so that
 //      a completely incorrect run produces a meaningful placement signal.
-function updatePR(difficulty, correct) {
+//
+// v2.2 adds:
+//   5. Proximity scoring. The three answers are bands, not points, so being
+//      wrong is a matter of degree: a wrong answer's loss is scaled by how far
+//      the true evaluation sits outside the band the player chose, and a correct
+//      answer on a knife-edge evaluation earns a small bonus. See
+//      nearMissPenaltyFactor / edgeCallBonusFactor.
+//   6. Elite engagement. HIGH_RATING_FLOOR raised to 0.16, the PR_ELITE stunt
+//      softened to 0.75, and a capped gain-only assist above 3,000 PR.
+//   7. A non-zero answer always moves the rating by at least one point, so the
+//      ladder never silently stops responding.
+//
+// `context` carries { evalPawns, guess } from sendAnswer. It is optional: with
+// no context the proximity multipliers are 1 and scoring matches v2.1.
+function updatePR(difficulty, correct, context = {}) {
     const provisional = isProvisionalMode();
     const base = provisional ? PR_PROVISIONAL_BASE[difficulty] : PR_BASE[difficulty];
     if (!base) return;
 
     const baseValue = correct ? base.correct : base.wrong;
 
-    // ratingFactor compresses gains as PR rises. HIGH_RATING_FLOOR (0.10)
-    // prevents the rounded dead zone that previously formed above ~3,355 PR.
-    // At PR 3,500, factor = 0.10 (floor); at PR 1,750, factor = 0.50.
+    // ratingFactor compresses gains as PR rises. HIGH_RATING_FLOOR (0.16)
+    // prevents the rounded dead zone that previously formed at the top of the
+    // ladder. At PR 3,000, factor = 0.16 (floor); at PR 1,750, factor = 0.50.
     const ratingFactor = Math.max(HIGH_RATING_FLOOR, 1 - (playerPR / PR_RATING_DENOM));
 
     // confMult: small early-game boost (peaks ~1.135× at puzzle 11), fades by 80.
@@ -1129,20 +1308,42 @@ function updatePR(difficulty, correct) {
     }
 
     const streakMult = streakMultiplier(correct);
-    let delta = Math.round(baseValue * ratingFactor * confMult * uncertaintyMult * streakMult);
 
-    // Above PR_ELITE (3200), growth — gains AND losses — is stunted by 50%.
+    // Proximity: +0.9 is not definitively "Equal" and +1.1 definitively "White",
+    // so a wrong answer is graded on how far outside the chosen band the engine
+    // actually landed. Correct answers get the much smaller edge-call bonus.
+    // Applied in provisional play too — a beginner who calls +1.05 "Equal" has
+    // read the position, and placement should reflect that.
+    const { evalPawns, guess } = context;
+    const proximityMult = correct
+        ? edgeCallBonusFactor(evalPawns)
+        : nearMissPenaltyFactor(guess, evalPawns);
+
+    // Gain-only assist at the top of the ladder. Never applied to losses, and
+    // never during provisional placement.
+    const eliteMult = (!provisional && correct) ? eliteGainAssist() : 1;
+
+    // Above PR_ELITE (3200), growth — gains AND losses — is throttled.
     // No hard cap; the rating can climb indefinitely, just more slowly.
-    if (playerPR >= PR_ELITE) {
-        delta = Math.round(delta * 0.5);
-    }
+    const stuntMult = playerPR >= PR_ELITE ? PR_ELITE_STUNT : 1;
 
     // Review positions carry 50% of the ordinary PR weight. This separates
     // first-exposure positional judgment (full credit) from repeated recall
     // (partial credit) on the competitive leaderboard.
-    if (!provisional && currentPuzzleIsReview) {
-        delta = Math.round(delta * REVIEW_PR_COEFFICIENT);
-    }
+    const reviewMult = (!provisional && currentPuzzleIsReview) ? REVIEW_PR_COEFFICIENT : 1;
+
+    // Rounded exactly once, at the end. Rounding after each stage used to
+    // quantise the small elite multipliers away entirely — a +12% gain assist on
+    // a 4.8-point delta rounded to the same integer as no assist at all.
+    let delta = Math.round(
+        baseValue * ratingFactor * confMult * uncertaintyMult
+        * streakMult * proximityMult * eliteMult * stuntMult * reviewMult
+    );
+
+    // Every answer moves the rating. Without this, the stacked multipliers can
+    // round a near-miss at high PR down to exactly 0, which reads as the ladder
+    // being broken rather than forgiving.
+    if (delta === 0) delta = correct ? 1 : -1;
 
     if (correct) { correctCount++; } else { wrongCount++; }
     updateStreak(correct);
@@ -1165,22 +1366,12 @@ function updatePR(difficulty, correct) {
         provisional: provisional,
         isReview:    currentPuzzleIsReview,
         posEval:     null,   // filled in by sendAnswer after calling updatePR
+        // How far outside the chosen band the engine landed, in pawns. null for
+        // correct answers and for entries written before proximity scoring.
+        missDistance: correct ? null : evaluationMissDistance(guess, evalPawns),
         ts:          Date.now(),
     });
     if (prHistory.length > 50) prHistory = prHistory.slice(prHistory.length - 50);
-
-    if (provisional) {
-        const sign = delta >= 0 ? '+' : '';
-        const streakLabel = currentStreak > 1  ? `x${currentStreak} correct streak`
-                          : currentStreak < -1 ? `x${Math.abs(currentStreak)} wrong streak`
-                          : 'no streak';
-        console.log(
-            `Provisional PR update | puzzle ${totalPuzzles}/${PROVISIONAL_PUZZLES} | ` +
-            `difficulty: ${difficulty} | correct: ${correct} | ` +
-            `change: ${sign}${delta} | new PR: ${playerPR} | ` +
-            `streakMult: x${streakMult.toFixed(2)} (${streakLabel})`
-        );
-    }
 
     renderPR(delta);
 }
@@ -1573,10 +1764,10 @@ function renderPuzzle(pos) {
     renderSVG(getPuzzleSVG(pos));
     correct_result = findResult(pos.Eval);
     const turnEl = document.getElementById('turn');
-    if (turnEl) turnEl.innerHTML = pos.Turn;
+    if (turnEl) turnEl.textContent = getPuzzleTurnLabel(pos);
     renderPuzzleMetadata(pos);
     updateReviewQueueUI();
-    void logCurrentPuzzleRating(pos);
+    void ensureCurrentPuzzleRating(pos);
     return true;
 }
 
@@ -1748,28 +1939,47 @@ function sendAnswer(guess) {
         showGuestGate();
         return;
     }
+    const evaluationRaw = parseFloat(currentPuzzle.Eval) / 100;
+    const wasCorrect    = guess === correct_result;
+    const missDistance  = evaluationMissDistance(guess, evaluationRaw);
+
     const resultEl = document.getElementById("result");
-    if (guess === correct_result) {
-        resultEl.innerHTML = '<p style="color:var(--ok);font-weight:700;">Correct</p>';
+    if (wasCorrect) {
+        const edgeCall = evaluationEdgeDistance(evaluationRaw) < PR_EDGE_CALL_WINDOW;
+        resultEl.innerHTML = '<p style="color:var(--ok);font-weight:700;">Correct</p>' +
+            (edgeCall
+                ? '<p style="color:var(--text-dim);font-weight:600;font-size:0.86rem;margin-top:6px;">' +
+                  'Knife-edge evaluation — this one sat right on the line.</p>'
+                : '');
         resultEl.classList.remove("incorrect");
         resultEl.classList.add("correct");
     } else {
-        resultEl.innerHTML = '<p style="color:var(--bad);font-weight:700;">Incorrect — the position is<br><span style="color:var(--text);">' + correct_result + '</span></p>';
+        // A miss inside the tolerance means the player read the position and only
+        // disagreed about where the line falls, so say so — the reduced PR loss
+        // should be legible rather than mysterious.
+        const nearMiss = missDistance !== null
+            && missDistance > 0
+            && missDistance < PR_NEAR_MISS_TOLERANCE;
+        resultEl.innerHTML =
+            '<p style="color:var(--bad);font-weight:700;">Incorrect — the position is<br><span style="color:var(--text);">' +
+            correct_result + '</span></p>' +
+            (nearMiss
+                ? '<p style="color:var(--text-dim);font-weight:600;font-size:0.86rem;margin-top:6px;">' +
+                  `Close call — ${missDistance.toFixed(2)} pawns past the line. Reduced PR loss.</p>`
+                : '');
         resultEl.classList.remove("correct");
         resultEl.classList.add("incorrect");
     }
     answered = true;
     const difficulty    = currentPuzzleDifficulty || getActiveDifficulty();
-    const evaluationRaw = parseFloat(currentPuzzle.Eval) / 100;
     const displayEval   = evaluationRaw > 0 ? `+${evaluationRaw}` : `${evaluationRaw}`;
     document.getElementById("evaluation-display").innerHTML = `Evaluation&nbsp;&nbsp;${displayEval}`;
-    const wasCorrect = guess === correct_result;
 
     // Capture PR before updatePR changes it — fire PDR update async, non-blocking
     const playerPRAtAnswer = playerPR;
     void updatePuzzleRatingAfterAnswer(currentPuzzle, playerPRAtAnswer, wasCorrect);
 
-    updatePR(difficulty, wasCorrect);
+    updatePR(difficulty, wasCorrect, { evalPawns: evaluationRaw, guess });
 
     // Only authenticated players have a persistent review queue. New positions
     // advance the spacing clock; a review answer never does. A correct review
@@ -1888,6 +2098,31 @@ function getPuzzleSVG(pos) {
 function getPuzzleFEN(pos) {
     // Both formats use top-level FEN field
     return (pos && pos.FEN) || '';
+}
+
+// The two import pipelines disagree on what Turn holds: the original Firebase
+// positions store a ready-made phrase ("White to move"), while positions
+// normalised from sideToMove store only a colour ("white" / "b"). Both are
+// collapsed to the same "<Colour> to move" phrasing here, with the FEN's
+// active-colour field as the last resort.
+function getPuzzleTurnLabel(pos) {
+    const raw = String((pos && pos.Turn) || '').trim();
+    let colour = null;
+
+    if (/black/i.test(raw))      colour = 'Black';
+    else if (/white/i.test(raw)) colour = 'White';
+    else if (/^b$/i.test(raw))   colour = 'Black';
+    else if (/^w$/i.test(raw))   colour = 'White';
+
+    if (!colour) {
+        // FEN field 2 is the side to move: "... w KQkq - 0 1"
+        const active = getPuzzleFEN(pos).split(/\s+/)[1];
+        if (active === 'b') colour = 'Black';
+        else if (active === 'w') colour = 'White';
+    }
+
+    if (!colour) return raw;                       // unknown shape — show it verbatim
+    return `${colour} to move`;
 }
 
 function getPuzzleThemes(pos) {
@@ -2912,15 +3147,62 @@ const PR_MILESTONES = [
 ];
 
 var toastTimer = null;
-var shownMilestones = new Set(
-    JSON.parse(localStorage.getItem('chessiq-milestones') || '[]')
-);
+
+// Which milestones this player has already been congratulated for.
+//
+// This used to be a single browser-wide localStorage key. Signing in from a
+// second browser, clearing site data, or simply losing the key meant every
+// milestone below the player's current PR was treated as brand new — and
+// because the loop breaks after one toast, they replayed one per puzzle for
+// the rest of the session. That is the "old achievements pop up again after
+// logging back in" bug.
+//
+// The set is now seeded from peakPR, which lives in Firebase and is therefore
+// the same on every device. localStorage is kept only as a per-account cache
+// so a milestone crossed and then decayed past is not re-announced.
+var shownMilestones = new Set();
+
+function milestoneStorageKey() {
+    return currentUID ? `chessiq-milestones:${currentUID}` : null;
+}
+
+function persistShownMilestones() {
+    const key = milestoneStorageKey();
+    if (!key) return;   // guests keep milestone state in memory only
+    try {
+        localStorage.setItem(key, JSON.stringify([...shownMilestones]));
+    } catch (_) {}
+}
+
+// Called once per sign-in, before the first renderPR. Everything at or below
+// the player's all-time peak has already been earned, whatever this browser
+// happens to remember.
+function seedShownMilestones() {
+    shownMilestones = new Set();
+
+    const key = milestoneStorageKey();
+    if (key) {
+        try {
+            const cached = JSON.parse(localStorage.getItem(key) || '[]');
+            if (Array.isArray(cached)) cached.forEach(pr => shownMilestones.add(Number(pr)));
+        } catch (_) {}
+    }
+
+    const reached = Math.max(Number(peakPR) || 0, Number(playerPR) || 0);
+    PR_MILESTONES.forEach(m => {
+        if (reached >= m.pr) shownMilestones.add(m.pr);
+    });
+    persistShownMilestones();
+
+    // Drop the old browser-wide key so a stale copy can never be read again.
+    try { localStorage.removeItem('chessiq-milestones'); } catch (_) {}
+}
 
 function checkMilestone(newPR) {
     for (const m of PR_MILESTONES) {
         if (newPR >= m.pr && !shownMilestones.has(m.pr)) {
             shownMilestones.add(m.pr);
-            localStorage.setItem('chessiq-milestones', JSON.stringify([...shownMilestones]));
+            persistShownMilestones();
             showMilestoneToast(m, newPR);
             break; // only one toast at a time
         }
@@ -2991,7 +3273,7 @@ async function initPOTD() {
             date:          today,
             positionKey:   key,
             svg:           getPuzzleSVG(pick),
-            turn:          pick.Turn,
+            turn:          getPuzzleTurnLabel(pick),
             eval:          pick.Eval,
             correctAnswer: findResult(pick.Eval),
             votes:         { White: 0, Equal: 0, Black: 0 },
@@ -3045,7 +3327,9 @@ window.openPOTD = function() {
 
     // Populate board
     document.getElementById('potd-modal-board').innerHTML = potdData.svg || '<p>Loading...</p>';
-    document.getElementById('potd-modal-turn').textContent = potdData.turn || '';
+    // Daily entries written before the Turn normalisation may hold a bare colour.
+    document.getElementById('potd-modal-turn').textContent =
+        getPuzzleTurnLabel({ Turn: potdData.turn });
     document.getElementById('potd-modal-date').textContent =
         'Puzzle of the Day — ' + potdData.date;
 
@@ -3256,13 +3540,8 @@ function extractGeminiRating(puzzle) {
     const raw = puzzle?.AIExplanation?.difficultyRating;   // ← confirmed field name
     if (raw === undefined || raw === null) return null;
     const n = Number(raw);
-    if (!Number.isFinite(n) || n < 1 || n > 10) {
-        console.warn(
-            `[PDR] difficultyRating for puzzle "${puzzle._key}" is out of range or non-numeric: ${raw}. ` +
-            `Falling back to baseline-only.`
-        );
-        return null;
-    }
+    // Out of range or non-numeric: fall back to the static baseline silently.
+    if (!Number.isFinite(n) || n < 1 || n > 10) return null;
     return n;
 }
 
@@ -3328,21 +3607,11 @@ async function ensurePuzzleStats(puzzle) {
     return stats;
 }
 
-// Called by renderPuzzle — logs current rating to console for every puzzle loaded
-async function logCurrentPuzzleRating(puzzle) {
+// Called by renderPuzzle — makes sure the loaded puzzle has a puzzleStats record
+// so the adaptive rating has somewhere to land once the player answers.
+async function ensureCurrentPuzzleRating(puzzle) {
     if (!puzzle?._key) return;
-    const stats = await ensurePuzzleStats(puzzle);
-    if (!stats) return;
-    console.log(
-        `%c[PDR] Puzzle loaded%c | key: ${puzzle._key} | ` +
-        `staticDifficulty: ${puzzle.Difficulty} | ` +
-        `geminiDifficultyRating: ${puzzle?.AIExplanation?.difficultyRating ?? 'absent'} | ` +
-        `currentRating: ${stats.rating.toFixed(2)}/10 | ` +
-        `tier: ${stats.tier} | ` +
-        `attempts: ${stats.attempts} (✓ ${stats.correctCount} / ✗ ${stats.wrongCount})`,
-        'color:#ffd400;font-weight:700;',
-        'color:inherit;font-weight:normal;'
-    );
+    await ensurePuzzleStats(puzzle);
 }
 
 // Called by sendAnswer — adaptively nudges the puzzle's rating based on
@@ -3369,8 +3638,7 @@ async function updatePuzzleRatingAfterAnswer(puzzle, playerPRAtAnswer, wasCorrec
     }
 
     newRating = roundRating(Math.max(1, Math.min(10, newRating)));
-    const newTier    = ratingToTier(newRating);
-    const tierChanged = newTier !== stats.tier;
+    const newTier = ratingToTier(newRating);
 
     const updatedStats = {
         ...stats,
@@ -3396,27 +3664,6 @@ async function updatePuzzleRatingAfterAnswer(puzzle, playerPRAtAnswer, wasCorrec
             wrongPRSum:   updatedStats.wrongPRSum,
             lastUpdated:  updatedStats.lastUpdated,
         });
-
-        const sign  = wasCorrect ? '−' : '+';
-        const delta = Math.abs(newRating - stats.rating).toFixed(2);
-        console.log(
-            `%c[PDR] Rating updated%c | key: ${key} | ` +
-            `playerPR: ${playerPRAtAnswer} → expectedDiff: ${expectedDiff.toFixed(2)} | ` +
-            `correct: ${wasCorrect} | nudge: ${sign}${delta} | ` +
-            `rating: ${stats.rating.toFixed(2)} → ${newRating.toFixed(2)} | ` +
-            `tier: ${stats.tier}${tierChanged ? ` → ${newTier} ⚡` : ''} | ` +
-            `attempts: ${updatedStats.attempts}`,
-            'color:#ffd400;font-weight:700;',
-            'color:inherit;font-weight:normal;'
-        );
-
-        if (tierChanged) {
-            console.log(
-                `%c[PDR] TIER CHANGED%c | ${key} | ${stats.tier} → ${newTier} | rating: ${newRating.toFixed(2)}`,
-                'background:#ffd400;color:#000;font-weight:700;padding:2px 6px;',
-                'color:inherit;'
-            );
-        }
     } catch (err) {
         console.warn(`[PDR] Could not update puzzleStats/${key}:`, err);
     }

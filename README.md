@@ -177,6 +177,20 @@ Once the provisional phase ends, PR is governed by a compression curve: the high
 
 A correct-answer streak provides a mild bonus (up to +20%), and a losing streak applies a small additional penalty — but neither is large enough to substitute for accuracy. The system rewards players who are consistently right, not players who get hot for ten puzzles.
 
+Near-Miss Scoring
+
+Being wrong is a matter of degree. A position evaluated at +1.10 is not meaningfully different from one at +0.90, so calling the first "Equal" is a far better read than calling it a win for Black. PR loss is therefore scaled by how far the engine's evaluation lands outside the band you chose:
+
+- A miss of a tenth of a pawn costs about a quarter of the normal loss.
+- The penalty ramps to the full amount once the evaluation is 1.5 pawns clear of your band.
+- Calling White when Black is winning (or the reverse) always costs the full amount — the nearest such error is still two full pawns outside your answer.
+
+The symmetric, deliberately much smaller counterpart: a correct call on a position whose evaluation sits right on a band edge earns up to 10% extra, because those are the genuinely hard evaluations.
+
+Elite Range
+
+Above PR 2800 the compression curve used to flatten gains to one or two points per puzzle, which reads as a treadmill rather than a ladder. Deltas in that range are now roughly three times larger, and gains — not losses — receive a capped assist that ramps in across 2800 → 3500. Break-even accuracy at the top of the ladder sits near 45% rather than 50%, so a strong session visibly moves the number while a coin-flip session still does not.
+
 Inactivity Decay
 
 PR decays slowly after a 7-day grace period of inactivity, so ratings on the leaderboard reflect active, current performance.

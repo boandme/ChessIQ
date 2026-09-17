@@ -29,6 +29,16 @@ function todayUTC() {
     return new Date().toISOString().slice(0, 10);
 }
 
+// Daily entries written by different import generations hold either a ready-made
+// phrase ("White to move") or a bare colour ("white" / "b"). Both render as
+// "<Colour> to move" so the badge always states the side to move explicitly.
+function formatTurnLabel(turn) {
+    const raw = String(turn || '').trim();
+    if (/black/i.test(raw) || /^b$/i.test(raw)) return 'Black to move';
+    if (/white/i.test(raw) || /^w$/i.test(raw)) return 'White to move';
+    return raw;
+}
+
 function answerForEvaluation(evaluation) {
     const centipawns = parseFloat(evaluation);
     if (!Number.isFinite(centipawns) || Math.abs(centipawns) <= 100) return 'Equal';
@@ -165,7 +175,7 @@ function renderPOTDModal() {
     const result = document.getElementById('potd-result-box');
 
     if (board) board.innerHTML = potdData.svg || '<p>Position unavailable.</p>';
-    if (turn) turn.textContent = potdData.turn || '';
+    if (turn) turn.textContent = formatTurnLabel(potdData.turn);
     if (date) date.textContent = `Puzzle of the Day — ${potdData.date}`;
     renderPOTDCountdown();
 
@@ -209,7 +219,7 @@ async function loadPOTD() {
                 date: today,
                 positionKey: pick.id || pick.key || pick._key,
                 svg: pick.SVG,
-                turn: pick.Turn,
+                turn: formatTurnLabel(pick.Turn),
                 eval: pick.Eval,
                 correctAnswer: answerForEvaluation(pick.Eval),
                 votes: { White: 0, Equal: 0, Black: 0 },
