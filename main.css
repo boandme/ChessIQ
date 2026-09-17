@@ -840,7 +840,9 @@ svg.board, #board svg {
 /* ── Result + evaluation ──────────────────────────────────────────────────── */
 #result {
     width: 100%; min-height: 72px; padding: 14px;
-    display: flex; justify-content: center; align-items: center; text-align: center;
+    /* Column so the near-miss / edge-call note can sit under the verdict
+       instead of beside it. */
+    display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
     background: var(--surface-2);
     border: 1px solid var(--line);
     border-left: 3px solid var(--line-bright);

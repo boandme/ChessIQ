@@ -271,6 +271,14 @@ const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').match
         if (!Number.isFinite(centipawns) || Math.abs(centipawns) <= 100) return 'Equal';
         return centipawns > 0 ? 'White Winning' : 'Black Winning';
     };
+    // Stored Turn values are either a phrase ("White to move") or a bare colour
+    // ("white" / "b") depending on which import generation wrote the position.
+    const formatTurnLabel = turn => {
+        const raw = String(turn || '').trim();
+        if (/black/i.test(raw) || /^b$/i.test(raw)) return 'Black to move';
+        if (/white/i.test(raw) || /^w$/i.test(raw)) return 'White to move';
+        return raw;
+    };
 
     function ensureDailyModal() {
         if (document.getElementById('potd-modal')) return;
@@ -388,7 +396,7 @@ const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').match
         const signIn = document.getElementById('potd-signin-notice');
         const result = document.getElementById('potd-result-box');
         if (board) board.innerHTML = dailyData.svg || '<p>Position unavailable.</p>';
-        if (turn) turn.textContent = dailyData.turn || '';
+        if (turn) turn.textContent = formatTurnLabel(dailyData.turn);
         if (date) date.textContent = `Puzzle of the Day — ${dailyData.date}`;
         renderCountdown();
 
@@ -429,7 +437,7 @@ const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').match
                     date: today,
                     positionKey: pick.id || pick.key || pick._key,
                     svg: pick.SVG,
-                    turn: pick.Turn,
+                    turn: formatTurnLabel(pick.Turn),
                     eval: pick.Eval,
                     correctAnswer: answerForEvaluation(pick.Eval),
                     votes: { White: 0, Equal: 0, Black: 0 },
