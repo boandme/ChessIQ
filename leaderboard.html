@@ -97,6 +97,58 @@
         }
 
         /* ── Column headers ──────────────────────────────────────────────────── */
+        /* -- Board toggle ------------------------------------------------- */
+        .lb-tabs {
+            display: flex; align-items: center; gap: 8px;
+            padding: 14px 26px 0;
+        }
+        .lb-tab {
+            padding: 9px 18px;
+            background: var(--surface-2);
+            border: 1px solid var(--line);
+            border-bottom: none;
+            border-radius: 7px 7px 0 0;
+            cursor: pointer;
+            font-family: var(--font-mono);
+            font-size: 0.7rem; font-weight: 700;
+            letter-spacing: 0.12em; text-transform: uppercase;
+            color: var(--text-faint);
+            transition: color 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+        }
+        .lb-tab:hover { color: var(--text-dim); }
+        .lb-tab.active { color: var(--text); background: var(--surface-3); border-color: var(--line-bright); }
+        /* Ranked gets the louder treatment -- it is the competitive surface. */
+        .lb-tab-ranked.active {
+            color: var(--yellow-bright);
+            border-color: var(--yellow-line);
+            background: linear-gradient(180deg, var(--yellow-soft), var(--surface-3));
+            box-shadow: 0 -2px 14px rgba(255, 212, 0, 0.16);
+        }
+        .lb-season-tag {
+            margin-left: auto; padding: 4px 12px; border-radius: 100px;
+            background: var(--yellow-soft); border: 1px solid var(--yellow-line);
+            color: var(--yellow); font-family: var(--font-mono);
+            font-size: 0.62rem; font-weight: 700;
+            letter-spacing: 0.14em; text-transform: uppercase;
+        }
+        .lb-tier-badge {
+            --tier-accent: #9aa0ad;
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 2px 9px; border-radius: 100px;
+            background: color-mix(in srgb, var(--tier-accent) 14%, transparent);
+            border: 1px solid color-mix(in srgb, var(--tier-accent) 45%, transparent);
+            color: var(--tier-accent);
+            font-family: var(--font-mono); font-size: 0.6rem; font-weight: 700;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .lb-season-delta.pos { color: var(--ok); }
+        .lb-season-delta.neg { color: var(--bad); }
+        @media (max-width: 760px) {
+            .lb-tabs { padding: 12px 16px 0; }
+            .lb-season-tag { display: none; }
+        }
+
         .lb-col-headers {
             display: grid;
             grid-template-columns: 72px minmax(260px, 1fr) 130px 120px 130px;
@@ -416,7 +468,8 @@
             </a>
         </div>
         <nav class="topnav">
-            <a href="index.html">Home</a>
+            <a href="index.html">Casual</a>
+            <a href="ranked.html" class="nav-ranked">Ranked</a>
             <a href="leaderboard.html" class="active">Leaderboard</a>
             <a href="analytics.html">Analytics</a>
             <a href="info.html">Information</a>
@@ -469,13 +522,29 @@
             </div>
         </div>
 
+        <!-- Board toggle: one competitive surface per mode, same shell. -->
+        <div class="lb-tabs" role="tablist">
+            <button class="lb-tab active" id="lb-tab-casual" role="tab" aria-selected="true"
+                    onclick="switchBoard('casual')">Casual &middot; PR</button>
+            <button class="lb-tab lb-tab-ranked" id="lb-tab-ranked" role="tab" aria-selected="false"
+                    onclick="switchBoard('ranked')">Ranked &middot; RR</button>
+            <span class="lb-season-tag" id="lb-season-tag" hidden>Winter 2026</span>
+        </div>
+
         <!-- Column headers -->
-        <div class="lb-col-headers">
+        <div class="lb-col-headers" id="lb-cols-casual">
             <div class="lb-col-label">#</div>
             <div class="lb-col-label">Player</div>
             <div class="lb-col-label right">PR</div>
             <div class="lb-col-label right">Puzzles</div>
             <div class="lb-col-label right">Accuracy</div>
+        </div>
+        <div class="lb-col-headers" id="lb-cols-ranked" hidden>
+            <div class="lb-col-label">#</div>
+            <div class="lb-col-label">Player</div>
+            <div class="lb-col-label right">RR</div>
+            <div class="lb-col-label right">Season</div>
+            <div class="lb-col-label right">Duels</div>
         </div>
 
         <!-- Rows render here -->
@@ -606,13 +675,12 @@
                             : isOGAccount(createdAt, data.username),
                         isCoach:      isChessCoach(data.username, data.roles),
                         isAdmin:      isAdminAccount(data.username, data.roles),
+                        ranked:       (data.ranked && typeof data.ranked === 'object') ? data.ranked : null,
                     };
                 });
+                allPlayers = players;
 
-                // Sort highest PR first; tie-break by most puzzles played
-                players.sort((a, b) => b.pr - a.pr || b.totalPuzzles - a.totalPuzzles);
-
-                renderLeaderboard(players);
+                renderActiveBoard();
                 updateTimestamp();
             }, (error) => {
                 renderError(error.message);
@@ -620,6 +688,110 @@
         }
 
         // ── Render rows ───────────────────────────────────────────────────────
+        // -- Board switching ---------------------------------------------------
+        // Two leaderboards, one shell. Casual ranks on PR; Ranked ranks on the
+        // rating gained since season start, so a player who joined in week six
+        // competes on the same basis as a day-one player.
+        const RANKED_SEASON_ID   = 'winter-2026';
+        const RANKED_SEASON_NAME = 'Winter 2026';
+        const LB_TIERS = [
+            { name: 'Pawn',        min: 0,    icon: '\u265F', accent: '#9aa0ad' },
+            { name: 'Knight',      min: 1000, icon: '\u265E', accent: '#6fc3ff' },
+            { name: 'Bishop',      min: 1300, icon: '\u265D', accent: '#b98cff' },
+            { name: 'Rook',        min: 1600, icon: '\u265C', accent: '#ff9a5c' },
+            { name: 'Queen',       min: 1900, icon: '\u265B', accent: '#ffd400' },
+            { name: 'Grandmaster', min: 2200, icon: '\u265A', accent: '#fff1a8' },
+        ];
+        function lbTierFor(rating) {
+            let found = LB_TIERS[0];
+            for (const tier of LB_TIERS) if ((rating ?? 0) >= tier.min) found = tier;
+            return found;
+        }
+
+        let allPlayers = [];
+        let activeBoard = 'casual';
+
+        window.switchBoard = function(board) {
+            activeBoard = board;
+            document.getElementById('lb-tab-casual').classList.toggle('active', board === 'casual');
+            document.getElementById('lb-tab-ranked').classList.toggle('active', board === 'ranked');
+            document.getElementById('lb-tab-casual').setAttribute('aria-selected', String(board === 'casual'));
+            document.getElementById('lb-tab-ranked').setAttribute('aria-selected', String(board === 'ranked'));
+            document.getElementById('lb-cols-casual').hidden = (board !== 'casual');
+            document.getElementById('lb-cols-ranked').hidden = (board !== 'ranked');
+            const tag = document.getElementById('lb-season-tag');
+            tag.hidden = (board !== 'ranked');
+            tag.textContent = RANKED_SEASON_NAME;
+            renderActiveBoard();
+        };
+
+        function renderActiveBoard() {
+            if (activeBoard === 'ranked') {
+                const ranked = allPlayers
+                    .filter(function(p) {
+                        return p.ranked && p.ranked.seasonId === RANKED_SEASON_ID &&
+                               ((p.ranked.soloPlayed || 0) + (p.ranked.duelPlayed || 0)) > 0;
+                    })
+                    .sort(function(a, b) {
+                        return (b.ranked.seasonDelta || 0) - (a.ranked.seasonDelta || 0) ||
+                               (b.ranked.rating || 0) - (a.ranked.rating || 0);
+                    });
+                renderRankedBoard(ranked);
+            } else {
+                const casual = allPlayers.slice()
+                    .sort(function(a, b) { return b.pr - a.pr || b.totalPuzzles - a.totalPuzzles; });
+                renderLeaderboard(casual);
+            }
+        }
+
+        function renderRankedBoard(players) {
+            const list = document.getElementById('lb-list');
+            document.getElementById('lb-player-count').textContent = players.length;
+            const yourIdx = players.findIndex(function(p) { return p.uid === currentUID; });
+            document.getElementById('lb-your-rank').textContent =
+                yourIdx >= 0 ? '#' + (yourIdx + 1) : '\u2014';
+
+            if (!players.length) {
+                list.innerHTML =
+                    '<div class="lb-empty">' +
+                    '<h3>No ranked players yet</h3>' +
+                    '<p>Be the first to post a ' + RANKED_SEASON_NAME + ' result.</p>' +
+                    '</div>';
+                return;
+            }
+
+            const MEDALS = ['\u{1F947}', '\u{1F948}', '\u{1F949}'];
+            list.innerHTML = players.map(function(p, i) {
+                const rank      = i + 1;
+                const rankClass = rank <= 3 ? 'rank-' + rank : '';
+                const isYou     = p.uid === currentUID ? 'is-you' : '';
+                const r         = p.ranked;
+                const tier      = lbTierFor(r.rating);
+                const delta     = r.seasonDelta || 0;
+                const deltaCls  = delta > 0 ? 'pos' : (delta < 0 ? 'neg' : '');
+                const duels     = (r.duelWins || 0) + (r.duelLosses || 0) + (r.duelDraws || 0);
+                const rankDisplay = rank <= 3
+                    ? '<span class="lb-rank-medal">' + MEDALS[rank - 1] + '</span>'
+                    : '<span>' + rank + '</span>';
+
+                return '' +
+                '<div class="lb-row ' + rankClass + ' ' + isYou + '">' +
+                    '<div class="lb-rank">' + rankDisplay + '</div>' +
+                    '<div class="lb-name-cell">' +
+                        '<div class="lb-avatar">' + p.username.charAt(0).toUpperCase() + '</div>' +
+                        '<div class="lb-username">' + escHtml(p.username) + '</div>' +
+                        '<span class="lb-tier-badge" style="--tier-accent:' + tier.accent + '">' +
+                            tier.icon + ' ' + tier.name + '</span>' +
+                        (p.isAdmin ? '<span class="lb-admin-banner" title="ChessIQ administrator">Admin</span>' : '') +
+                    '</div>' +
+                    '<div class="lb-pr">' + (r.rating == null ? '\u2014' : r.rating) + '</div>' +
+                    '<div class="lb-puzzles lb-season-delta ' + deltaCls + '">' +
+                        (delta > 0 ? '+' : '') + delta + '</div>' +
+                    '<div class="lb-accuracy">' + duels + '</div>' +
+                '</div>';
+            }).join('');
+        }
+
         function renderLeaderboard(players) {
             const list = document.getElementById('lb-list');
 

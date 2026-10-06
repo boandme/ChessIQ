@@ -1,0 +1,142 @@
+{
+  "//": [
+    "ChessIQ Realtime Database rules.",
+    "",
+    "Deploy with:  firebase deploy --only database",
+    "",
+    "These rules cover the Ranked nodes added in v1.6. The pre-existing /users",
+    "and /positions rules are reproduced here to match current behaviour so",
+    "deploying this file does not silently change the casual app.",
+    "",
+    "KNOWN ISSUE, not fixed here: /users is readable by any authenticated user",
+    "because leaderboard.html, admin-dashboard.js and the Ranked rank lookup all",
+    "read the whole node, and /users/{uid}/email holds a real address. Closing",
+    "that needs the email field relocated to /private and a /leaderboard",
+    "projection built first. Tracked as item 1 of the pre-Ranked list."
+  ],
+
+  "rules": {
+    "positions": {
+      ".read": true,
+      ".write": false
+    },
+
+    "puzzleStats": {
+      ".read": true,
+      "$key": {
+        ".write": "auth != null"
+      }
+    },
+
+    "potd": {
+      ".read": true,
+      "$date": {
+        ".write": "auth != null"
+      }
+    },
+
+    "usernames": {
+      ".read": true,
+      "$name": {
+        ".write": "auth != null && !data.exists()"
+      }
+    },
+
+    "users": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+
+        "ranked": {
+          ".validate": "newData.hasChildren(['rating', 'seasonId'])",
+          "rating": {
+            ".validate": "newData.isNumber() && newData.val() >= 100 && newData.val() <= 5000"
+          }
+        }
+      }
+    },
+
+    "rankedSessions": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+
+    "rankedPresence": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+
+    "rankedQueue": {
+      "//": [
+        "Readable by any signed-in player because quick match scans the queue",
+        "client side to find someone waiting. Each player owns their own entry.",
+        "",
+        "The one exception is matchedDuelId: the player doing the claiming must",
+        "be able to stamp it onto the waiting player's entry, which is how",
+        "pairing happens without a server. It may only be written when it is",
+        "currently empty, so a claim cannot be stolen or overwritten."
+      ],
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && (auth.uid === $uid || (!data.child('matchedDuelId').exists() && newData.child('matchedDuelId').exists()))",
+        ".validate": "newData.hasChildren(['uid', 'rating', 'queuedAt'])",
+        "uid":      { ".validate": "newData.val() === $uid" },
+        "rating":   { ".validate": "newData.isNumber()" },
+        "queuedAt": { ".validate": "newData.isNumber()" },
+        "matchedDuelId": { ".validate": "newData.isString() && newData.val().length <= 32" },
+        "$other":   { ".validate": true }
+      }
+    },
+
+    "duels": {
+      "$duelId": {
+        "//": [
+          "Readable while waiting so a challenge link can be opened by someone",
+          "who is not yet a participant, and afterwards only by the two players.",
+          "Writable by either participant, plus the open-slot case where a",
+          "joining player writes themselves in as guest."
+        ],
+        ".read": "auth != null && (!data.exists() || data.child('status').val() === 'waiting' || data.child('host/uid').val() === auth.uid || data.child('guest/uid').val() === auth.uid)",
+
+        ".write": "auth != null && (!data.exists() || data.child('host/uid').val() === auth.uid || data.child('guest/uid').val() === auth.uid || (data.child('status').val() === 'waiting' && !data.child('guest').exists() && newData.child('guest/uid').val() === auth.uid) || newData.child('host/uid').val() === auth.uid)",
+
+        "status": {
+          ".validate": "newData.val() === 'waiting' || newData.val() === 'ready' || newData.val() === 'active' || newData.val() === 'complete' || newData.val() === 'void'"
+        },
+        "seed":    { ".validate": "newData.isNumber()" },
+        "startAt": { ".validate": "newData.isNumber()" },
+
+        "players": {
+          "$playerUid": {
+            "//": [
+              "NOTE: .write cascades in RTDB, so the $duelId rule above already",
+              "grants both participants write access here and this rule cannot",
+              "revoke it. Duel scores are therefore client-authoritative in",
+              "v1.0 — the .validate bounds below are the real guard, and they",
+              "only cap the range, not the honesty. A determined player can",
+              "write themselves a 1500. Closing that needs a Cloud Function to",
+              "own settlement; acceptable for link-based duels among friends,",
+              "not for a public competitive ladder."
+            ],
+            ".write": "auth != null && auth.uid === $playerUid",
+            "score": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1500"
+            },
+            "progress": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10"
+            }
+          }
+        },
+
+        "result": {
+          "//": "Settled by whichever client observes both players finished.",
+          ".write": "auth != null && (data.parent().child('host/uid').val() === auth.uid || data.parent().child('guest/uid').val() === auth.uid)"
+        }
+      }
+    }
+  }
+}

@@ -218,6 +218,29 @@ function streakMultiplier(correct) {
     return 1.0;
 }
 
+// ── Evaluation display ────────────────────────────────────────────────────────
+// Stockfish reports a forced mate as a sentinel score — in this database
+// +/-100000 centipawns, i.e. +/-1000 pawns. The eval chip used to print that
+// literally, so 2.4% of positions told the player "Evaluation  +1000". Anything
+// this far out is a mate, not a measurable advantage.
+const MATE_EVAL_PAWNS = 100;
+
+function isMateEval(pawns) {
+    return Number.isFinite(pawns) && Math.abs(pawns) >= MATE_EVAL_PAWNS;
+}
+
+// `compact` is for the narrow eval column in the puzzle log, where there is no
+// room for a phrase.
+function formatEvalPawns(pawns, { compact = false } = {}) {
+    if (!Number.isFinite(pawns)) return '—';
+    if (isMateEval(pawns)) {
+        if (compact) return pawns > 0 ? '+M' : '−M';
+        return pawns > 0 ? 'Mate · White' : 'Mate · Black';
+    }
+    const fixed = pawns.toFixed(2);
+    return pawns > 0 ? `+${fixed}` : fixed;
+}
+
 // ── Evaluation proximity ──────────────────────────────────────────────────────
 // The pawn interval each answer claims. These mirror findResult()'s ±1.00
 // thresholds — change one and you must change the other.
@@ -559,6 +582,7 @@ onAuthStateChanged(auth, async (user) => {
     // bootstrap admin is incorrectly treated as a guest on first load.
     showSignedInUI(profileUsername);
     adminControlCenter.syncAuthorization(currentUserRecord);
+    renderRatingChips(currentUserRecord);
 
     // ── Apply inactivity decay before showing PR ───────────────────────────────
     // This must run *after* showSignedInUI, which is what clears isGuest.
@@ -1376,6 +1400,57 @@ function updatePR(difficulty, correct, context = {}) {
     renderPR(delta);
 }
 
+// ── Ranked Rating chip (topbar) ───────────────────────────────────────────────
+// Mirrors the tier thresholds in ranked-core.js. Deliberately duplicated: the
+// casual page should not pull the whole Ranked bundle in just to paint a chip.
+const RR_TIERS = [
+    { name: 'Pawn',        min: 0,    icon: '♟', accent: '#9aa0ad' },
+    { name: 'Knight',      min: 1000, icon: '♞', accent: '#6fc3ff' },
+    { name: 'Bishop',      min: 1300, icon: '♝', accent: '#b98cff' },
+    { name: 'Rook',        min: 1600, icon: '♜', accent: '#ff9a5c' },
+    { name: 'Queen',       min: 1900, icon: '♛', accent: '#ffd400' },
+    { name: 'Grandmaster', min: 2200, icon: '♚', accent: '#fff1a8' },
+];
+
+function rrTierFor(rating) {
+    let found = RR_TIERS[0];
+    for (const tier of RR_TIERS) if ((rating ?? 0) >= tier.min) found = tier;
+    return found;
+}
+
+// Reads the Ranked profile written by ranked.js. A player who has never opened
+// Ranked has no node yet, so the chip shows an em dash rather than a fake 800.
+function renderRatingChips(record) {
+    const pair = document.getElementById('rating-pair');
+    if (!pair) return;
+    if (isGuest) { pair.style.display = 'none'; return; }
+    pair.style.display = 'flex';
+
+    const prEl = document.getElementById('topbar-pr');
+    if (prEl) prEl.textContent = String(playerPR);
+
+    const ranked = record && record.ranked;
+    const rating = Number(ranked && ranked.rating);
+    const rrEl   = document.getElementById('topbar-rr');
+    const markEl = document.getElementById('topbar-tier-mark');
+    const nameEl = document.getElementById('topbar-tier-name');
+    const wrap   = document.getElementById('topbar-rr-wrap');
+
+    if (!Number.isFinite(rating)) {
+        if (rrEl)   rrEl.textContent = '—';
+        if (nameEl) nameEl.textContent = 'Unranked';
+        if (markEl) markEl.textContent = '♟';
+        if (wrap)   wrap.style.setProperty('--tier-accent', '#6e6e7c');
+        return;
+    }
+
+    const tier = rrTierFor(rating);
+    if (rrEl)   rrEl.textContent   = String(rating);
+    if (markEl) markEl.textContent = tier.icon;
+    if (nameEl) nameEl.textContent = tier.name;
+    if (wrap)   wrap.style.setProperty('--tier-accent', tier.accent);
+}
+
 // ── Render PR display card ────────────────────────────────────────────────────
 function renderPR(delta) {
     const valEl       = document.getElementById('pr-value');
@@ -1387,6 +1462,8 @@ function renderPR(delta) {
 
     valEl.textContent = playerPR;
     subEl.textContent = `${totalPuzzles} puzzle${totalPuzzles !== 1 ? 's' : ''} played`;
+    const chipPR = document.getElementById('topbar-pr');
+    if (chipPR && !isGuest) chipPR.textContent = String(playerPR);
 
     const correctStreak = Math.max(0, currentStreak);
     if (streakEl) {
@@ -1537,13 +1614,160 @@ function getThemedCycleSignature() {
     return `${difficultyLabel}|${[...selectedThemeKeys].sort().join('|')}`;
 }
 
+// ── Position training tiers ───────────────────────────────────────────────────
+// The stored Easy / Medium / Hard field describes a position's complexity, but
+// it says nothing about *what kind* of thinking the position rewards. Measured
+// across the 538-position archive, 39% of the pool is decided by more than 2.5
+// pawns and over half of those simply have a material gap — the verdict follows
+// from counting pieces, not from reading the position. Meanwhile only about a
+// fifth of the pool sits near the +/-1.00 answer boundary, which is the band
+// that actually trains positional evaluation.
+//
+// Classifying each position by that axis lets the ladder serve material counts
+// to beginners (the entry rung the product promises) and boundary calls to
+// strong players, from the data already in the database.
+const FEN_PIECE_VALUES = { p: 1, n: 3, b: 3, r: 5, q: 9 };
+
+// The original import stores MaterialDiff directly; the 2012/2016 pipeline does
+// not carry it, so it is recomputed from the FEN when absent.
+function getPuzzleMaterialDiff(pos) {
+    // Number(null) is 0, so the stored value has to be screened before it is
+    // coerced — otherwise a position without the field reports equal material.
+    const raw = pos ? pos.MaterialDiff : undefined;
+    if (raw !== undefined && raw !== null && raw !== '') {
+        const stored = Number(raw);
+        if (Number.isFinite(stored)) return stored;
+    }
+
+    const board = getPuzzleFEN(pos).split(/\s+/)[0];
+    if (!board) return 0;
+
+    let diff = 0;
+    for (const square of board) {
+        const value = FEN_PIECE_VALUES[square.toLowerCase()];
+        if (!value) continue;                                  // digits, '/', kings
+        diff += square === square.toUpperCase() ? value : -value;
+    }
+    return diff;
+}
+
+// counting  - a material gap of 2+ points already gives the verdict away.
+//             The genuine beginner rung: learn to read a board by counting it.
+// judgment  - the evaluation sits within half a pawn of the +/-1.00 answer
+//             boundary. The hardest call in the app, and the only tier that
+//             really trains evaluation.
+// reading   - decided, but not by material. Rewards reading activity, structure
+//             and king safety rather than arithmetic.
+// obvious   - a positional crush or a forced mate. Useful for pace, not for
+//             calibration.
+const TRAINING_TIERS = ['counting', 'judgment', 'reading', 'obvious'];
+
+function getPositionTrainingTier(pos) {
+    const pawns = parseFloat(pos && pos.Eval) / 100;
+    if (!Number.isFinite(pawns)) return 'reading';
+    if (isMateEval(pawns)) return 'obvious';
+
+    if (Math.abs(getPuzzleMaterialDiff(pos)) >= 2 && Math.abs(pawns) >= 1.5) return 'counting';
+
+    const boundary = evaluationEdgeDistance(pawns);
+    if (boundary <= 0.5) return 'judgment';
+    if (boundary <= 1.5) return 'reading';
+    return 'obvious';
+}
+
+// Target tier mix at three points on the ladder, interpolated in between.
+// No tier is ever zero: the judgment band is only about a fifth of the pool, so
+// filtering hard to it would cycle the same ~100 positions forever and starve
+// both the freshness pass and the spaced-repetition queue.
+const TIER_WEIGHT_ANCHORS = [
+    { pr: 500,  counting: 3.0, judgment: 0.6, reading: 1.0, obvious: 1.4 },
+    { pr: 1600, counting: 1.0, judgment: 1.4, reading: 1.4, obvious: 1.0 },
+    { pr: 2600, counting: 0.4, judgment: 2.6, reading: 1.5, obvious: 0.5 },
+];
+
+function getTierWeights(pr) {
+    const first = TIER_WEIGHT_ANCHORS[0];
+    const last  = TIER_WEIGHT_ANCHORS[TIER_WEIGHT_ANCHORS.length - 1];
+    if (!Number.isFinite(pr) || pr <= first.pr) return first;
+    if (pr >= last.pr) return last;
+
+    let lower = first;
+    let upper = last;
+    for (let i = 0; i < TIER_WEIGHT_ANCHORS.length - 1; i++) {
+        if (pr >= TIER_WEIGHT_ANCHORS[i].pr && pr <= TIER_WEIGHT_ANCHORS[i + 1].pr) {
+            lower = TIER_WEIGHT_ANCHORS[i];
+            upper = TIER_WEIGHT_ANCHORS[i + 1];
+            break;
+        }
+    }
+
+    const span = upper.pr - lower.pr;
+    const t = span > 0 ? (pr - lower.pr) / span : 0;
+    const blended = {};
+    TRAINING_TIERS.forEach(tier => {
+        blended[tier] = lower[tier] + (upper[tier] - lower[tier]) * t;
+    });
+    return blended;
+}
+
+// No position may be drawn more than this many times the mean rate. A thin
+// tier would otherwise dominate: in the 538-position archive only 7 Hard
+// positions land in the judgment tier, and an uncapped 2.6 weight would serve
+// those seven more than half the time once the player has worked through the
+// unseen pool. The cap keeps the mix shifting with rating without turning into
+// a seven-position loop.
+const TIER_CONCENTRATION_CAP = 6;
+
+// Weighted sample over the pool. Each position's weight is its tier's target
+// weight divided by how many positions that tier contributes, so the weights
+// behave as a target *distribution over tiers* rather than letting whichever
+// tier happens to be largest dominate by sheer count. Every position in the
+// pool stays reachable.
+//
+// The pool handed in has already been through getFreshPuzzlePool, so ordinary
+// repeat-avoidance still governs what is eligible; this only sets preference
+// among the positions that already qualify.
+function chooseWeightedByTrainingTier(pool) {
+    const targets = getTierWeights(playerPR);
+    const counts = {};
+    const tiers = pool.map(position => {
+        const tier = getPositionTrainingTier(position);
+        counts[tier] = (counts[tier] || 0) + 1;
+        return tier;
+    });
+
+    const raw = tiers.map(tier => (targets[tier] ?? 1) / counts[tier]);
+    const sum = raw.reduce((a, b) => a + b, 0);
+    if (!(sum > 0)) return pool[Math.floor(Math.random() * pool.length)];
+
+    // Clamp against the mean weight. Sampling reads the post-clamp running
+    // total, so no renormalisation pass is needed.
+    const ceiling = TIER_CONCENTRATION_CAP * (sum / pool.length);
+
+    let total = 0;
+    const cumulative = raw.map(weight => {
+        total += Math.min(weight, ceiling);
+        return total;
+    });
+
+    const roll = Math.random() * total;
+    const index = cumulative.findIndex(threshold => roll < threshold);
+    return pool[index >= 0 ? index : pool.length - 1];
+}
+
 function choosePuzzleFromPool(pool) {
     if (!pool.length) return null;
 
-    // Keep the existing random behavior for All Themes. A thematic pool instead
-    // presents each matching puzzle once, then refills and repeats naturally.
+    // All Themes now samples by training tier rather than uniformly, so the mix
+    // of countable versus boundary positions tracks the player's rating.
+    // Provisional play stays uniform: placement should see a representative
+    // slice of the pool, not a slice shaped by the PR it is trying to establish.
+    // A thematic pool is left alone — it presents each matching puzzle once,
+    // then refills and repeats, and reweighting would break that cycle.
     if (!isThemeFilterActive()) {
-        return pool[Math.floor(Math.random() * pool.length)];
+        return isProvisionalMode()
+            ? pool[Math.floor(Math.random() * pool.length)]
+            : chooseWeightedByTrainingTier(pool);
     }
 
     const signature = getThemedCycleSignature();
@@ -1972,7 +2196,7 @@ function sendAnswer(guess) {
     }
     answered = true;
     const difficulty    = currentPuzzleDifficulty || getActiveDifficulty();
-    const displayEval   = evaluationRaw > 0 ? `+${evaluationRaw}` : `${evaluationRaw}`;
+    const displayEval   = formatEvalPawns(evaluationRaw);
     document.getElementById("evaluation-display").innerHTML = `Evaluation&nbsp;&nbsp;${displayEval}`;
 
     // Capture PR before updatePR changes it — fire PDR update async, non-blocking
@@ -2057,6 +2281,12 @@ function revealAIExplanation(puzzle) {
         themesEl.appendChild(pill);
     });
 
+    // Going deeper: the engine's move and the strategic plan. Both were already
+    // stored for every position but had never been surfaced. Kept collapsed by
+    // default so the primary read stays the focus — this is opt-in extra depth,
+    // not part of the first thing the player sees.
+    renderAIExtras(puzzle);
+
     // Only show the block if there's at least something to display
     if ((exp && exp.why) || themes.length) {
         // Re-trigger the entry animation on each reveal
@@ -2067,9 +2297,92 @@ function revealAIExplanation(puzzle) {
     }
 }
 
+// The sheen is a first-run affordance, not a permanent effect. Once the player
+// has opened the drawer they know it is there, so the button keeps its border,
+// hover lift and glow but stops shimmering on every puzzle.
+const AI_EXTRAS_SEEN_KEY = 'chessiq-ai-extras-seen';
+
+function hasSeenAIExtras() {
+    try {
+        return localStorage.getItem(AI_EXTRAS_SEEN_KEY) === '1';
+    } catch (_) {
+        return false;
+    }
+}
+
+function markAIExtrasSeen() {
+    try {
+        localStorage.setItem(AI_EXTRAS_SEEN_KEY, '1');
+    } catch (_) {}
+}
+
+function renderAIExtras(puzzle) {
+    const section     = document.getElementById('ai-exp-more');
+    const toggle      = document.getElementById('ai-exp-more-toggle');
+    const body        = document.getElementById('ai-exp-more-body');
+    const moveWrap    = document.getElementById('ai-exp-bestmove-wrap');
+    const moveEl      = document.getElementById('ai-exp-bestmove');
+    const moveReason  = document.getElementById('ai-exp-bestmove-reason');
+    const planWrap    = document.getElementById('ai-exp-plan-wrap');
+    const planEl      = document.getElementById('ai-exp-plan');
+    if (!section || !toggle || !body) return;
+
+    const best = getPuzzleBestMove(puzzle);
+    const plan = getPuzzlePlan(puzzle);
+
+    if (moveWrap && moveEl && moveReason) {
+        moveWrap.hidden = !best;
+        moveEl.textContent     = best ? best.move : '';
+        moveEl.hidden          = !(best && best.move);
+        moveReason.textContent = best ? best.reason : '';
+    }
+    if (planWrap && planEl) {
+        planWrap.hidden  = !plan;
+        planEl.textContent = plan;
+    }
+
+    // Nothing stored for this position — hide the whole affordance rather than
+    // offering an empty drawer.
+    section.hidden = !best && !plan;
+
+    // Every new puzzle starts collapsed, including after the player expanded it
+    // on the previous one.
+    setAIExtrasExpanded(false);
+
+    // Re-arm the nudge. Dropping the class and forcing a reflow is what makes
+    // the animation replay on each reveal instead of only once per page load.
+    section.classList.remove('is-nudging');
+    if (!section.hidden && !hasSeenAIExtras()) {
+        void section.offsetWidth;
+        section.classList.add('is-nudging');
+    }
+}
+
+function setAIExtrasExpanded(expanded) {
+    const section = document.getElementById('ai-exp-more');
+    const toggle  = document.getElementById('ai-exp-more-toggle');
+    const body    = document.getElementById('ai-exp-more-body');
+    if (!section || !toggle || !body) return;
+    body.hidden = !expanded;
+    toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    section.classList.toggle('is-open', expanded);
+
+    if (expanded) {
+        section.classList.remove('is-nudging');
+        markAIExtrasSeen();
+    }
+}
+
+window.toggleAIExtras = function() {
+    const toggle = document.getElementById('ai-exp-more-toggle');
+    if (!toggle) return;
+    setAIExtrasExpanded(toggle.getAttribute('aria-expanded') !== 'true');
+};
+
 function hideAIExplanation() {
     const container = document.getElementById('ai-explanation');
     if (container) container.classList.remove('visible');
+    setAIExtrasExpanded(false);
 }
 
 function showGuestGate() {
@@ -2134,6 +2447,32 @@ function getPuzzleThemes(pos) {
                  : Array.isArray(exp.Themes)  ? exp.Themes
                  : [];
     return themes;
+}
+
+function getPuzzleBestMove(pos) {
+    // Three shapes exist in the database: AIExplanation.bestMove as
+    // { move, reason } (the original 538 and the 2012/2016 import), and a
+    // top-level BestMove string carrying the move with no reasoning.
+    const exp = (pos && pos.AIExplanation) || {};
+    const raw = exp.bestMove || exp.BestMove || (pos && (pos.BestMove || pos.bestMove));
+    if (!raw) return null;
+
+    if (typeof raw === 'string') {
+        const move = raw.trim();
+        return move ? { move, reason: '' } : null;
+    }
+    if (typeof raw === 'object') {
+        const move   = String(raw.move   || raw.Move   || '').trim();
+        const reason = String(raw.reason || raw.Reason || '').trim();
+        return (move || reason) ? { move, reason } : null;
+    }
+    return null;
+}
+
+function getPuzzlePlan(pos) {
+    const exp = (pos && pos.AIExplanation) || {};
+    const plan = exp.plan || exp.Plan || '';
+    return typeof plan === 'string' ? plan.trim() : '';
 }
 
 function getPuzzleMetadata(pos) {
@@ -2877,9 +3216,7 @@ function renderPuzzleLog() {
         const deltaClass = entry.delta >= 0 ? 'positive' : 'negative';
         const resultClass  = entry.correct ? 'correct' : 'incorrect';
         const resultLabel  = entry.correct ? '✓' : '✗';
-        const posEval    = entry.posEval !== null && entry.posEval !== undefined
-            ? (entry.posEval > 0 ? `+${entry.posEval.toFixed(2)}` : entry.posEval.toFixed(2))
-            : '—';
+        const posEval    = formatEvalPawns(entry.posEval, { compact: true });
         const diff = entry.difficulty || '—';
         const time = entry.ts ? fmt(entry.ts) : '—';
 

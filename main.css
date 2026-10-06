@@ -1154,6 +1154,224 @@ svg.board, #board svg {
     color: #c58fff;
 }
 
+/* ── Going deeper: engine move + plan (collapsed by default) ──────────────── */
+/* Deliberately quieter than the Why/Themes sections above it: this is opt-in
+   extra depth and must not read as the primary explanation. */
+.ai-exp-more {
+    padding: 0;
+    gap: 0;
+}
+
+/* The `hidden` attribute is a UA-stylesheet `display: none`, which loses to the
+   author `display: flex` on .ai-exp-section / .ai-exp-more-body / .ai-exp-extra.
+   Without these, hiding an empty drawer silently does nothing. */
+.ai-exp-section[hidden],
+.ai-exp-more-body[hidden],
+.ai-exp-extra[hidden] {
+    display: none;
+}
+
+/* A flush, faint row did not read as interactive. This is a real secondary
+   button: inset chassis, yellow hairline, lift and glow on hover. It stays a
+   ghost button rather than a filled one so it never competes with the solid
+   yellow #nextButton directly beneath it. */
+.ai-exp-more-toggle {
+    position: relative;
+    overflow: hidden;
+    width: calc(100% - 28px);
+    margin: 10px 14px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 7px;
+    background: linear-gradient(180deg, var(--surface-3), var(--surface-2));
+    border: 1px solid var(--yellow-line);
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
+    transition: transform 0.2s var(--ease-snap),
+                box-shadow 0.2s ease,
+                border-color 0.2s ease,
+                background 0.2s ease;
+}
+.ai-exp-more-toggle:hover {
+    transform: translateY(-2px);
+    border-color: var(--yellow);
+    background: linear-gradient(180deg, var(--yellow-soft), var(--surface-3));
+    /* Not var(--glow): #ai-explanation clips at overflow:hidden, and a 24px
+       spread would be cut off by this button's 10-14px margins. */
+    box-shadow: 0 0 12px rgba(255, 212, 0, 0.30);
+}
+.ai-exp-more-toggle:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+.ai-exp-more-toggle:focus-visible {
+    outline: 2px solid var(--yellow);
+    outline-offset: 2px;
+}
+
+/* Full-strength yellow even when closed — the label is the main signal that
+   there is something here to press. */
+.ai-exp-more-toggle .ai-exp-label {
+    color: var(--yellow);
+}
+
+.ai-exp-more-hint {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    white-space: nowrap;
+    transition: opacity 0.18s ease;
+}
+.ai-exp-more.is-open .ai-exp-more-hint {
+    opacity: 0;
+}
+
+/* Chevron in its own chip, so the control has an obvious hit target. */
+.ai-exp-more-chevron {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    padding: 3px;
+    border-radius: 50%;
+    background: var(--yellow-soft);
+    color: var(--yellow);
+    transition: transform 0.24s var(--ease-snap), background 0.18s ease;
+}
+.ai-exp-more-toggle:hover .ai-exp-more-chevron {
+    background: var(--yellow-line);
+}
+.ai-exp-more.is-open .ai-exp-more-chevron {
+    transform: rotate(180deg);
+}
+
+/* ── First-time attention nudge ────────────────────────────────────────────
+   A sheen sweep plus a soft glow pulse, three cycles then settle. Applied only
+   until the player has opened the drawer once (see markAIExtrasSeen), so a long
+   session does not shimmer on every single puzzle. */
+.ai-exp-more-toggle::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+        105deg,
+        transparent 35%,
+        rgba(255, 212, 0, 0.26) 50%,
+        transparent 65%
+    );
+    transform: translateX(-130%);
+}
+.ai-exp-more.is-nudging .ai-exp-more-toggle::after {
+    animation: ai-more-sheen 2.4s var(--ease-out) 0.45s 3;
+}
+.ai-exp-more.is-nudging .ai-exp-more-toggle {
+    animation: ai-more-pulse 2.4s ease-out 0.45s 3;
+}
+/* Any interaction cancels the nudge immediately. */
+.ai-exp-more.is-nudging .ai-exp-more-toggle:hover,
+.ai-exp-more.is-open .ai-exp-more-toggle {
+    animation: none;
+}
+.ai-exp-more.is-nudging .ai-exp-more-toggle:hover::after,
+.ai-exp-more.is-open .ai-exp-more-toggle::after {
+    animation: none;
+}
+
+@keyframes ai-more-sheen {
+    0%        { transform: translateX(-130%); }
+    45%, 100% { transform: translateX(130%); }
+}
+@keyframes ai-more-pulse {
+    0%, 100% { box-shadow: 0 0 0 rgba(255, 212, 0, 0); border-color: var(--yellow-line); }
+    18%      { box-shadow: 0 0 16px rgba(255, 212, 0, 0.28); border-color: var(--yellow); }
+    40%      { box-shadow: 0 0 0 rgba(255, 212, 0, 0); border-color: var(--yellow-line); }
+}
+
+/* The global reduced-motion rule collapses durations but keeps iteration
+   counts, which would strobe. Drop the nudge outright instead. */
+@media (prefers-reduced-motion: reduce) {
+    .ai-exp-more.is-nudging .ai-exp-more-toggle,
+    .ai-exp-more.is-nudging .ai-exp-more-toggle::after {
+        animation: none !important;
+    }
+}
+
+.ai-exp-more-body {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--line);
+    animation: ai-exp-more-in 0.24s var(--ease-out) both;
+}
+@keyframes ai-exp-more-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: none; }
+}
+
+.ai-exp-extra {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 10px 14px;
+}
+.ai-exp-extra + .ai-exp-extra {
+    border-top: 1px dashed var(--line);
+}
+
+.ai-exp-sublabel {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+}
+
+/* The move itself reads as data, so it gets the mono/yellow chip treatment. */
+.ai-exp-move {
+    display: inline-block;
+    margin-right: 8px;
+    padding: 1px 7px;
+    border-radius: 4px;
+    background: var(--yellow-soft);
+    border: 1px solid var(--yellow-line);
+    font-family: var(--font-mono);
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: var(--yellow-bright);
+    vertical-align: baseline;
+}
+.ai-exp-move[hidden] { display: none; }
+
+@media (max-width: 480px) {
+    /* The hint carried the margin-left:auto that pushed the chevron to the far
+       edge, so the chevron has to take it over once the hint is dropped. */
+    .ai-exp-more-hint { display: none; }
+    .ai-exp-more-chevron { margin-left: auto; }
+}
+
+/* ── Ranked nav marker ────────────────────────────────────────────────────
+   Lives here rather than in ranked.css because every page carries the Ranked
+   link but only the two Ranked-aware pages load that stylesheet. */
+.topnav a.nav-ranked { position: relative; }
+.topnav a.nav-ranked::after {
+    content: '';
+    position: absolute;
+    top: 6px; right: 2px;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--yellow);
+    box-shadow: 0 0 8px var(--yellow);
+}
+
 /* ══════════════════════════════════════════════════════════════════════════
    GUESS SECTION — COLLAPSIBLE
    ══════════════════════════════════════════════════════════════════════════ */

@@ -74,6 +74,57 @@
             margin: 0;
             text-shadow: var(--glow);
         }
+        /* -- Mode filter --------------------------------------------------- */
+        .an-mode-filter {
+            display: inline-flex;
+            padding: 3px;
+            gap: 2px;
+            background: var(--surface-2);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+        }
+        .an-mode-btn {
+            padding: 6px 14px;
+            background: none;
+            border: 0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: var(--font-mono);
+            font-size: 0.66rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-faint);
+            transition: color 0.18s ease, background 0.18s ease;
+        }
+        .an-mode-btn:hover { color: var(--text-dim); }
+        .an-mode-btn.active { background: var(--surface-3); color: var(--text); }
+        /* Ranked keeps its gold identity wherever it appears. */
+        .an-mode-ranked.active {
+            background: linear-gradient(180deg, var(--yellow-soft), var(--surface-3));
+            color: var(--yellow-bright);
+            box-shadow: 0 0 12px rgba(255, 212, 0, 0.16);
+        }
+        .an-mode-note {
+            margin-top: 6px;
+            font-family: var(--font-mono);
+            font-size: 0.62rem;
+            letter-spacing: 0.06em;
+            color: var(--text-faint);
+        }
+        .an-chart-legend {
+            display: flex; gap: 14px; align-items: center;
+            margin-top: 6px;
+            font-family: var(--font-mono); font-size: 0.6rem;
+            letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint);
+        }
+        .an-chart-legend span { display: inline-flex; align-items: center; gap: 5px; }
+        .an-chart-legend i { width: 10px; height: 2px; border-radius: 2px; display: inline-block; }
+        @media (max-width: 760px) {
+            .an-mode-filter { order: -1; }
+            .an-mode-btn { padding: 6px 10px; font-size: 0.6rem; }
+        }
+
         .an-header-meta {
             display: flex;
             align-items: center;
@@ -355,6 +406,42 @@
             border: 1px solid var(--line);
             background: var(--surface-2);
             align-self: flex-start;
+        }
+
+        /* -- Season badges -------------------------------------------------- */
+        .an-season-card { margin-top: 12px; }
+        .an-season-badges { display: flex; flex-direction: column; gap: 8px; padding: 4px 0 2px; }
+        .an-season-empty {
+            font-size: 0.82rem; color: var(--text-faint); line-height: 1.5; padding: 6px 2px;
+        }
+        .an-season-badge {
+            --tier-accent: #9aa0ad;
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 14px; border-radius: 8px;
+            background: linear-gradient(135deg,
+                color-mix(in srgb, var(--tier-accent) 12%, transparent), var(--surface-2));
+            border: 1px solid color-mix(in srgb, var(--tier-accent) 40%, transparent);
+        }
+        .an-season-badge.tier-knight      { --tier-accent: #6fc3ff; }
+        .an-season-badge.tier-bishop      { --tier-accent: #b98cff; }
+        .an-season-badge.tier-rook        { --tier-accent: #ff9a5c; }
+        .an-season-badge.tier-queen       { --tier-accent: #ffd400; }
+        .an-season-badge.tier-grandmaster { --tier-accent: #fff1a8; }
+        .an-season-badge-icon {
+            font-size: 1.5rem; line-height: 1; color: var(--tier-accent);
+            text-shadow: 0 0 14px color-mix(in srgb, var(--tier-accent) 60%, transparent);
+        }
+        .an-season-badge-body { display: flex; flex-direction: column; gap: 2px; }
+        .an-season-badge-season {
+            font-family: var(--font-display); font-weight: 700; font-size: 0.92rem; color: var(--text);
+        }
+        .an-season-badge-tier {
+            font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700;
+            letter-spacing: 0.14em; text-transform: uppercase; color: var(--tier-accent);
+        }
+        .an-season-badge-rating {
+            margin-left: auto; font-family: var(--font-mono);
+            font-size: 0.86rem; font-weight: 700; color: var(--text-dim);
         }
 
         .an-radar-body {
@@ -752,7 +839,8 @@
         </div>
 
         <nav class="topnav">
-            <a href="index.html">Home</a>
+            <a href="index.html">Casual</a>
+            <a href="ranked.html" class="nav-ranked">Ranked</a>
             <a href="leaderboard.html">Leaderboard</a>
             <a href="analytics.html" class="active">Analytics</a>
             <a href="info.html">Information</a>
@@ -790,6 +878,15 @@
                 <h1 class="an-title">Analytics</h1>
             </div>
             <div class="an-header-meta">
+                <!-- Mode filter. Every stat, chart and the radar respond to it. -->
+                <div class="an-mode-filter" role="tablist" aria-label="Training mode filter">
+                    <button class="an-mode-btn active" id="an-mode-casual" role="tab"
+                            aria-selected="true" onclick="setAnalyticsMode('casual')">Casual</button>
+                    <button class="an-mode-btn an-mode-ranked" id="an-mode-ranked" role="tab"
+                            aria-selected="false" onclick="setAnalyticsMode('ranked')">Ranked</button>
+                    <button class="an-mode-btn" id="an-mode-combined" role="tab"
+                            aria-selected="false" onclick="setAnalyticsMode('combined')">Combined</button>
+                </div>
                 <div class="an-meta-chip">Player: <span id="an-username">—</span></div>
                 <div class="an-meta-chip" id="an-last-updated-chip">Data: <span>live</span></div>
                 <a href="index.html" class="an-back-link">
@@ -921,6 +1018,19 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Permanent proof of a closed season. Never earnable again. -->
+                <div class="an-card an-season-card">
+                    <div class="an-card-title">
+                        <div class="an-card-title-text">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5 17 22l-5-3-5 3 1.5-8.5"/></svg>
+                            Season Badges
+                        </div>
+                    </div>
+                    <div id="an-season-badges" class="an-season-badges">
+                        <div class="an-season-empty">Sign in to see your season history.</div>
+                    </div>
+                </div>
             </div><!-- /center -->
 
         </div><!-- /grid -->
@@ -977,7 +1087,7 @@
         import { initializeApp, getApp, getApps }   from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
         import { getDatabase, ref, get }             from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-        import { addNormalizedThemeObservation } from './theme-normalizer.js';
+        import { addNormalizedThemeObservation, canonicalizeThemeLabel } from './theme-normalizer.js';
 
         // ── Firebase ─────────────────────────────────────────────────────────
         const firebaseConfig = {
@@ -1013,6 +1123,9 @@
         // All positions (for theme analysis)
         let allPositions    = [];
         let positionsLoaded = false;
+        // Exact per-theme tallies main.js has been recording all along. The
+        // radar used to ignore these and estimate from difficulty mix instead.
+        let casualThemePerformance = null;
 
         // ── Helpers ───────────────────────────────────────────────────────────
 
@@ -1032,6 +1145,101 @@
         }
         function isProvisionalMode() {
             return totalPuzzles < PROVISIONAL_PUZZLES;
+        }
+
+        // ── Ranked state ──────────────────────────────────────────────────────
+        // Casual numbers come from the user record; Ranked numbers come from the
+        // session log ranked.js writes, which stores the puzzle key for every
+        // answer. That difference matters for the radar: Ranked theme accuracy
+        // is exact, Casual is reconstructed.
+        let rankedProfile  = null;
+        let rankedSessions = [];     // newest first
+        let analyticsMode  = 'casual';
+
+        const AN_RR_TIERS = [
+            { name: 'Pawn',        min: 0,    icon: '\u265F' },
+            { name: 'Knight',      min: 1000, icon: '\u265E' },
+            { name: 'Bishop',      min: 1300, icon: '\u265D' },
+            { name: 'Rook',        min: 1600, icon: '\u265C' },
+            { name: 'Queen',       min: 1900, icon: '\u265B' },
+            { name: 'Grandmaster', min: 2200, icon: '\u265A' },
+        ];
+        function anTierFor(rating) {
+            let found = AN_RR_TIERS[0];
+            for (const t of AN_RR_TIERS) if ((rating ?? 0) >= t.min) found = t;
+            return found;
+        }
+
+        async function loadRankedData(uid) {
+            try {
+                const [profileSnap, sessionSnap] = await Promise.all([
+                    get(ref(db, `users/${uid}/ranked`)),
+                    get(ref(db, `rankedSessions/${uid}`)),
+                ]);
+                rankedProfile = profileSnap.exists() ? profileSnap.val() : null;
+                rankedSessions = sessionSnap.exists()
+                    ? Object.entries(sessionSnap.val())
+                        .map(([key, value]) => ({ ...value, _key: key }))
+                        .sort((a, b) => (b.ts || 0) - (a.ts || 0))
+                    : [];
+            } catch (_) {
+                rankedProfile = null;
+                rankedSessions = [];
+            }
+        }
+
+        // Every ranked answer, flattened newest-first, with its session context.
+        function rankedAnswers() {
+            const out = [];
+            rankedSessions.forEach(session => {
+                const puzzles = Array.isArray(session.puzzles) ? session.puzzles : [];
+                puzzles.forEach((p, i) => {
+                    out.push({
+                        ...p,
+                        sessionMode: session.mode,
+                        ratingAfter: session.ratingAfter,
+                        ratingDelta: session.ratingDelta,
+                        ts: (session.ts || 0) + i,     // keeps order stable within a session
+                        index: i,
+                    });
+                });
+            });
+            return out.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+        }
+
+        function rankedTotals() {
+            const answers = rankedAnswers();
+            const correct = answers.filter(a => a.correct).length;
+            return {
+                answers,
+                total: answers.length,
+                correct,
+                wrong: answers.length - correct,
+                accuracy: answers.length ? Math.round((correct / answers.length) * 100) : null,
+                sessions: rankedSessions.length,
+                bestScore: rankedSessions.reduce((m, s) => Math.max(m, s.score || 0), 0),
+                avgMs: answers.length
+                    ? answers.reduce((sum, a) => sum + (a.ms || 0), 0) / answers.length
+                    : 0,
+            };
+        }
+
+        window.setAnalyticsMode = function(mode) {
+            analyticsMode = mode;
+            ['casual', 'ranked', 'combined'].forEach(m => {
+                const btn = document.getElementById('an-mode-' + m);
+                if (!btn) return;
+                btn.classList.toggle('active', m === mode);
+                btn.setAttribute('aria-selected', String(m === mode));
+            });
+            renderAll();
+        };
+
+        function renderAll() {
+            if (!currentUID) return;
+            populateOverview();
+            renderAnPuzzleLog();
+            renderRadarProfile();
         }
 
         // ── Auth ──────────────────────────────────────────────────────────────
@@ -1068,6 +1276,9 @@
                 bestStreak    = data.bestStreak   ?? 0;
                 peakPR        = data.peakPR       ?? playerPR;
                 prHistory     = Array.isArray(data.prHistory) ? data.prHistory : [];
+                casualThemePerformance =
+                    (data.achievements && data.achievements.activity &&
+                     data.achievements.activity.themePerformance) || null;
                 currentUsername = (typeof data.username === 'string' && data.username.trim())
                     ? data.username.trim()
                     : (user.displayName || 'Player');
@@ -1077,6 +1288,9 @@
 
             if (nameEl) nameEl.textContent = currentUsername;
             setText('an-username', currentUsername);
+
+            await loadRankedData(currentUID);
+            renderSeasonBadges();
 
             populateOverview();
             renderAnPuzzleLog();
@@ -1090,6 +1304,11 @@
 
         // ── Show guest empty state ────────────────────────────────────────────
         function showGuestState() {
+            const badgeHost = document.getElementById('an-season-badges');
+            if (badgeHost) {
+                badgeHost.innerHTML =
+                    '<div class="an-season-empty">Sign in to see your season history.</div>';
+            }
             const gateEl = document.getElementById('an-auth-gate-left');
             const statsEl = document.getElementById('an-stats-content');
             if (gateEl) gateEl.style.display = 'flex';
@@ -1109,7 +1328,30 @@
         }
 
         // ── Overview population ───────────────────────────────────────────────
+        // Relabels the KPI tiles so a number is never shown under the wrong
+        // caption — "Current PR" means nothing in the Ranked view.
+        function setKpiLabels(labels) {
+            const map = {
+                'an-stat-pr':       labels.rating,
+                'an-stat-puzzles':  labels.volume,
+                'an-stat-streak':   labels.streak,
+                'an-stat-accuracy': 'Accuracy',
+            };
+            Object.entries(map).forEach(([id, label]) => {
+                const value = document.getElementById(id);
+                if (!value) return;
+                const tile = value.parentElement;
+                const caption = tile && tile.querySelector('.an-kpi-label');
+                if (caption) caption.textContent = label;
+            });
+        }
+
         function populateOverview() {
+            if (analyticsMode === 'ranked')   return populateRankedOverview();
+            if (analyticsMode === 'combined') return populateCombinedOverview();
+
+            setKpiLabels({ rating: 'Current PR', volume: 'Puzzles Played', streak: 'Current Streak' });
+
             const accuracy = totalPuzzles > 0
                 ? Math.round((correctCount / totalPuzzles) * 100) + '%'
                 : '—';
@@ -1132,6 +1374,7 @@
             setText('an-stat-correct',     correctCount);
             setText('an-stat-wrong',       wrongCount);
             setText('an-stat-peak-pr',     peakPR);
+            setChartTitle('PR Over Time');
 
             // Recent delta
             const recentEl = document.getElementById('an-stat-recent-delta');
@@ -1157,11 +1400,136 @@
                 badge.textContent = '';
             }
 
-            renderAnSparkline();
+            renderAnSparkline(casualSeries());
+        }
+
+        // ── Series builders ───────────────────────────────────────────────────
+        // One shape for the chart to draw, whatever the mode is measuring.
+        function casualSeries() {
+            return [{
+                label: 'PR',
+                color: '#ffd400',
+                points: prHistory.map(e => ({ value: e.pr, ts: e.ts, meta: e })),
+            }];
+        }
+
+        function rankedSeries() {
+            const ordered = [...rankedSessions].reverse();   // oldest first
+            return [{
+                label: 'RR',
+                color: '#ffd400',
+                points: ordered
+                    .filter(s => Number.isFinite(Number(s.ratingAfter)))
+                    .map(s => ({ value: Number(s.ratingAfter), ts: s.ts, meta: s })),
+            }];
+        }
+
+        function setChartTitle(text, note) {
+            const node = document.querySelector('.an-card-title-text');
+            if (node) {
+                const svg = node.querySelector('svg');
+                node.textContent = '';
+                if (svg) node.appendChild(svg);
+                node.appendChild(document.createTextNode(' ' + text));
+            }
+            const wrap = document.querySelector('.an-chart-wrap');
+            if (!wrap) return;
+            let noteEl = document.getElementById('an-chart-note');
+            if (!noteEl) {
+                noteEl = document.createElement('div');
+                noteEl.id = 'an-chart-note';
+                noteEl.className = 'an-mode-note';
+                wrap.appendChild(noteEl);
+            }
+            noteEl.textContent = note || '';
+            noteEl.style.display = note ? '' : 'none';
+        }
+
+        function populateRankedOverview() {
+            setKpiLabels({ rating: 'Ranked Rating', volume: 'Sessions', streak: 'Best Score' });
+            const t = rankedTotals();
+            const rating = rankedProfile ? rankedProfile.rating : null;
+            const tier = anTierFor(rating || 0);
+
+            setText('an-stat-pr',       rating ?? '—');
+            setText('an-stat-puzzles',  t.sessions || '—');
+            setText('an-stat-streak',   t.bestScore ? t.bestScore : '—');
+            setText('an-stat-accuracy', t.accuracy === null ? '—' : t.accuracy + '%');
+
+            setText('an-stat-difficulty',  rating ? `${tier.icon} ${tier.name}` : '—');
+            setText('an-stat-best-streak', rankedProfile ? (rankedProfile.peakRating ?? '—') : '—');
+            setText('an-stat-correct',     t.correct);
+            setText('an-stat-wrong',       t.wrong);
+            setText('an-stat-peak-pr',     rankedProfile ? (rankedProfile.seasonPeakRating ?? '—') : '—');
+
+            const recentEl = document.getElementById('an-stat-recent-delta');
+            if (recentEl) {
+                const recent = rankedSessions.slice(0, 10)
+                    .reduce((sum, s) => sum + (Number(s.ratingDelta) || 0), 0);
+                recentEl.textContent = rankedSessions.length ? (recent >= 0 ? '+' : '') + recent : '—';
+                recentEl.className = 'an-detail-value ' + (recent >= 0 ? 'positive' : 'negative');
+            }
+
+            const badge = document.getElementById('an-pr-badge');
+            if (badge) {
+                const delta = rankedProfile ? (rankedProfile.seasonDelta || 0) : 0;
+                badge.textContent = rankedProfile ? `${delta >= 0 ? '+' : ''}${delta} this season` : '';
+                badge.className = 'an-pr-badge ' + (delta >= 0 ? 'gain' : 'loss');
+            }
+
+            setChartTitle('Ranked Rating Over Time',
+                t.sessions ? '' : 'Play a Ranked session to start this chart.');
+            renderAnSparkline(rankedSeries());
+        }
+
+        function populateCombinedOverview() {
+            setKpiLabels({ rating: 'PR / RR', volume: 'Positions Seen', streak: 'Current Streak' });
+            const t = rankedTotals();
+            const rating = rankedProfile ? rankedProfile.rating : null;
+
+            const bothCorrect = correctCount + t.correct;
+            const bothTotal   = totalPuzzles + t.total;
+
+            setText('an-stat-pr', rating === null ? String(playerPR) : `${playerPR} / ${rating}`);
+            setText('an-stat-puzzles', bothTotal);
+            setText('an-stat-streak', currentStreak === 0 ? '—'
+                : currentStreak > 0 ? `+${currentStreak} ✓` : `${Math.abs(currentStreak)} ✗`);
+            setText('an-stat-accuracy',
+                bothTotal ? Math.round((bothCorrect / bothTotal) * 100) + '%' : '—');
+
+            setText('an-stat-difficulty',  getDifficultyFromPR(playerPR));
+            setText('an-stat-best-streak', bestStreak > 0 ? `${bestStreak} ✓` : '—');
+            setText('an-stat-correct',     bothCorrect);
+            setText('an-stat-wrong',       wrongCount + t.wrong);
+            setText('an-stat-peak-pr',     peakPR);
+
+            const recentEl = document.getElementById('an-stat-recent-delta');
+            if (recentEl && prHistory.length >= 2) {
+                const slice = prHistory.slice(-10);
+                const delta = slice[slice.length - 1].pr - slice[0].pr;
+                recentEl.textContent = (delta >= 0 ? '+' : '') + delta;
+                recentEl.className = 'an-detail-value ' + (delta >= 0 ? 'positive' : 'negative');
+            }
+
+            const badge = document.getElementById('an-pr-badge');
+            if (badge) badge.textContent = '';
+
+            // Two ratings on different scales cannot share one axis honestly, so
+            // each line is normalised to its own range and the note says so.
+            const series = casualSeries().concat(
+                rankedSeries().map(s => ({ ...s, label: 'RR', color: '#6fc3ff' })));
+            setChartTitle('PR & Ranked Rating',
+                'Each line is scaled to its own range — the two ratings are not on a shared axis.');
+            renderAnSparkline(series.filter(s => s.points.length));
         }
 
         // ── Sparkline with hover tooltips ─────────────────────────────────────
-        function renderAnSparkline() {
+        // `series` is [{ label, color, points: [{ value, ts, meta }] }]. The
+        // first entry is the primary line — it owns the axis, the dots and the
+        // hover tooltip. Any further entries are drawn as secondary lines
+        // normalised to their own range, which is how Combined shows PR and RR
+        // together without pretending they share a scale.
+        function renderAnSparkline(series) {
             const svg     = document.getElementById('an-sparkline');
             const tooltip = document.getElementById('an-chart-tooltip');
             const container = document.getElementById('an-sparkline-container');
@@ -1171,21 +1539,29 @@
 
             const W = 300, H = 100, PAD = 14;
 
-            if (prHistory.length < 2) {
+            const allSeries = (series && series.length) ? series : casualSeries();
+            const primary   = allSeries[0] || { label: 'PR', color: '#ffd400', points: [] };
+            const data      = primary.points;
+            const LINE      = primary.color || '#ffd400';
+            renderChartLegend(allSeries);
+
+            if (data.length < 2) {
                 const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
                 text.setAttribute('x', W / 2); text.setAttribute('y', H / 2 + 5);
                 text.setAttribute('text-anchor', 'middle');
                 text.setAttribute('fill', 'rgba(165,165,178,0.5)');
                 text.setAttribute('font-size', '11');
                 text.setAttribute('font-family', 'JetBrains Mono, monospace');
-                text.textContent = 'Play more puzzles to see trend';
+                text.textContent = allSeries.length && primary.points.length === 1
+                    ? 'One session so far \u2014 trend appears next time'
+                    : 'Play more puzzles to see trend';
                 svg.appendChild(text);
                 setText('an-chart-left', '');
                 setText('an-chart-right', '');
                 return;
             }
 
-            const vals   = prHistory.map(p => p.pr);
+            const vals   = data.map(p => p.value);
             const minVal = Math.min(...vals);
             const maxVal = Math.max(...vals);
             const range  = maxVal - minVal || 1;
@@ -1204,9 +1580,9 @@
             grad.setAttribute('x1', '0'); grad.setAttribute('y1', '0');
             grad.setAttribute('x2', '0'); grad.setAttribute('y2', '1');
             const s1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-            s1.setAttribute('offset', '0%'); s1.setAttribute('stop-color', '#ffd400'); s1.setAttribute('stop-opacity', '0.3');
+            s1.setAttribute('offset', '0%'); s1.setAttribute('stop-color', LINE); s1.setAttribute('stop-opacity', '0.3');
             const s2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-            s2.setAttribute('offset', '100%'); s2.setAttribute('stop-color', '#ffd400'); s2.setAttribute('stop-opacity', '0.02');
+            s2.setAttribute('offset', '100%'); s2.setAttribute('stop-color', LINE); s2.setAttribute('stop-opacity', '0.02');
             grad.appendChild(s1); grad.appendChild(s2); defs.appendChild(grad); svg.appendChild(defs);
 
             // Area
@@ -1235,16 +1611,39 @@
             const lineD = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0]},${p[1]}`).join(' ');
             const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             line.setAttribute('d', lineD); line.setAttribute('fill', 'none');
-            line.setAttribute('stroke', '#ffd400'); line.setAttribute('stroke-width', '2');
+            line.setAttribute('stroke', LINE); line.setAttribute('stroke-width', '2');
             line.setAttribute('stroke-linejoin', 'round'); line.setAttribute('stroke-linecap', 'round');
             svg.appendChild(line);
+
+            // Secondary series. Each is scaled to its own min/max so a rating on
+            // a different range stays readable next to the primary one.
+            allSeries.slice(1).forEach(extra => {
+                if (!extra.points || extra.points.length < 2) return;
+                const eVals = extra.points.map(p => p.value);
+                const eMin  = Math.min(...eVals);
+                const eMax  = Math.max(...eVals);
+                const eRange = (eMax - eMin) || 1;
+                const ePoints = extra.points.map((p, i) => {
+                    const x = PAD + (i / (extra.points.length - 1)) * (W - PAD * 2);
+                    const y = PAD + innerH - ((p.value - eMin) / eRange) * innerH;
+                    return [x, y];
+                });
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', ePoints.map((p, i) => (i === 0 ? 'M' : 'L') + p[0] + ',' + p[1]).join(' '));
+                path.setAttribute('fill', 'none');
+                path.setAttribute('stroke', extra.color || '#6fc3ff');
+                path.setAttribute('stroke-width', '1.8');
+                path.setAttribute('stroke-dasharray', '4,3');
+                path.setAttribute('stroke-linejoin', 'round');
+                svg.appendChild(path);
+            });
 
             // Dots (only shown if not too dense)
             points.forEach(([x, y]) => {
                 const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                 c.setAttribute('cx', x); c.setAttribute('cy', y);
                 c.setAttribute('r', vals.length > 25 ? '0' : '2.5');
-                c.setAttribute('fill', '#ffd400'); c.setAttribute('stroke', '#08080a'); c.setAttribute('stroke-width', '1.5');
+                c.setAttribute('fill', LINE); c.setAttribute('stroke', '#08080a'); c.setAttribute('stroke-width', '1.5');
                 svg.appendChild(c);
             });
 
@@ -1252,7 +1651,7 @@
             [[points[0], vals[0]], [points[points.length - 1], vals[vals.length - 1]]].forEach(([[x, y]]) => {
                 const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                 c.setAttribute('cx', x); c.setAttribute('cy', y); c.setAttribute('r', '4');
-                c.setAttribute('fill', '#ffd400'); c.setAttribute('stroke', '#08080a'); c.setAttribute('stroke-width', '1.5');
+                c.setAttribute('fill', LINE); c.setAttribute('stroke', '#08080a'); c.setAttribute('stroke-width', '1.5');
                 svg.appendChild(c);
             });
 
@@ -1272,7 +1671,7 @@
             svg.appendChild(hoverLine);
 
             const hoverDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            hoverDot.setAttribute('r', '4'); hoverDot.setAttribute('fill', '#ffd400');
+            hoverDot.setAttribute('r', '4'); hoverDot.setAttribute('fill', LINE);
             hoverDot.setAttribute('stroke', '#08080a'); hoverDot.setAttribute('stroke-width', '2');
             hoverDot.style.display = 'none';
             svg.appendChild(hoverDot);
@@ -1292,7 +1691,8 @@
                     });
 
                     const [nx, ny] = points[nearest];
-                    const entry    = prHistory[nearest];
+                    const point    = data[nearest];
+                    const entry    = point.meta || {};
 
                     hoverLine.setAttribute('x1', nx); hoverLine.setAttribute('x2', nx);
                     hoverLine.style.display = '';
@@ -1300,11 +1700,16 @@
                     hoverDot.style.display = '';
 
                     // Tooltip content
-                    const d       = new Date(entry.ts);
+                    const d       = new Date(point.ts || entry.ts);
                     const dateStr = `${d.getMonth() + 1}/${d.getDate()} ${d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`;
-                    const sign    = entry.delta >= 0 ? '+' : '';
-                    const resultLabel = entry.correct ? '✓ Correct' : '✗ Incorrect';
-                    tooltip.innerHTML = `<strong>PR ${entry.pr}</strong> &nbsp; <span style="color:${entry.delta >= 0 ? 'var(--ok)' : 'var(--bad)'}">${sign}${entry.delta}</span><br><span style="color:var(--text-faint);font-size:0.6rem;">${dateStr} · ${entry.difficulty || '—'} · ${resultLabel}</span>`;
+                    const delta   = Number(entry.delta ?? entry.ratingDelta ?? 0);
+                    const sign    = delta >= 0 ? '+' : '';
+                    // Casual points are single puzzles; Ranked points are whole
+                    // sessions, so the second line has to describe each properly.
+                    const detail  = entry.mode
+                        ? `${entry.mode === 'duel' ? 'Duel' : 'Blitz Solo'} · ${entry.score ?? 0} pts`
+                        : `${entry.difficulty || '—'} · ${entry.correct ? '✓ Correct' : '✗ Incorrect'}`;
+                    tooltip.innerHTML = `<strong>${primary.label} ${point.value}</strong> &nbsp; <span style="color:${delta >= 0 ? 'var(--ok)' : 'var(--bad)'}">${sign}${delta}</span><br><span style="color:var(--text-faint);font-size:0.6rem;">${dateStr} · ${detail}</span>`;
                     tooltip.classList.add('visible');
 
                     // Position tooltip
@@ -1327,12 +1732,30 @@
                 const d = new Date(ts);
                 return `${d.getMonth() + 1}/${d.getDate()}`;
             };
-            setText('an-chart-left',  fmt(prHistory[0].ts)     + ` (${prHistory[0].pr})`);
-            setText('an-chart-right', fmt(prHistory[prHistory.length - 1].ts) + ` (${prHistory[prHistory.length - 1].pr})`);
+            setText('an-chart-left',  fmt(data[0].ts) + ` (${data[0].value})`);
+            setText('an-chart-right', fmt(data[data.length - 1].ts) + ` (${data[data.length - 1].value})`);
         }
 
         // ── Puzzle Log ────────────────────────────────────────────────────────
+        function renderChartLegend(series) {
+            const wrap = document.querySelector('.an-chart-wrap');
+            if (!wrap) return;
+            let legend = document.getElementById('an-chart-legend');
+            if (!legend) {
+                legend = document.createElement('div');
+                legend.id = 'an-chart-legend';
+                legend.className = 'an-chart-legend';
+                wrap.appendChild(legend);
+            }
+            if (!series || series.length < 2) { legend.style.display = 'none'; return; }
+            legend.style.display = 'flex';
+            legend.innerHTML = series.map(function(s) {
+                return '<span><i style="background:' + s.color + '"></i>' + s.label + '</span>';
+            }).join('');
+        }
+
         window.renderAnPuzzleLog = function() {
+            if (analyticsMode !== 'casual') return renderRankedPuzzleLog();
             const container = document.getElementById('an-log-list');
             const netEl     = document.getElementById('an-log-net');
             const dropdown  = document.getElementById('an-log-select');
@@ -1372,9 +1795,13 @@
                 const deltaClass = entry.delta >= 0 ? 'positive' : 'negative';
                 const resultClass = entry.correct ? 'correct' : 'incorrect';
                 const resultLabel = entry.correct ? '✓' : '✗';
-                const posEval    = entry.posEval !== null && entry.posEval !== undefined
-                    ? (entry.posEval > 0 ? `+${entry.posEval.toFixed(2)}` : entry.posEval.toFixed(2))
-                    : '—';
+                // Forced mates are stored as a +/-100000cp sentinel; printing
+                // that verbatim showed "+1000.00" in the eval column.
+                const posEval    = !Number.isFinite(entry.posEval)
+                    ? '—'
+                    : Math.abs(entry.posEval) >= 100
+                        ? (entry.posEval > 0 ? '+M' : '−M')
+                        : (entry.posEval > 0 ? `+${entry.posEval.toFixed(2)}` : entry.posEval.toFixed(2));
                 const diff  = entry.difficulty || '—';
                 const time  = entry.ts ? fmt(entry.ts) : '—';
                 const themes = Array.isArray(entry.themes) && entry.themes.length
@@ -1393,6 +1820,202 @@
                 </div>`;
             }).join('');
         };
+
+        // Ranked rows are individual answers inside a session, so they carry the
+        // session's mode and the points scored rather than a PR delta.
+        function renderRankedPuzzleLog() {
+            const container = document.getElementById('an-log-list');
+            const netEl     = document.getElementById('an-log-net');
+            const dropdown  = document.getElementById('an-log-select');
+            if (!container) return;
+
+            const count = dropdown ? parseInt(dropdown.value, 10) || 25 : 25;
+            let rows = rankedAnswers();
+
+            if (analyticsMode === 'combined') {
+                // Casual entries have no puzzle key, so they are shown from
+                // prHistory and interleaved by timestamp.
+                const casualRows = prHistory.map(function(e, i) {
+                    return {
+                        _casual: true, ts: e.ts, correct: e.correct,
+                        delta: e.delta, pr: e.pr, difficulty: e.difficulty,
+                        posEval: e.posEval, _n: i + 1,
+                    };
+                });
+                rows = rows.concat(casualRows).sort(function(a, b) { return (b.ts || 0) - (a.ts || 0); });
+            }
+
+            const slice = rows.slice(0, count);
+
+            if (netEl) {
+                const pts = rows.filter(function(r) { return !r._casual; })
+                                .reduce(function(s, r) { return s + (r.points || 0); }, 0);
+                netEl.textContent = pts ? pts + ' pts' : '\u2014';
+                netEl.className = 'an-log-net-value positive';
+            }
+
+            if (!slice.length) {
+                container.innerHTML = '<div class="an-log-empty">No ranked sessions yet.<br>' +
+                    'Play a Blitz Solo set or a Duel to build this log.</div>';
+                return;
+            }
+
+            const posMap = {};
+            allPositions.forEach(function(p) { if (p._key) posMap[p._key] = p; });
+
+            const fmt = function(ts) {
+                const d = new Date(ts);
+                return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            };
+
+            container.innerHTML = slice.map(function(r, i) {
+                const resultClass = r.correct ? 'correct' : 'incorrect';
+                const resultLabel = r.correct ? '\u2713' : '\u2717';
+                const num  = rows.length - i;
+                const time = r.ts ? fmt(r.ts) : '\u2014';
+
+                if (r._casual) {
+                    const sign = r.delta >= 0 ? '+' : '';
+                    return '<div class="an-log-row ' + resultClass + '">' +
+                        '<span class="an-log-cell num">#' + num + '</span>' +
+                        '<span class="an-log-cell result ' + resultClass + '">' + resultLabel + '</span>' +
+                        '<span class="an-log-cell pr">' + r.pr + '</span>' +
+                        '<span class="an-log-cell delta ' + (r.delta >= 0 ? 'positive' : 'negative') + '">' +
+                            sign + r.delta + '</span>' +
+                        '<span class="an-log-cell eval">\u2014</span>' +
+                        '<span class="an-log-cell diff diff-' + String(r.difficulty || '').toLowerCase() + '">' +
+                            (r.difficulty || '\u2014') + '</span>' +
+                        '<span class="an-log-cell time">' + time + '</span>' +
+                        '<span class="an-log-cell themes">Casual</span>' +
+                        '</div>';
+                }
+
+                const pos = posMap[r.key];
+                const themes = pos && pos.AIExplanation && Array.isArray(pos.AIExplanation.themes)
+                    ? pos.AIExplanation.themes.slice(0, 3).join(' \u00b7 ')
+                    : (r.sessionMode === 'duel' ? 'Duel' : 'Blitz Solo');
+                const secs = ((r.ms || 0) / 1000).toFixed(1) + 's';
+
+                return '<div class="an-log-row ' + resultClass + '">' +
+                    '<span class="an-log-cell num">#' + num + '</span>' +
+                    '<span class="an-log-cell result ' + resultClass + '">' + resultLabel + '</span>' +
+                    '<span class="an-log-cell pr">' + (r.points || 0) + '</span>' +
+                    '<span class="an-log-cell delta ' + (r.correct ? 'positive' : 'negative') + '">' +
+                        (r.correct ? '+' + (r.points || 0) : '0') + '</span>' +
+                    '<span class="an-log-cell eval">' + secs + '</span>' +
+                    '<span class="an-log-cell diff">' +
+                        (r.sessionMode === 'duel' ? 'Duel' : 'Solo') + '</span>' +
+                    '<span class="an-log-cell time">' + time + '</span>' +
+                    '<span class="an-log-cell themes">' + themes + '</span>' +
+                    '</div>';
+            }).join('');
+        }
+
+        // ── Exact theme accuracy from Ranked sessions ─────────────────────────
+        // Ranked records the puzzle key for every answer, so this is a real
+        // per-theme tally rather than the estimate the casual radar has to use.
+        function rankedThemeTotals() {
+            const posMap = {};
+            allPositions.forEach(function(p) { if (p._key) posMap[p._key] = p; });
+
+            const totals = new Map();
+            rankedAnswers().forEach(function(answer) {
+                const pos = posMap[answer.key];
+                if (!pos) return;
+                const exp = pos.AIExplanation;
+                const themes = (exp && Array.isArray(exp.themes)) ? exp.themes : [];
+                const seen = new Set();
+                themes.forEach(function(raw) {
+                    const label = String(raw || '').trim();
+                    if (!label || seen.has(label)) return;
+                    seen.add(label);
+                    addNormalizedThemeObservation(totals, label, answer.correct ? 1 : 0);
+                });
+            });
+            return totals;
+        }
+
+        // Casual has an exact record too, written by main.js on every answer —
+        // it simply was never read here. Preferred over the old estimate when
+        // it has enough behind it.
+        function casualThemeTotals() {
+            const totals = new Map();
+            const stored = casualThemePerformance;
+            if (stored && typeof stored === 'object') {
+                Object.values(stored).forEach(function(entry) {
+                    const total = Number(entry && entry.total) || 0;
+                    const correct = Number(entry && entry.correct) || 0;
+                    const label = (entry && typeof entry.label === 'string' && entry.label.trim())
+                        ? entry.label.trim() : null;
+                    if (!label || total <= 0) return;
+
+                    const canonical = canonicalizeThemeLabel(label);
+                    if (!canonical) return;
+                    const existing = totals.get(canonical.key) ||
+                        { name: canonical.label, total: 0, correct: 0 };
+                    existing.total += total;
+                    existing.correct += Math.min(correct, total);
+                    totals.set(canonical.key, existing);
+                });
+            }
+            return totals;
+        }
+
+        function mergeThemeTotals(a, b) {
+            const out = new Map();
+            [a, b].forEach(function(src) {
+                src.forEach(function(value, key) {
+                    const existing = out.get(key);
+                    if (existing) {
+                        existing.total += value.total;
+                        existing.correct += value.correct;
+                    } else {
+                        out.set(key, { name: value.name, total: value.total, correct: value.correct });
+                    }
+                });
+            });
+            return out;
+        }
+
+        // ── Season badges ─────────────────────────────────────────────────────
+        // Permanent proof of a closed season. Never earnable again once the
+        // season rolls over, so they are rendered from the archived record
+        // rather than recomputed.
+        const AN_SEASON_NAMES = { 'winter-2026': 'Winter 2026', 'spring-2027': 'Spring 2027' };
+        function seasonLabel(id) {
+            return AN_SEASON_NAMES[id] || String(id || '')
+                .replace(/-/g, ' ')
+                .replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+        }
+
+        function renderSeasonBadges() {
+            const host = document.getElementById('an-season-badges');
+            if (!host) return;
+            const badges = (rankedProfile && rankedProfile.badges) || {};
+            const list = Object.values(badges)
+                .filter(function(b) { return b && b.season; })
+                .sort(function(a, b) { return (b.closedAt || 0) - (a.closedAt || 0); });
+
+            if (!list.length) {
+                host.innerHTML = '<div class="an-season-empty">' +
+                    'No closed seasons yet. Your ' +
+                    seasonLabel(rankedProfile ? rankedProfile.seasonId : 'winter-2026') +
+                    ' badge is awarded when the season ends.</div>';
+                return;
+            }
+
+            host.innerHTML = list.map(function(b) {
+                const tier = AN_RR_TIERS.find(function(t) { return t.name === b.tier; }) || AN_RR_TIERS[0];
+                return '<div class="an-season-badge tier-' + String(b.tier || '').toLowerCase() + '">' +
+                    '<span class="an-season-badge-icon">' + tier.icon + '</span>' +
+                    '<span class="an-season-badge-body">' +
+                        '<span class="an-season-badge-season">' + seasonLabel(b.season) + '</span>' +
+                        '<span class="an-season-badge-tier">' + (b.tier || 'Pawn') + '</span>' +
+                    '</span>' +
+                    '<span class="an-season-badge-rating">' + (b.rating || '') + '</span>' +
+                    '</div>';
+            }).join('');
+        }
 
         // ── Load positions and build radar ────────────────────────────────────
         async function loadPositionsAndRender() {
@@ -1427,6 +2050,78 @@
                         <div class="an-radar-empty-sub">Your positional theme accuracy map is built from your personal puzzle history.</div>
                         <a href="login.html" class="an-auth-gate-btn" style="margin-top:8px;">Sign In</a>
                     </div>`;
+                return;
+            }
+
+            // Ranked and Combined have exact per-answer theme data, so they are
+            // gated on their own volume rather than the casual puzzle count.
+            if (analyticsMode !== 'casual') {
+                const exact = analyticsMode === 'ranked'
+                    ? rankedThemeTotals()
+                    : mergeThemeTotals(casualThemeTotals(), rankedThemeTotals());
+                const answered = analyticsMode === 'ranked'
+                    ? rankedTotals().total
+                    : rankedTotals().total + totalPuzzles;
+
+                const top = [...exact.values()]
+                    .filter(function(t) { return t.total > 0; })
+                    .sort(function(a, b) { return b.total - a.total; })
+                    .slice(0, 9);
+
+                if (top.length < 3) {
+                    body.innerHTML =
+                        '<div class="an-radar-empty">' +
+                        '<div class="an-radar-empty-title">Not enough ' +
+                            (analyticsMode === 'ranked' ? 'Ranked' : '') + ' theme data yet</div>' +
+                        '<div class="an-radar-empty-sub">' +
+                            (analyticsMode === 'ranked'
+                                ? 'Play a few Ranked sessions \u2014 every answer is tagged with its themes.'
+                                : 'Keep playing in either mode to fill out your profile.') +
+                        '</div></div>';
+                    if (sampleBadge) sampleBadge.style.display = 'none';
+                    return;
+                }
+
+                if (sampleBadge) {
+                    sampleBadge.textContent = 'Exact \u00b7 ' + answered + ' answer' +
+                        (answered === 1 ? '' : 's');
+                    sampleBadge.style.display = '';
+                }
+
+                drawRadarChart(body, top.map(function(t) {
+                    return {
+                        name: t.name,
+                        accuracy: Math.round((t.correct / t.total) * 100),
+                        correct: Math.round(t.correct),
+                        total: t.total,
+                    };
+                }));
+                return;
+            }
+
+            // Casual with a real recorded tally behind it is exact too. Only
+            // accounts that predate theme recording fall through to the old
+            // difficulty-weighted estimate below.
+            const casualExact = casualThemeTotals();
+            const casualTop = [...casualExact.values()]
+                .filter(function(t) { return t.total > 0; })
+                .sort(function(a, b) { return b.total - a.total; })
+                .slice(0, 9);
+            if (casualTop.length >= 3) {
+                if (sampleBadge) {
+                    const answered = [...casualExact.values()]
+                        .reduce(function(s, t) { return s + t.total; }, 0);
+                    sampleBadge.textContent = 'Exact \u00b7 ' + answered + ' themed answers';
+                    sampleBadge.style.display = '';
+                }
+                drawRadarChart(body, casualTop.map(function(t) {
+                    return {
+                        name: t.name,
+                        accuracy: Math.round((t.correct / t.total) * 100),
+                        correct: Math.round(t.correct),
+                        total: t.total,
+                    };
+                }));
                 return;
             }
 
@@ -1547,7 +2242,9 @@
 
             // Show sample badge
             if (sampleBadge) {
-                sampleBadge.textContent = `Based on ${totalPuzzles} puzzle${totalPuzzles !== 1 ? 's' : ''}`;
+                // Flagged as an estimate: this path reconstructs themes from the
+                // difficulty mix because the account has no recorded tally.
+                sampleBadge.textContent = `Estimated \u00b7 ${totalPuzzles} puzzle${totalPuzzles !== 1 ? 's' : ''}`;
                 sampleBadge.style.display = '';
             }
 

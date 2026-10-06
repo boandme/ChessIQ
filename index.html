@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="ranked.css">
 </head>
 <body>
     <a href="#main-game" class="skip-link">Skip to game</a>
@@ -83,7 +84,8 @@
         </div>
 
         <nav class="topnav">
-            <a href="index.html" class="active">Home</a>
+            <a href="index.html" class="active">Casual</a>
+            <a href="ranked.html" class="nav-ranked">Ranked</a>
             <a href="leaderboard.html">Leaderboard</a>
             <a href="analytics.html">Analytics</a>
             <a href="info.html">Information</a>
@@ -95,6 +97,21 @@
         </nav>
 
         <div id="header-controls" class="topbar-right">
+            <!-- Dual rating: PR standard, RR with the gold treatment. Hidden
+                 for guests, populated by main.js once the profile loads. -->
+            <div id="rating-pair" class="rating-pair" style="display:none;">
+                <div class="rating-chip rating-pr" title="Position Rating — casual training">
+                    <span class="rating-chip-label">PR</span>
+                    <span class="rating-chip-value" id="topbar-pr">—</span>
+                </div>
+                <a class="rating-chip rating-rr" id="topbar-rr-wrap" href="ranked.html" title="Ranked Rating — competitive">
+                    <span class="rating-chip-tier" id="topbar-tier-mark">♟</span>
+                    <span class="rating-chip-label">RR</span>
+                    <span class="rating-chip-value" id="topbar-rr">—</span>
+                    <span class="rating-chip-tiername" id="topbar-tier-name">Pawn</span>
+                </a>
+            </div>
+
             <div id="user-badge" style="display:none;">
                 <span class="user-dot"></span>
                 <span id="header-username">—</span>
@@ -373,6 +390,34 @@
                 <div class="ai-exp-section">
                     <div class="ai-exp-label">Themes</div>
                     <div id="ai-exp-themes" class="ai-exp-themes"></div>
+                </div>
+
+                <!-- Going deeper: engine move + strategic plan. Collapsed by
+                     default so it never competes with the primary read. -->
+                <div class="ai-exp-section ai-exp-more" id="ai-exp-more" hidden>
+                    <button type="button" class="ai-exp-more-toggle" id="ai-exp-more-toggle"
+                            onclick="toggleAIExtras()" aria-expanded="false" aria-controls="ai-exp-more-body">
+                        <span class="ai-exp-label">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/></svg>
+                            Going deeper
+                        </span>
+                        <span class="ai-exp-more-hint">Engine move &amp; plan</span>
+                        <svg class="ai-exp-more-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+
+                    <div class="ai-exp-more-body" id="ai-exp-more-body" hidden>
+                        <div class="ai-exp-extra" id="ai-exp-bestmove-wrap" hidden>
+                            <div class="ai-exp-sublabel">Engine's move</div>
+                            <p class="ai-exp-text">
+                                <span class="ai-exp-move" id="ai-exp-bestmove"></span>
+                                <span id="ai-exp-bestmove-reason"></span>
+                            </p>
+                        </div>
+                        <div class="ai-exp-extra" id="ai-exp-plan-wrap" hidden>
+                            <div class="ai-exp-sublabel">Plan from here</div>
+                            <p class="ai-exp-text" id="ai-exp-plan"></p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -692,5 +737,11 @@
 
     <script type="module" src="experience.js"></script>
     <script type="module" src="main.js"></script>
+    <script type="module">
+        // Casual / Ranked picker. Opens once per tab session so the choice is
+        // deliberate without nagging a player who already decided.
+        import { maybeAutoOpen } from './mode-select.js';
+        maybeAutoOpen();
+    </script>
 </body>
 </html>
