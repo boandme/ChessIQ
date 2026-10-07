@@ -996,3 +996,123 @@ a.rating-rr:hover {
     .rk-standing-tier { font-size: 2.4rem; }
     .rk-mode-head h2 { font-size: 1.9rem; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   v1.6.1 — scale pass
+   The page was capped at 1480px and the session side column at 380px, which
+   on a 2560px display left most of the screen empty and made a timed board
+   smaller than the untimed one in casual. Widths below are viewport-relative
+   so the layout grows with the display instead of stopping at a fixed point.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.rk-page {
+    max-width: min(1860px, 96vw);
+    padding: calc(var(--topbar-h) + 24px) 20px 48px;
+}
+
+/* ── Mode select at full scale ───────────────────────────────────────────── */
+.rk-standing { padding: 24px 32px; margin-bottom: 26px; }
+.rk-standing-tier  { font-size: 3.6rem; }
+.rk-standing-rating { font-size: 3.4rem; }
+.rk-standing-label { font-size: 0.7rem; }
+.rk-standing-stat { min-width: 124px; padding: 14px 20px; }
+.rk-standing-stat-value { font-size: 1.55rem; }
+.rk-standing-stat-label { font-size: 0.6rem; }
+
+.rk-modes { gap: 26px; }
+.rk-mode-panel {
+    /* Fills the viewport below the standing strip without forcing a scroll. */
+    min-height: min(74vh, 840px);
+    padding: 40px 38px;
+    gap: 26px;
+}
+.rk-mode-kicker  { font-size: 0.68rem; }
+.rk-mode-head h2 { font-size: 3.1rem; margin: 10px 0 14px; }
+.rk-mode-head p  { font-size: 1.1rem; line-height: 1.65; max-width: 50ch; }
+
+.rk-mode-body { gap: 22px; }
+.rk-figure { min-width: 164px; padding: 24px 26px; }
+.rk-figure-value { font-size: 3.9rem; }
+.rk-figure-label { font-size: 0.92rem; }
+
+.rk-timing li { padding: 13px 18px; font-size: 1.02rem; }
+.rk-timing em { font-size: 1.08rem; }
+
+.rk-points li { font-size: 0.98rem; line-height: 1.6; padding-left: 23px; }
+.rk-points li::before { top: 9px; }
+
+.rk-mode-foot { gap: 11px; }
+.rk-mode-foot .rk-btn { padding: 17px 26px; font-size: 1.04rem; }
+.rk-mode-foot .rk-btn svg { width: 19px; height: 19px; }
+
+.rk-tier-badge { font-size: 0.8rem; padding: 6px 15px; }
+.rk-tier-track { height: 7px; }
+.rk-tier-hint  { font-size: 0.82rem; }
+
+/* ── Session stage at casual scale or better ─────────────────────────────── */
+.rk-clock {
+    grid-template-columns: minmax(170px, 300px) 1fr auto;
+    gap: 26px; padding: 17px 26px; margin-bottom: 18px;
+}
+.rk-clock-mode   { font-size: 0.7rem; }
+.rk-clock-themes { font-size: 0.9rem; }
+.rk-clock-count  { font-size: 1.9rem; }
+.rk-timer-track  { height: 15px; }
+
+.rk-stage {
+    grid-template-columns: minmax(0, 1fr) 420px;
+    gap: 28px;
+}
+
+/* The board is the point of the screen. It takes the full column width, but
+   never more height than the viewport has left — a square that overflows
+   vertically would force a scroll mid-clock, which is unusable under time. */
+.rk-stage-board { align-items: center; }
+.rk-board-frame {
+    width: min(100%, calc(100vh - 250px));
+    margin: 0 auto;
+    padding: 18px;
+}
+.rk-board-foot { width: min(100%, calc(100vh - 250px)); margin: 0 auto; }
+.rk-turn { font-size: 1.1rem; }
+.rk-diff-chip { font-size: 0.72rem; padding: 4px 13px; }
+
+.rk-scorecard { padding: 20px 24px; }
+.rk-scorecard-value { font-size: 3rem; }
+.rk-scorecard-label { font-size: 0.62rem; }
+.rk-scorecard-count { font-size: 1.05rem; }
+.rk-pip { width: 11px; height: 11px; }
+
+.rk-call { padding: 22px; gap: 14px; }
+.rk-call-heading { font-size: 0.68rem; }
+.rk-call-hint { font-size: 0.8rem; }
+
+.rk-answers { gap: 11px; }
+.rk-answer {
+    padding: 21px 20px;
+    gap: 16px;
+    font-size: 1.32rem;
+    border-radius: 10px;
+}
+.rk-answer-icon { width: 36px; height: 36px; }
+.rk-answer-key  { font-size: 0.72rem; padding: 3px 9px; }
+
+.rk-feedback { min-height: 32px; font-size: 1.3rem; }
+
+/* ── Review at the same scale ────────────────────────────────────────────── */
+.rk-review { max-width: min(1240px, 94vw); }
+.rk-review-card { grid-template-columns: 300px 1fr; gap: 24px; padding: 22px; }
+
+@media (max-width: 1320px) {
+    .rk-stage { grid-template-columns: minmax(0, 1fr) 370px; gap: 22px; }
+    .rk-mode-head h2 { font-size: 2.6rem; }
+    .rk-figure-value { font-size: 3.2rem; }
+}
+@media (max-width: 1180px) {
+    /* Single column: the board gets the full width, capped by viewport height. */
+    .rk-board-frame, .rk-board-foot { width: min(100%, calc(100vh - 340px)); }
+}
+@media (max-height: 820px) and (min-width: 1181px) {
+    /* Short laptop screens: keep the whole stage on one screen. */
+    .rk-board-frame, .rk-board-foot { width: min(100%, calc(100vh - 215px)); }
+}

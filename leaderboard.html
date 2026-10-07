@@ -25,7 +25,9 @@
         /* ── Leaderboard-specific styles ─────────────────────────────────────── */
         .lb-wrap {
             width: 100%;
-            max-width: 1040px;
+            /* Two boards side by side need real width. 1040px was sized for a
+               single table and squeezed both into unreadable columns. */
+            max-width: min(1860px, 96vw);
             display: flex;
             flex-direction: column;
             gap: 0;
@@ -101,8 +103,8 @@
         .lb-boards {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 18px;
-            padding: 18px 26px 4px;
+            gap: 22px;
+            padding: 22px 30px 6px;
             align-items: start;
         }
         .lb-board {
@@ -123,7 +125,7 @@
         }
         .lb-board-head {
             display: flex; align-items: flex-end; justify-content: space-between;
-            gap: 12px; padding: 16px 18px 13px;
+            gap: 14px; padding: 20px 22px 16px;
             border-bottom: 1px solid var(--line);
         }
         .lb-board-ranked .lb-board-head { border-bottom-color: var(--yellow-line); }
@@ -133,8 +135,8 @@
         }
         .lb-board-ranked .lb-board-kicker { color: var(--yellow-deep); }
         .lb-board-title h2 {
-            margin: 4px 0 0;
-            font-family: var(--font-display); font-size: 1.3rem; font-weight: 700;
+            margin: 5px 0 0;
+            font-family: var(--font-display); font-size: 1.65rem; font-weight: 700;
             color: var(--text); letter-spacing: -0.01em;
         }
         .lb-board-ranked .lb-board-title h2 {
@@ -153,20 +155,25 @@
             letter-spacing: 0.14em; text-transform: uppercase;
         }
 
-        /* Inside a board the grid is narrower than the old full-width table. */
+        /* Columns sized for the real width now available. The name column is
+           the one that was unreadable, so it takes the slack. */
+        .lb-boards .lb-col-headers,
+        .lb-boards .lb-row {
+            grid-template-columns: 58px minmax(0, 1fr) 92px 92px 82px;
+            gap: 10px;
+            padding: 0 22px;
+        }
         .lb-boards .lb-col-headers {
-            grid-template-columns: 44px minmax(0, 1fr) 62px 66px 54px;
-            padding: 9px 16px;
+            padding: 11px 22px;
             border-left: none; border-right: none;
             background: var(--surface-2);
         }
         .lb-board-ranked .lb-col-headers { background: rgba(255, 212, 0, 0.05); }
         .lb-boards .lb-list { border: none; border-radius: 0; }
-        .lb-boards .lb-row {
-            grid-template-columns: 44px minmax(0, 1fr) 62px 66px 54px;
-            padding: 0 16px;
-            gap: 6px;
-        }
+        .lb-boards .lb-row { min-height: 62px; }
+        .lb-boards .lb-username { font-size: 1.02rem; }
+        .lb-boards .lb-pr { font-size: 1.22rem; }
+        .lb-boards .lb-avatar { width: 34px; height: 34px; font-size: 0.92rem; }
         .lb-boards .lb-name-cell { gap: 7px; min-width: 0; }
         .lb-boards .lb-username {
             overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -192,13 +199,22 @@
         }
         .lb-season-delta.pos { color: var(--ok); }
         .lb-season-delta.neg { color: var(--bad); }
-        @media (max-width: 1100px) {
+        @media (max-width: 1340px) {
+            .lb-boards .lb-col-headers,
+            .lb-boards .lb-row { grid-template-columns: 48px minmax(0,1fr) 74px 74px 66px; padding: 0 16px; }
+            .lb-boards .lb-col-headers { padding: 10px 16px; }
+        }
+        @media (max-width: 1180px) {
             .lb-boards { grid-template-columns: 1fr; }
+            .lb-boards .lb-col-headers,
+            .lb-boards .lb-row { grid-template-columns: 58px minmax(0,1fr) 92px 92px 82px; padding: 0 22px; }
+            .lb-boards .lb-col-headers { padding: 11px 22px; }
         }
         @media (max-width: 760px) {
             .lb-boards { padding: 12px 14px 4px; gap: 14px; }
             .lb-boards .lb-col-headers,
-            .lb-boards .lb-row { grid-template-columns: 38px minmax(0,1fr) 56px 58px; }
+            .lb-boards .lb-row { grid-template-columns: 38px minmax(0,1fr) 62px 62px; padding: 0 14px; }
+            .lb-boards .lb-col-headers { padding: 9px 14px; }
             .lb-boards .lb-col-label:nth-child(5),
             .lb-boards .lb-row > :nth-child(5) { display: none; }
         }

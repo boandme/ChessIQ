@@ -358,10 +358,7 @@ v1.6 – Ranked Release (October 2026)
 
 
 
-v1.7 – Rush Mode (2026)
-A timed streak gamemode on top of Ranked: 3 or 5 minutes, maximum positions correct, with its own leaderboard alongside Blitz Solo and Duels.
-
-v1.8 – Friends & Personalization Update (2026)
+v1.7 – Friends & Personalization Update (2026)
 Add friends, friends-only leaderboards, dark/light mode, super beginner mode, daily rewards, and streak tracking. Mobile coming to both Android and Apple.
 
 
