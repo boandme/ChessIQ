@@ -50,8 +50,23 @@
                     Ranked
                 </a></li>
             </ul>
+            <h3>Resources</h3>
+            <ul>
+                <li><a href="info.html" onclick="closeSidebar()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/></svg>
+                    Information
+                </a></li>
+                <li><a href="changelog.html" onclick="closeSidebar()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+                    Changelog
+                </a></li>
+                <li><a href="credits.html" onclick="closeSidebar()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Credits
+                </a></li>
+            </ul>
         </nav>
-        <div class="sidebar-foot">v1.6 — RANKED</div>
+        <div class="sidebar-foot">v1.6 — ACTIVE</div>
     </aside>
 
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
@@ -73,8 +88,6 @@
             <a href="ranked.html" class="active nav-ranked">Ranked</a>
             <a href="leaderboard.html">Leaderboard</a>
             <a href="analytics.html">Analytics</a>
-            <a href="info.html">Information</a>
-            <a href="changelog.html">Changelog</a>
             <button id="potd-nav-btn" class="potd-nav-btn" aria-label="Puzzle of the Day" title="Puzzle of the Day">
                 <span class="potd-nav-icon">📅</span>
                 <span class="potd-nav-label">Daily</span>
@@ -85,15 +98,20 @@
             <!-- Dual rating: PR in the standard treatment, RR with the gold
                  glow and tier mark so Ranked reads as the competitive one. -->
             <div id="rating-pair" class="rating-pair" style="display:none;">
-                <div class="rating-chip rating-pr" title="Position Rating — casual training">
-                    <span class="rating-chip-label">PR</span>
-                    <span class="rating-chip-value" id="topbar-pr">—</span>
-                </div>
-                <div class="rating-chip rating-rr" id="topbar-rr-wrap" title="Ranked Rating — competitive">
-                    <span class="rating-chip-tier" id="topbar-tier-mark">♟</span>
-                    <span class="rating-chip-label">RR</span>
-                    <span class="rating-chip-value" id="topbar-rr">—</span>
-                    <span class="rating-chip-tiername" id="topbar-tier-name">Pawn</span>
+                <a class="rating-rr" id="topbar-rr-wrap" href="ranked.html"
+                   title="Ranked Rating — competitive, seasonal">
+                    <span class="rating-rr-tier" id="topbar-tier-mark">♟</span>
+                    <span class="rating-rr-body">
+                        <span class="rating-rr-top">
+                            <span class="rating-rr-value" id="topbar-rr">—</span>
+                            <span class="rating-rr-tiername" id="topbar-tier-name">Pawn</span>
+                        </span>
+                        <span class="rating-rr-label">Ranked Rating</span>
+                    </span>
+                </a>
+                <div class="rating-pr" title="Position Rating — casual training">
+                    <span class="rating-pr-value" id="topbar-pr">—</span>
+                    <span class="rating-pr-label">Position Rating</span>
                 </div>
             </div>
 
@@ -135,79 +153,118 @@
 
         <!-- ══ 1. Mode select ══════════════════════════════════════════════ -->
         <section id="view-select" class="rk-view" hidden>
+
+            <!-- Standing: the numbers that matter, at the size they matter. -->
+            <div class="rk-standing">
+                <div class="rk-standing-main">
+                    <span class="rk-standing-tier" id="standing-tier-icon">♟</span>
+                    <div class="rk-standing-text">
+                        <div class="rk-standing-rating" id="standing-rating">—</div>
+                        <div class="rk-standing-label">Ranked Rating · <span id="standing-tier-name">Pawn</span></div>
+                    </div>
+                </div>
+                <div class="rk-standing-stats">
+                    <div class="rk-standing-stat">
+                        <span class="rk-standing-stat-value" id="standing-games">0</span>
+                        <span class="rk-standing-stat-label">Games played</span>
+                    </div>
+                    <div class="rk-standing-stat">
+                        <span class="rk-standing-stat-value" id="standing-record">0–0</span>
+                        <span class="rk-standing-stat-label">Duel record</span>
+                    </div>
+                    <div class="rk-standing-stat">
+                        <span class="rk-standing-stat-value" id="standing-best">—</span>
+                        <span class="rk-standing-stat-label">Best score</span>
+                    </div>
+                    <div class="rk-standing-stat">
+                        <span class="rk-standing-stat-value" id="standing-season-delta">—</span>
+                        <span class="rk-standing-stat-label" id="standing-season">Winter 2026</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="rk-modes">
 
                 <!-- Left: Blitz Solo -->
-                <div class="rk-mode-col">
-                    <div class="rk-mode-head">
+                <article class="rk-mode-panel rk-mode-solo">
+                    <header class="rk-mode-head">
+                        <span class="rk-mode-kicker">Solo</span>
                         <h2>Blitz Solo</h2>
                         <p>Two random themes. Ten positions. A clock that does not care how deeply you usually think.</p>
-                    </div>
+                    </header>
 
-                    <div class="rk-card rk-card-accent">
-                        <div class="rk-card-row">
-                            <span class="rk-card-stat">10</span>
-                            <span class="rk-card-stat-label">positions, timed</span>
+                    <div class="rk-mode-body">
+                        <div class="rk-figure">
+                            <span class="rk-figure-value">10</span>
+                            <span class="rk-figure-label">positions<br>per session</span>
                         </div>
-                        <ul class="rk-card-list">
+                        <ul class="rk-timing">
                             <li><span>Easy</span><em>15s</em></li>
                             <li><span>Medium</span><em>22s</em></li>
                             <li><span>Hard</span><em>30s</em></li>
                         </ul>
-                        <p class="rk-card-note">Themes are spun at session start — you find out when the wheel stops.</p>
                     </div>
 
-                    <button id="btn-solo" class="rk-btn rk-btn-primary rk-btn-wide" onclick="startSolo()" disabled>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.9 2.9M16.2 16.2l2.9 2.9M2 12h4M18 12h4M4.9 19.1l2.9-2.9M16.2 7.8l2.9-2.9"/></svg>
-                        Roll themes &amp; play
-                    </button>
-                </div>
+                    <ul class="rk-points">
+                        <li>Themes spin at session start — you find out when the wheel stops</li>
+                        <li>Counts for a quarter of a duel's rating weight</li>
+                        <li>Needs 4 of 10 correct to move your rating at all</li>
+                    </ul>
 
-                <div class="rk-mode-divider" aria-hidden="true"></div>
+                    <footer class="rk-mode-foot">
+                        <button id="btn-solo" class="rk-btn rk-btn-primary rk-btn-wide" onclick="startSolo()" disabled>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.9 2.9M16.2 16.2l2.9 2.9M2 12h4M18 12h4M4.9 19.1l2.9-2.9M16.2 7.8l2.9-2.9"/></svg>
+                            Roll themes &amp; play
+                        </button>
+                    </footer>
+                </article>
 
                 <!-- Right: Duels -->
-                <div class="rk-mode-col">
-                    <div class="rk-mode-head">
+                <article class="rk-mode-panel rk-mode-duel">
+                    <header class="rk-mode-head">
+                        <span class="rk-mode-kicker">Head to head</span>
                         <h2>Duels</h2>
                         <p>Same ten positions, same clock, another player. Full rating weight.</p>
-                    </div>
+                    </header>
 
-                    <div class="rk-card">
-                        <div class="rk-stat-line">
-                            <span class="rk-stat-line-label">Ranked rating</span>
-                            <span class="rk-stat-line-value" id="duel-rating">—</span>
+                    <div class="rk-mode-body">
+                        <div class="rk-figure rk-figure-live">
+                            <span class="rk-figure-value" id="duel-online">—</span>
+                            <span class="rk-figure-label">players<br>online now</span>
                         </div>
-                        <div class="rk-stat-line">
-                            <span class="rk-stat-line-label">Players online</span>
-                            <span class="rk-stat-line-value" id="duel-online">—</span>
-                        </div>
-
                         <div class="rk-tier-block">
                             <div class="rk-tier-badge" id="duel-tier">♟ Pawn</div>
                             <div class="rk-tier-track"><span id="duel-tier-fill"></span></div>
                             <div class="rk-tier-hint" id="duel-tier-hint">—</div>
-                        </div>
-
-                        <div class="rk-season-line">
-                            <span class="rk-season-dot"></span>
-                            <span id="duel-season">Winter 2026</span>
-                        </div>
-
-                        <!-- Closed seasons. Permanent, never earnable again. -->
-                        <div class="rk-badges" id="rk-badges" hidden>
-                            <div class="rk-badges-label">Season badges</div>
-                            <div class="rk-badges-list" id="rk-badges-list"></div>
+                            <div class="rk-season-line">
+                                <span class="rk-season-dot"></span>
+                                <span id="duel-season">Winter 2026</span>
+                            </div>
                         </div>
                     </div>
 
-                    <button id="btn-duel-quick" class="rk-btn rk-btn-primary rk-btn-wide" onclick="startQuickMatch()" disabled>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
-                        Play
-                    </button>
-                    <button id="btn-duel-link" class="rk-btn rk-btn-ghost rk-btn-wide" onclick="createChallengeLink()" disabled>
-                        Challenge a friend with a link
-                    </button>
-                </div>
+                    <ul class="rk-points">
+                        <li>Both players answer the identical set, simultaneously</li>
+                        <li>Live opponent progress — position only, never their answers</li>
+                        <li>A disconnect voids the duel; nobody's rating moves</li>
+                    </ul>
+
+                    <!-- Closed seasons. Permanent, never earnable again. -->
+                    <div class="rk-badges" id="rk-badges" hidden>
+                        <div class="rk-badges-label">Season badges</div>
+                        <div class="rk-badges-list" id="rk-badges-list"></div>
+                    </div>
+
+                    <footer class="rk-mode-foot">
+                        <button id="btn-duel-quick" class="rk-btn rk-btn-primary rk-btn-wide" onclick="startQuickMatch()" disabled>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
+                            Find an opponent
+                        </button>
+                        <button id="btn-duel-link" class="rk-btn rk-btn-ghost rk-btn-wide" onclick="createChallengeLink()" disabled>
+                            Challenge a friend with a link
+                        </button>
+                    </footer>
+                </article>
             </div>
             <p class="rk-select-note" id="select-note">Loading positions…</p>
         </section>
@@ -266,56 +323,87 @@
 
         <!-- ══ 3. Live session ═════════════════════════════════════════════ -->
         <section id="view-session" class="rk-view" hidden>
-            <div class="rk-session">
 
-                <header class="rk-session-bar">
-                    <div class="rk-session-meta">
-                        <span class="rk-session-mode" id="session-mode">Blitz Solo</span>
-                        <span class="rk-session-themes" id="session-themes"></span>
-                    </div>
-                    <div class="rk-session-numbers">
-                        <span class="rk-session-counter" id="session-counter">1 / 10</span>
-                        <span class="rk-session-score" id="session-score">0</span>
-                    </div>
-                </header>
-
+            <!-- Clock spans the full width: it is the one thing that must never
+                 be competed with for attention. -->
+            <div class="rk-clock">
+                <div class="rk-clock-meta">
+                    <span class="rk-clock-mode" id="session-mode">Blitz Solo</span>
+                    <span class="rk-clock-themes" id="session-themes"></span>
+                </div>
                 <div class="rk-timer">
                     <div class="rk-timer-track"><span class="rk-timer-fill" id="timer-fill" data-level="calm"></span></div>
-                    <span class="rk-timer-label" id="timer-label">—</span>
                 </div>
+                <div class="rk-clock-count"><span id="timer-label">—</span></div>
+            </div>
 
-                <div class="rk-duel-progress" id="duel-progress-wrap" hidden>
-                    <span class="rk-duel-progress-label" id="duel-progress-label">Opponent</span>
-                    <div class="rk-duel-progress-track"><span id="duel-progress-fill"></span></div>
-                </div>
+            <div class="rk-stage">
 
-                <div class="rk-board-wrap">
-                    <div class="rk-board" id="session-board"></div>
-                    <div id="countdown" class="rk-countdown" hidden>
-                        <span class="rk-countdown-value" id="countdown-value">3</span>
+                <!-- Board -->
+                <div class="rk-stage-board">
+                    <div class="rk-board-frame">
+                        <span class="corner tl"></span><span class="corner tr"></span>
+                        <span class="corner bl"></span><span class="corner br"></span>
+                        <div class="rk-board" id="session-board"></div>
+                        <div id="countdown" class="rk-countdown" hidden>
+                            <span class="rk-countdown-value" id="countdown-value">3</span>
+                        </div>
+                    </div>
+                    <div class="rk-board-foot">
+                        <span class="rk-turn" id="session-turn">—</span>
+                        <span class="rk-diff-chip" id="session-difficulty">Medium</span>
                     </div>
                 </div>
 
-                <div class="rk-session-foot">
-                    <span class="rk-turn" id="session-turn">—</span>
-                    <span class="rk-diff-chip" id="session-difficulty">Medium</span>
-                </div>
+                <!-- Call -->
+                <aside class="rk-stage-side">
+                    <div class="rk-scorecard">
+                        <div class="rk-scorecard-score">
+                            <span class="rk-scorecard-value" id="session-score">0</span>
+                            <span class="rk-scorecard-label">Points</span>
+                        </div>
+                        <div class="rk-scorecard-progress">
+                            <div class="rk-scorecard-count" id="session-counter">1 / 10</div>
+                            <div class="rk-pips" id="session-pips" aria-hidden="true"></div>
+                        </div>
+                    </div>
 
-                <div class="rk-answers">
-                    <button class="rk-answer rk-answer-white" onclick="answerRanked('White Winning')">
-                        <span class="rk-answer-key">1</span><span class="rk-answer-text">White</span>
-                    </button>
-                    <button class="rk-answer rk-answer-equal" onclick="answerRanked('Equal')">
-                        <span class="rk-answer-key">2</span><span class="rk-answer-text">Equal</span>
-                    </button>
-                    <button class="rk-answer rk-answer-black" onclick="answerRanked('Black Winning')">
-                        <span class="rk-answer-key">3</span><span class="rk-answer-text">Black</span>
-                    </button>
-                </div>
+                    <div class="rk-duel-progress" id="duel-progress-wrap" hidden>
+                        <span class="rk-duel-progress-label" id="duel-progress-label">Opponent</span>
+                        <div class="rk-duel-progress-track"><span id="duel-progress-fill"></span></div>
+                    </div>
 
-                <div class="rk-feedback" id="session-feedback"></div>
+                    <div class="rk-call">
+                        <div class="rk-call-heading">Make your call</div>
+                        <div class="rk-answers">
+                            <button class="rk-answer rk-answer-white" onclick="answerRanked('White Winning')">
+                                <span class="rk-answer-icon">
+                                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M24 5v8M20 9h8"/><path d="M24 13c-7 3-9 8-5 12h10c4-4 2-9-5-12z"/><path d="M17 25h14l-2 13H19z"/><path d="M15 38h18"/></svg>
+                                </span>
+                                <span class="rk-answer-text">White</span>
+                                <span class="rk-answer-key">1</span>
+                            </button>
+                            <button class="rk-answer rk-answer-equal" onclick="answerRanked('Equal')">
+                                <span class="rk-answer-icon">
+                                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"><line x1="13" y1="19" x2="35" y2="19"/><line x1="13" y1="29" x2="35" y2="29"/></svg>
+                                </span>
+                                <span class="rk-answer-text">Equal</span>
+                                <span class="rk-answer-key">2</span>
+                            </button>
+                            <button class="rk-answer rk-answer-black" onclick="answerRanked('Black Winning')">
+                                <span class="rk-answer-icon">
+                                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M24 5v8M20 9h8"/><path d="M24 13c-7 3-9 8-5 12h10c4-4 2-9-5-12z"/><path d="M17 25h14l-2 13H19z"/><path d="M15 38h18"/></svg>
+                                </span>
+                                <span class="rk-answer-text">Black</span>
+                                <span class="rk-answer-key">3</span>
+                            </button>
+                        </div>
+                        <div class="rk-feedback" id="session-feedback"></div>
+                        <p class="rk-call-hint">No explanations until the review — Ranked tests instinct.</p>
+                    </div>
 
-                <button class="rk-btn rk-btn-text rk-quit" onclick="quitSession()">Quit session</button>
+                    <button class="rk-btn rk-btn-text rk-quit" onclick="quitSession()">Quit session</button>
+                </aside>
             </div>
         </section>
 

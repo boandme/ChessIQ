@@ -39,6 +39,11 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
+/* `hidden` must actually hide. Without this, every `display: flex/grid/block`
+   rule in this file silently overrides it — the cause of several "panel shows
+   when it should not" bugs. Keep this rule above everything that sets display. */
+[hidden] { display: none !important; }
+
 html { scroll-behavior: smooth; background: var(--bg); }
 
 body {

@@ -97,39 +97,87 @@
         }
 
         /* ── Column headers ──────────────────────────────────────────────────── */
-        /* -- Board toggle ------------------------------------------------- */
-        .lb-tabs {
-            display: flex; align-items: center; gap: 8px;
-            padding: 14px 26px 0;
+        /* -- Two boards, side by side -------------------------------------- */
+        .lb-boards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            padding: 18px 26px 4px;
+            align-items: start;
         }
-        .lb-tab {
-            padding: 9px 18px;
-            background: var(--surface-2);
+        .lb-board {
+            display: flex; flex-direction: column;
+            background: var(--surface);
             border: 1px solid var(--line);
-            border-bottom: none;
-            border-radius: 7px 7px 0 0;
-            cursor: pointer;
-            font-family: var(--font-mono);
-            font-size: 0.7rem; font-weight: 700;
-            letter-spacing: 0.12em; text-transform: uppercase;
-            color: var(--text-faint);
-            transition: color 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+            border-radius: 11px;
+            overflow: hidden;
         }
-        .lb-tab:hover { color: var(--text-dim); }
-        .lb-tab.active { color: var(--text); background: var(--surface-3); border-color: var(--line-bright); }
-        /* Ranked gets the louder treatment -- it is the competitive surface. */
-        .lb-tab-ranked.active {
-            color: var(--yellow-bright);
+        /* The competitive board earns a louder frame: gold edge, warm wash,
+           and a glow the casual board deliberately does not get. */
+        .lb-board-ranked {
             border-color: var(--yellow-line);
-            background: linear-gradient(180deg, var(--yellow-soft), var(--surface-3));
-            box-shadow: 0 -2px 14px rgba(255, 212, 0, 0.16);
+            background:
+                radial-gradient(120% 70% at 100% 0%, rgba(255, 212, 0, 0.09), transparent 60%),
+                var(--surface);
+            box-shadow: 0 0 34px rgba(255, 212, 0, 0.1);
+        }
+        .lb-board-head {
+            display: flex; align-items: flex-end; justify-content: space-between;
+            gap: 12px; padding: 16px 18px 13px;
+            border-bottom: 1px solid var(--line);
+        }
+        .lb-board-ranked .lb-board-head { border-bottom-color: var(--yellow-line); }
+        .lb-board-kicker {
+            font-family: var(--font-mono); font-size: 0.58rem; font-weight: 700;
+            letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-faint);
+        }
+        .lb-board-ranked .lb-board-kicker { color: var(--yellow-deep); }
+        .lb-board-title h2 {
+            margin: 4px 0 0;
+            font-family: var(--font-display); font-size: 1.3rem; font-weight: 700;
+            color: var(--text); letter-spacing: -0.01em;
+        }
+        .lb-board-ranked .lb-board-title h2 {
+            color: var(--yellow-bright);
+            text-shadow: 0 0 20px rgba(255, 212, 0, 0.28);
+        }
+        .lb-board-meta {
+            font-family: var(--font-mono); font-size: 0.66rem;
+            color: var(--text-faint); white-space: nowrap;
         }
         .lb-season-tag {
-            margin-left: auto; padding: 4px 12px; border-radius: 100px;
+            padding: 4px 11px; border-radius: 100px;
             background: var(--yellow-soft); border: 1px solid var(--yellow-line);
             color: var(--yellow); font-family: var(--font-mono);
-            font-size: 0.62rem; font-weight: 700;
+            font-size: 0.6rem; font-weight: 700;
             letter-spacing: 0.14em; text-transform: uppercase;
+        }
+
+        /* Inside a board the grid is narrower than the old full-width table. */
+        .lb-boards .lb-col-headers {
+            grid-template-columns: 44px minmax(0, 1fr) 62px 66px 54px;
+            padding: 9px 16px;
+            border-left: none; border-right: none;
+            background: var(--surface-2);
+        }
+        .lb-board-ranked .lb-col-headers { background: rgba(255, 212, 0, 0.05); }
+        .lb-boards .lb-list { border: none; border-radius: 0; }
+        .lb-boards .lb-row {
+            grid-template-columns: 44px minmax(0, 1fr) 62px 66px 54px;
+            padding: 0 16px;
+            gap: 6px;
+        }
+        .lb-boards .lb-name-cell { gap: 7px; min-width: 0; }
+        .lb-boards .lb-username {
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        /* Rank movement is what makes a competitive board feel alive. */
+        .lb-board-ranked .lb-row.rank-1 {
+            background: linear-gradient(90deg, rgba(255,212,0,0.14) 0%, transparent 62%);
+        }
+        .lb-board-ranked .lb-pr {
+            color: var(--yellow-bright);
+            text-shadow: 0 0 14px rgba(255, 212, 0, 0.35);
         }
         .lb-tier-badge {
             --tier-accent: #9aa0ad;
@@ -144,9 +192,15 @@
         }
         .lb-season-delta.pos { color: var(--ok); }
         .lb-season-delta.neg { color: var(--bad); }
+        @media (max-width: 1100px) {
+            .lb-boards { grid-template-columns: 1fr; }
+        }
         @media (max-width: 760px) {
-            .lb-tabs { padding: 12px 16px 0; }
-            .lb-season-tag { display: none; }
+            .lb-boards { padding: 12px 14px 4px; gap: 14px; }
+            .lb-boards .lb-col-headers,
+            .lb-boards .lb-row { grid-template-columns: 38px minmax(0,1fr) 56px 58px; }
+            .lb-boards .lb-col-label:nth-child(5),
+            .lb-boards .lb-row > :nth-child(5) { display: none; }
         }
 
         .lb-col-headers {
@@ -452,8 +506,23 @@
                     PositionGuesser
                 </a></li>
             </ul>
+            <h3>Resources</h3>
+            <ul>
+                <li><a href="info.html" onclick="closeSidebar()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/></svg>
+                    Information
+                </a></li>
+                <li><a href="changelog.html" onclick="closeSidebar()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+                    Changelog
+                </a></li>
+                <li><a href="credits.html" onclick="closeSidebar()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Credits
+                </a></li>
+            </ul>
         </nav>
-        <div class="sidebar-foot">v1.4.8 — ACTIVE</div>
+        <div class="sidebar-foot">v1.6 — ACTIVE</div>
     </aside>
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
 
@@ -464,7 +533,7 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
                 </span>
                 <span class="brand-text">CHESS<span>IQ</span></span>
-                <span class="brand-ver">v1.4.8</span>
+                <span class="brand-ver">v1.6</span>
             </a>
         </div>
         <nav class="topnav">
@@ -472,8 +541,6 @@
             <a href="ranked.html" class="nav-ranked">Ranked</a>
             <a href="leaderboard.html" class="active">Leaderboard</a>
             <a href="analytics.html">Analytics</a>
-            <a href="info.html">Information</a>
-            <a href="changelog.html">Changelog</a>
             <button id="potd-nav-btn" class="potd-nav-btn" onclick="openPOTD()" aria-label="Puzzle of the Day" title="Puzzle of the Day">
                 <span class="potd-nav-icon">📅</span>
                 <span class="potd-nav-label">Daily</span>
@@ -516,43 +583,67 @@
                     </div>
                 </div>
                 <div class="lb-rank-badge">
-                    <div class="lb-rank-badge-label">Your Rank</div>
+                    <div class="lb-rank-badge-label" id="lb-rank-badge-label">Your Rank</div>
                     <div class="lb-rank-badge-value" id="lb-your-rank">—</div>
                 </div>
             </div>
         </div>
 
         <!-- Board toggle: one competitive surface per mode, same shell. -->
-        <div class="lb-tabs" role="tablist">
-            <button class="lb-tab active" id="lb-tab-casual" role="tab" aria-selected="true"
-                    onclick="switchBoard('casual')">Casual &middot; PR</button>
-            <button class="lb-tab lb-tab-ranked" id="lb-tab-ranked" role="tab" aria-selected="false"
-                    onclick="switchBoard('ranked')">Ranked &middot; RR</button>
-            <span class="lb-season-tag" id="lb-season-tag" hidden>Winter 2026</span>
-        </div>
+        <div class="lb-boards">
 
-        <!-- Column headers -->
-        <div class="lb-col-headers" id="lb-cols-casual">
-            <div class="lb-col-label">#</div>
-            <div class="lb-col-label">Player</div>
-            <div class="lb-col-label right">PR</div>
-            <div class="lb-col-label right">Puzzles</div>
-            <div class="lb-col-label right">Accuracy</div>
-        </div>
-        <div class="lb-col-headers" id="lb-cols-ranked" hidden>
-            <div class="lb-col-label">#</div>
-            <div class="lb-col-label">Player</div>
-            <div class="lb-col-label right">RR</div>
-            <div class="lb-col-label right">Season</div>
-            <div class="lb-col-label right">Duels</div>
-        </div>
+            <!-- Casual: the long game -->
+            <section class="lb-board lb-board-casual">
+                <header class="lb-board-head">
+                    <div class="lb-board-title">
+                        <span class="lb-board-kicker">Training</span>
+                        <h2>Casual &middot; PR</h2>
+                    </div>
+                    <div class="lb-board-meta">
+                        <span id="lb-player-count">\u2014</span> players
+                    </div>
+                </header>
+                <div class="lb-col-headers lb-cols-casual">
+                    <div class="lb-col-label">#</div>
+                    <div class="lb-col-label">Player</div>
+                    <div class="lb-col-label right">PR</div>
+                    <div class="lb-col-label right">Puzzles</div>
+                    <div class="lb-col-label right">Acc</div>
+                </div>
+                <div class="lb-list" id="lb-list">
+                    <div class="lb-loading" id="lb-loading">
+                        <div class="lb-loading-spinner"></div>
+                        LOADING RANKINGS...
+                    </div>
+                </div>
+            </section>
 
-        <!-- Rows render here -->
-        <div class="lb-list" id="lb-list">
-            <div class="lb-loading" id="lb-loading">
-                <div class="lb-loading-spinner"></div>
-                LOADING RANKINGS...
-            </div>
+            <!-- Ranked: the competitive one, and it should look like it -->
+            <section class="lb-board lb-board-ranked">
+                <header class="lb-board-head">
+                    <div class="lb-board-title">
+                        <span class="lb-board-kicker">Competitive</span>
+                        <h2>Ranked &middot; RR</h2>
+                    </div>
+                    <div class="lb-board-meta">
+                        <span class="lb-season-tag" id="lb-season-tag">Winter 2026</span>
+                    </div>
+                </header>
+                <div class="lb-col-headers lb-cols-ranked">
+                    <div class="lb-col-label">#</div>
+                    <div class="lb-col-label">Player</div>
+                    <div class="lb-col-label right">RR</div>
+                    <div class="lb-col-label right">Season</div>
+                    <div class="lb-col-label right">Duels</div>
+                </div>
+                <div class="lb-list" id="lb-ranked-list">
+                    <div class="lb-loading">
+                        <div class="lb-loading-spinner"></div>
+                        LOADING RANKINGS...
+                    </div>
+                </div>
+            </section>
+
         </div>
 
         <!-- Footer -->
@@ -709,47 +800,40 @@
         }
 
         let allPlayers = [];
-        let activeBoard = 'casual';
 
-        window.switchBoard = function(board) {
-            activeBoard = board;
-            document.getElementById('lb-tab-casual').classList.toggle('active', board === 'casual');
-            document.getElementById('lb-tab-ranked').classList.toggle('active', board === 'ranked');
-            document.getElementById('lb-tab-casual').setAttribute('aria-selected', String(board === 'casual'));
-            document.getElementById('lb-tab-ranked').setAttribute('aria-selected', String(board === 'ranked'));
-            document.getElementById('lb-cols-casual').hidden = (board !== 'casual');
-            document.getElementById('lb-cols-ranked').hidden = (board !== 'ranked');
-            const tag = document.getElementById('lb-season-tag');
-            tag.hidden = (board !== 'ranked');
-            tag.textContent = RANKED_SEASON_NAME;
-            renderActiveBoard();
-        };
-
+        // Both boards render on every snapshot \u2014 no toggle, nothing hidden.
         function renderActiveBoard() {
-            if (activeBoard === 'ranked') {
-                const ranked = allPlayers
-                    .filter(function(p) {
-                        return p.ranked && p.ranked.seasonId === RANKED_SEASON_ID &&
-                               ((p.ranked.soloPlayed || 0) + (p.ranked.duelPlayed || 0)) > 0;
-                    })
-                    .sort(function(a, b) {
-                        return (b.ranked.seasonDelta || 0) - (a.ranked.seasonDelta || 0) ||
-                               (b.ranked.rating || 0) - (a.ranked.rating || 0);
-                    });
-                renderRankedBoard(ranked);
-            } else {
-                const casual = allPlayers.slice()
-                    .sort(function(a, b) { return b.pr - a.pr || b.totalPuzzles - a.totalPuzzles; });
-                renderLeaderboard(casual);
-            }
+            const casual = allPlayers.slice()
+                .sort(function(a, b) { return b.pr - a.pr || b.totalPuzzles - a.totalPuzzles; });
+            renderLeaderboard(casual);
+
+            const ranked = allPlayers
+                .filter(function(p) {
+                    return p.ranked && p.ranked.seasonId === RANKED_SEASON_ID &&
+                           ((p.ranked.soloPlayed || 0) + (p.ranked.duelPlayed || 0)) > 0;
+                })
+                .sort(function(a, b) {
+                    return (b.ranked.seasonDelta || 0) - (a.ranked.seasonDelta || 0) ||
+                           (b.ranked.rating || 0) - (a.ranked.rating || 0);
+                });
+            renderRankedBoard(ranked);
+
+            const tag = document.getElementById('lb-season-tag');
+            if (tag) tag.textContent = RANKED_SEASON_NAME;
         }
 
         function renderRankedBoard(players) {
-            const list = document.getElementById('lb-list');
-            document.getElementById('lb-player-count').textContent = players.length;
+            const list = document.getElementById('lb-ranked-list');
+            if (!list) return;
             const yourIdx = players.findIndex(function(p) { return p.uid === currentUID; });
-            document.getElementById('lb-your-rank').textContent =
-                yourIdx >= 0 ? '#' + (yourIdx + 1) : '\u2014';
+            // The headline rank badge tracks Ranked when the player has one,
+            // because that is the number they came to check.
+            if (yourIdx >= 0) {
+                const badge = document.getElementById('lb-your-rank');
+                if (badge) badge.textContent = '#' + (yourIdx + 1);
+                const label = document.getElementById('lb-rank-badge-label');
+                if (label) label.textContent = 'Your Ranked position';
+            }
 
             if (!players.length) {
                 list.innerHTML =

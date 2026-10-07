@@ -47,8 +47,23 @@
                     PositionGuesser
                 </a></li>
             </ul>
+            <h3>Resources</h3>
+            <ul>
+                <li><a href="info.html" onclick="closeSidebar()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/></svg>
+                    Information
+                </a></li>
+                <li><a href="changelog.html" class="active" onclick="closeSidebar()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+                    Changelog
+                </a></li>
+                <li><a href="credits.html" onclick="closeSidebar()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Credits
+                </a></li>
+            </ul>
         </nav>
-        <div class="sidebar-foot">v1.5 — ACTIVE</div>
+        <div class="sidebar-foot">v1.6 — ACTIVE</div>
     </aside>
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
 
@@ -59,7 +74,7 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
                 </span>
                 <span class="brand-text">CHESS<span>IQ</span></span>
-                <span class="brand-ver">v1.5</span>
+                <span class="brand-ver">v1.6</span>
             </a>
         </div>
         <nav class="topnav">
@@ -67,8 +82,6 @@
             <a href="ranked.html" class="nav-ranked">Ranked</a>
             <a href="leaderboard.html">Leaderboard</a>
             <a href="analytics.html">Analytics</a>
-            <a href="info.html">Information</a>
-            <a href="changelog.html" class="active">Changelog</a>
             <button id="potd-nav-btn" class="potd-nav-btn" onclick="openPOTD()" aria-label="Puzzle of the Day" title="Puzzle of the Day">
                 <span class="potd-nav-icon">📅</span>
                 <span class="potd-nav-label">Daily</span>
@@ -103,7 +116,7 @@
             </dl>
             <dl class="release-stat release-stats">
                 <dt>Latest version</dt>
-                <dd>v1.5</dd>
+                <dd>v1.6</dd>
                 <span class="release-stat-label">Expanded Database</span>
             </dl>
             <dl class="release-stat release-stats">
@@ -117,10 +130,38 @@
             <article class="release-card current">
                 <div class="release-side">
                     <div>
+                        <div class="release-version">v1.6</div>
+                        <div class="release-era">October 2026</div>
+                    </div>
+                    <span class="release-badge">Latest</span>
+                </div>
+                <div class="release-body">
+                    <div class="release-body-top">
+                        <h2 class="release-name">Ranked</h2>
+                        <span class="release-meta">Competitive play under the clock</span>
+                    </div>
+                    <ul class="release-list">
+                        <li>Introduced <strong>ChessIQ Ranked</strong> on its own page: a competitive layer that tests whether positional understanding survives a clock. Ranked Rating is entirely separate from PR, so deep study and fast accurate judgement are two distinct things to develop.</li>
+                        <li><strong>Blitz Solo</strong> — two themes spun at random from the 73-theme taxonomy, ten positions, and time that scales with difficulty (Easy 15s, Medium 22s, Hard 30s) with a three-second beat between puzzles.</li>
+                        <li><strong>Duels</strong> — live one-on-one over the identical puzzle set, by quick match or a shareable challenge link. Synchronised start against the server clock, a live opponent progress bar showing position but never answers, and a void-with-no-rating-change if either player disconnects.</li>
+                        <li>Scoring rewards accuracy over speed by construction: 100 points for a correct answer plus up to 50 for time remaining, so ten slow correct answers always beat five fast ones. Wrong answers and timeouts score zero, never negative.</li>
+                        <li>Six tiers from <strong>Pawn to Grandmaster</strong>, a seasonal ladder opening with Winter 2026, a 70% soft reset at rollover, and permanent season badges recording the tier you held when a season closed.</li>
+                        <li>Explanations are withheld during play and released in full afterwards: a post-game review with every position, your answer, the clock, the points, and the complete AI breakdown. Duel reviews show both players' answers side by side.</li>
+                        <li>Added a Casual / Ranked mode picker on entry, a dual rating display in the top bar led by Ranked Rating, and side-by-side Casual and Ranked leaderboards with tier badges.</li>
+                        <li>Analytics gained a <strong>Casual / Ranked / Combined</strong> filter driving every stat, chart and the radar. The radar now uses exact recorded theme accuracy instead of estimating from your difficulty mix.</li>
+                        <li>Fixed theme tagging that left 668 positions — the entire tournament-game half of the library — invisible to theme analytics and the admin coverage report, because only one of the two stored theme field names was ever read.</li>
+                        <li>Moved Information, Changelog and Credits into the sidebar so the top bar carries only the four destinations players move between.</li>
+                    </ul>
+                </div>
+            </article>
+
+            <article class="release-card">
+                <div class="release-side">
+                    <div>
                         <div class="release-version">v1.5</div>
                         <div class="release-era">August 2026</div>
                     </div>
-                    <span class="release-badge">Latest</span>
+                    <span class="release-badge">Database</span>
                 </div>
                 <div class="release-body">
                     <div class="release-body-top">

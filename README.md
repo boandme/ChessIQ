@@ -14,7 +14,7 @@ ChessIQ's Multiple Uses
 
 ChessIQ scales with your level. Beginners start by counting material — learning which side simply has more pieces — and that alone builds a foundation for reading positions. As your rating climbs, the puzzles shift toward what ChessIQ was originally built for: recognizing positional imbalances, space, piece activity, and structural advantages that don't show up in a piece count. One tool, two very different kinds of chess thinking, on a single continuous ladder.
 
-Status: ✅ v1.5 — actively developed.
+Status: ✅ v1.6 — actively developed.
 
 
 
@@ -85,6 +85,55 @@ Thematic Focus training: select two or more of the ten most common positional th
 •
 Thematic pools respect the selected difficulty and cycle through every matching position before repeating
 
+⚔️ ChessIQ Ranked
+
+Ranked is the competitive layer, and it is deliberately not a reskin of training. Casual asks whether you can read a position. Ranked asks whether you can read it in fifteen seconds. Ranked Rating is tracked entirely separately from PR, so a player can be deep and slow, or fast and sharp, and the two numbers will say so.
+
+Ranked requires an account and lives on its own page.
+
+Blitz Solo
+
+•
+Two themes drawn at random from the 73-theme taxonomy and revealed on a spinning wheel at session start — never weighted toward your weak themes, because a rigged wheel would be obvious
+
+•
+Ten positions, random difficulty mix, with time scaled to difficulty: Easy 15s, Medium 22s, Hard 30s
+
+•
+A three-second countdown between positions so a new board never lands mid-thought
+
+•
+Carries a quarter of a duel's rating weight, and needs at least 4 of 10 correct before it moves your rating at all — grinding solo cannot carry you up the ladder
+
+Duels
+
+•
+Live one-on-one on the identical puzzle set, in the identical order, starting at the same instant for both players
+
+•
+Find an opponent through quick match, or send a challenge link to a friend
+
+•
+A waiting room showing both players' tier and rating before the first board appears
+
+•
+A live opponent progress bar during play — their position in the set, never their answers
+
+•
+If either player disconnects the duel is voided and neither rating moves
+
+Scoring
+
+Accuracy beats speed by construction. A correct answer is worth 100 points plus up to 50 more for time remaining, so ten slow correct answers (1,000) always outscore five fast ones (750). Wrong answers and timeouts score zero and never go negative — a bad position does not ruin a run.
+
+Tiers and seasons
+
+Six tiers from Pawn through Knight, Bishop, Rook and Queen to Grandmaster. Seasons give the ladder a narrative: the leaderboard ranks on rating gained since season start, so joining late is not a handicap. At rollover players keep 70% of their rating, and the tier they held when the season closed is recorded as a permanent profile badge that can never be earned again.
+
+Post-game review
+
+No explanations during play — Ranked tests instinct, not research. Afterwards you get every position back with your answer, the correct one, your time, your points, and the complete AI breakdown. Duel reviews put both players' answers side by side, which turns the review screen into the natural place to argue about a position.
+
 📊 Personalized Training
 
 •
@@ -104,6 +153,9 @@ Rating progression tracking
 
 •
 47 unlockable achievements across performance, positional accuracy, thematic mastery, PR progression, consistency, daily-play, leaderboard, and account milestones
+
+•
+Separate Ranked Rating with six tiers and a seasonal competitive ladder
 
 •
 Global leaderboard
@@ -289,14 +341,27 @@ v1.5 - Expanded Database update
 
 
 
+v1.6 – Ranked Release (October 2026)
+- ChessIQ Ranked: a competitive layer on a dedicated page, with Ranked Rating tracked separately from PR.
+- Blitz Solo: themed timed sets of ten, with a theme wheel at session start and difficulty-scaled timers.
+- Duels: live 1v1 by quick match or challenge link, with synchronised start, live opponent progress, and void-on-disconnect.
+- Six tiers (Pawn → Grandmaster), the Winter 2026 inaugural season, a 70% soft reset at rollover, and permanent season badges.
+- Post-game review releasing the full AI explanation for every position, with both players' answers side by side after a duel.
+- Casual / Ranked mode picker on entry; top bar now leads with Ranked Rating and keeps only the four primary destinations.
+- Side-by-side Casual and Ranked leaderboards with tier badges, replacing the single PR table.
+- Analytics filter across Casual / Ranked / Combined driving every stat, chart and the radar.
+- Fixed theme tagging that hid 668 positions — the whole tournament-game half of the library — from theme analytics and admin coverage reporting.
+- The theme radar now reads exact recorded per-theme accuracy instead of estimating it from your difficulty mix.
+
+
 🔜 Planned Updates
 
 
 
-**v1.6 – Ranked & Rush Modes / seperate from gameplay" - August 2026
-New Rush gamemode: 3 or 5 minutes, maximum puzzles correct. Separate leaderboard for Rush. Ability to switch between regular rated play and Rush on the homescreen.
+v1.7 – Rush Mode (2026)
+A timed streak gamemode on top of Ranked: 3 or 5 minutes, maximum positions correct, with its own leaderboard alongside Blitz Solo and Duels.
 
-v1.7 – Friends & Personalization Update (2026)
+v1.8 – Friends & Personalization Update (2026)
 Add friends, friends-only leaderboards, dark/light mode, super beginner mode, daily rewards, and streak tracking. Mobile coming to both Android and Apple.
 
 

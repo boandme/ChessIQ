@@ -144,9 +144,25 @@ function paintRating() {
     const wrap = el('topbar-rr-wrap');
     if (wrap) wrap.style.setProperty('--tier-accent', state.tier.accent);
 
-    // Duel panel mirrors the same numbers.
-    const panelRating = el('duel-rating');
-    if (panelRating) panelRating.textContent = String(state.profile.rating);
+    // Standing strip: the same numbers at a size that does not require
+    // hunting the corner of the screen for them.
+    const p = state.profile;
+    const games = (p.soloPlayed || 0) + (p.duelPlayed || 0);
+    const setStanding = (id, value) => { const node = el(id); if (node) node.textContent = value; };
+    setStanding('standing-rating', String(p.rating));
+    setStanding('standing-tier-icon', state.tier.icon);
+    setStanding('standing-tier-name', state.tier.name);
+    setStanding('standing-games', String(games));
+    setStanding('standing-record',
+        `${p.duelWins || 0}\u2013${p.duelLosses || 0}` + ((p.duelDraws || 0) ? ` (${p.duelDraws}D)` : ''));
+    setStanding('standing-best', p.bestSessionScore ? String(p.bestSessionScore) : '\u2014');
+    setStanding('standing-season', CURRENT_SEASON.name);
+    const seasonDelta = p.seasonDelta || 0;
+    setStanding('standing-season-delta', (seasonDelta >= 0 ? '+' : '') + seasonDelta);
+
+    const standingTier = el('standing-tier-icon');
+    if (standingTier) standingTier.style.setProperty('--tier-accent', state.tier.accent);
+
     const panelTier = el('duel-tier');
     if (panelTier) {
         panelTier.textContent = state.tier.icon + ' ' + state.tier.name;
@@ -226,10 +242,23 @@ let wheelAnimation = null;
 
 window.startSolo = function() {
     if (!state.positions || !state.themes.length) return;
+
+    // Solo never searches for anyone. Any duel state left over from a previous
+    // attempt is torn down first so the matchmaking panel cannot reappear here.
+    if (state.matchHandle) { void state.matchHandle.cancel(); state.matchHandle = null; }
+    if (state.unwatchDuel) { state.unwatchDuel(); state.unwatchDuel = null; }
+    state.duelId = null;
+    state.duel = null;
+    state.duelRole = null;
+    state.duelStartScheduled = false;
+    state.duelSetPublished = false;
+
     state.mode = 'solo';
     showView('pre');
     el('pre-duel').hidden = true;
     el('pre-wheel').hidden = false;
+    el('duel-versus').hidden = true;
+    el('duel-link-row').hidden = true;
     spinThemeWheel();
 };
 
@@ -518,12 +547,28 @@ function beginSession(mode) {
 
     el('session-mode').textContent = mode === 'duel' ? 'Duel' : 'Blitz Solo';
     el('session-themes').textContent = mode === 'solo'
-        ? (state.sessionThemes || []).join('  ·  ')
+        ? (state.sessionThemes || []).join('  \u00b7  ')
         : 'Mixed themes';
     el('duel-progress-wrap').hidden = (mode !== 'duel');
+    renderPips();
 
     showView('session');
     renderPuzzle();
+}
+
+// Ten pips: filled green/red as answers land, outlined on the current one.
+// Reads faster mid-session than "4 / 10" alone.
+function renderPips() {
+    const host = el('session-pips');
+    if (!host) return;
+    let html = '';
+    for (let i = 0; i < PUZZLES_PER_SESSION; i++) {
+        const record = state.results[i];
+        const cls = record ? (record.correct ? 'is-correct' : 'is-wrong')
+                  : (i === state.index ? 'is-current' : '');
+        html += '<span class="rk-pip ' + cls + '"></span>';
+    }
+    host.innerHTML = html;
 }
 
 function renderPuzzle() {
@@ -535,6 +580,7 @@ function renderPuzzle() {
     state.puzzleStartedAt = performance.now();
 
     el('session-counter').textContent = (state.index + 1) + ' / ' + PUZZLES_PER_SESSION;
+    renderPips();
     el('session-score').textContent   = String(state.score);
     el('session-board').innerHTML     = getPositionSVG(pos);
     el('session-turn').textContent    = turnLabelFor(pos);
@@ -616,6 +662,7 @@ function submitAnswer(answer) {
                         : 'Incorrect';
 
     el('session-score').textContent = String(state.score);
+    renderPips();
 
     if (state.mode === 'duel' && state.duelId) {
         void pushDuelAnswer(state.duelId, state.uid, state.index, record,

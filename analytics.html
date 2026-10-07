@@ -820,8 +820,23 @@
                     PositionGuesser
                 </a></li>
             </ul>
+            <h3>Resources</h3>
+            <ul>
+                <li><a href="info.html" onclick="closeSidebar()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/></svg>
+                    Information
+                </a></li>
+                <li><a href="changelog.html" onclick="closeSidebar()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+                    Changelog
+                </a></li>
+                <li><a href="credits.html" onclick="closeSidebar()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Credits
+                </a></li>
+            </ul>
         </nav>
-        <div class="sidebar-foot">v1.4.8 — ACTIVE</div>
+        <div class="sidebar-foot">v1.6 — ACTIVE</div>
     </aside>
 
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
@@ -834,7 +849,7 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
                 </span>
                 <span class="brand-text">CHESS<span>IQ</span></span>
-                <span class="brand-ver">v1.4.8</span>
+                <span class="brand-ver">v1.6</span>
             </a>
         </div>
 
@@ -843,8 +858,6 @@
             <a href="ranked.html" class="nav-ranked">Ranked</a>
             <a href="leaderboard.html">Leaderboard</a>
             <a href="analytics.html" class="active">Analytics</a>
-            <a href="info.html">Information</a>
-            <a href="changelog.html">Changelog</a>
             <button id="potd-nav-btn" class="potd-nav-btn" onclick="openPOTD()" aria-label="Puzzle of the Day" title="Puzzle of the Day">
                 <span class="potd-nav-icon">📅</span>
                 <span class="potd-nav-label">Daily</span>
@@ -1128,6 +1141,17 @@
         let casualThemePerformance = null;
 
         // ── Helpers ───────────────────────────────────────────────────────────
+
+        // Positions carry their themes under `themes` (original import) or
+        // `Themes` (2012/2016 import). Everything in this file goes through
+        // here so neither generation is ever dropped again.
+        function anThemesOf(pos) {
+            const exp = pos && pos.AIExplanation;
+            if (!exp) return [];
+            if (Array.isArray(exp.themes)) return exp.themes;
+            if (Array.isArray(exp.Themes)) return exp.Themes;
+            return [];
+        }
 
         function setText(id, val) {
             const el = document.getElementById(id);
@@ -1891,8 +1915,9 @@
                 }
 
                 const pos = posMap[r.key];
-                const themes = pos && pos.AIExplanation && Array.isArray(pos.AIExplanation.themes)
-                    ? pos.AIExplanation.themes.slice(0, 3).join(' \u00b7 ')
+                const themeList = anThemesOf(pos);
+                const themes = themeList.length
+                    ? themeList.slice(0, 3).join(' \u00b7 ')
                     : (r.sessionMode === 'duel' ? 'Duel' : 'Blitz Solo');
                 const secs = ((r.ms || 0) / 1000).toFixed(1) + 's';
 
@@ -1922,8 +1947,7 @@
             rankedAnswers().forEach(function(answer) {
                 const pos = posMap[answer.key];
                 if (!pos) return;
-                const exp = pos.AIExplanation;
-                const themes = (exp && Array.isArray(exp.themes)) ? exp.themes : [];
+                const themes = anThemesOf(pos);
                 const seen = new Set();
                 themes.forEach(function(raw) {
                     const label = String(raw || '').trim();
@@ -2217,8 +2241,7 @@
 
             // Now build theme stats
             usedPositions.forEach(pos => {
-                const exp    = pos.AIExplanation;
-                const themes = (exp && Array.isArray(exp.themes)) ? exp.themes : [];
+                const themes = anThemesOf(pos);
                 themes.forEach(rawTheme => {
                     // Correct weight is estimated from the player's performance
                     // at this difficulty; labels are normalized in the helper.

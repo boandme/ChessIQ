@@ -362,7 +362,12 @@ export function createAdminControlCenter({ db, getSession, getPositions }) {
                 missingExplanation++;
                 return;
             }
-            const sourceThemes = Array.isArray(explanation.themes) ? explanation.themes : [];
+            // Two import generations: the original 538 store `themes`, the
+            // 2012/2016 batch stores `Themes`. Reading only one of them is what
+            // reported 668 positions as having no usable themes.
+            const sourceThemes = Array.isArray(explanation.themes) ? explanation.themes
+                               : Array.isArray(explanation.Themes) ? explanation.Themes
+                               : [];
             if (!sourceThemes.length) {
                 missingThemes++;
                 return;
