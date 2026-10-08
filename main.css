@@ -546,8 +546,10 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
 .guest-gate-link:hover { color: var(--yellow); border-color: var(--yellow-line); }
 
 /* ── Hamburger (mobile only) ──────────────────────────────────────────────── */
+/* Visible at every width: the sidebar is the only route to Information,
+   Changelog and Credits, so hiding its trigger on desktop stranded them. */
 #hamburger-menu {
-    display: none;
+    display: flex;
     position: fixed; top: 15px; left: 16px; z-index: 1002;
     width: 42px; height: 42px;
     background: var(--surface-2);
@@ -555,8 +557,20 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
     cursor: pointer;
     flex-direction: column; justify-content: center; align-items: center; gap: 5px;
     clip-path: polygon(20% 0, 100% 0, 100% 80%, 80% 100%, 0 100%, 0 20%);
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s var(--ease-snap);
 }
+#hamburger-menu:hover {
+    background: var(--surface-3);
+    border-color: var(--yellow-line);
+    transform: translateY(-1px);
+}
+#hamburger-menu:hover span { background: var(--yellow-bright); }
+#hamburger-menu:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
 #hamburger-menu span { width: 20px; height: 2px; background: var(--yellow); transition: all 0.25s ease; }
+
+/* The button is fixed-position, so the bar reserves room for it at all widths
+   instead of only in the mobile breakpoint. */
+.topbar { padding-left: 70px; }
 
 /* ══════════════════════════════════════════════════════════════════════════
    SIDEBAR
@@ -595,11 +609,23 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
 }
 .sidebar-close-btn svg { width: 18px; height: 18px; }
 .sidebar-close-btn:hover { color: var(--bg); background: var(--yellow); border-color: var(--yellow); }
-.sidebar-nav { padding: 24px 18px; flex: 1; }
+.sidebar-nav {
+    padding: 24px 18px; flex: 1;
+    /* Three groups can outgrow a short viewport. */
+    overflow-y: auto;
+}
 .sidebar-nav h3 {
     color: var(--text-faint); font-size: 0.72rem; font-weight: 700;
-    margin: 0 8px 16px; text-transform: uppercase; letter-spacing: 0.18em;
+    margin: 0 8px 14px; text-transform: uppercase; letter-spacing: 0.18em;
 }
+/* Space between groups. The original sidebar had a single heading, so nothing
+   ever separated one list from the next. */
+.sidebar-nav ul + h3 {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+}
+.sidebar-nav li + li { margin-top: 4px; }
 .sidebar-nav ul { list-style: none; padding: 0; margin: 0; }
 .sidebar-nav a {
     display: flex; align-items: center; gap: 12px;
@@ -1845,7 +1871,6 @@ svg.board, #board svg {
 
 @media (max-width: 760px) {
     .topnav { display: none; }
-    #hamburger-menu { display: flex; }
     .topbar { padding: 0 16px 0 70px; }
     .brand-ver { display: none; }
     #header-username { display: none; }
