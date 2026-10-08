@@ -598,6 +598,7 @@ onAuthStateChanged(auth, async (user) => {
     updateDifficultyPanelUI();
     renderPR();
     initPositions();
+    openDeepLinkedModal();
     // Clear any OG achievement made ineligible by an account-specific exception
     // before reconciling unlocks. The OG account achievement is then the one
     // account-based milestone that should announce itself.
@@ -1405,11 +1406,11 @@ function updatePR(difficulty, correct, context = {}) {
 // casual page should not pull the whole Ranked bundle in just to paint a chip.
 const RR_TIERS = [
     { name: 'Pawn',        min: 0,    icon: '♟', accent: '#9aa0ad' },
-    { name: 'Knight',      min: 1000, icon: '♞', accent: '#6fc3ff' },
-    { name: 'Bishop',      min: 1300, icon: '♝', accent: '#b98cff' },
-    { name: 'Rook',        min: 1600, icon: '♜', accent: '#ff9a5c' },
-    { name: 'Queen',       min: 1900, icon: '♛', accent: '#ffd400' },
-    { name: 'Grandmaster', min: 2200, icon: '♚', accent: '#fff1a8' },
+    { name: 'Knight',      min: 800,  icon: '♞', accent: '#6fc3ff' },
+    { name: 'Bishop',      min: 1400, icon: '♝', accent: '#b98cff' },
+    { name: 'Rook',        min: 1950, icon: '♜', accent: '#ff9a5c' },
+    { name: 'Queen',       min: 2450, icon: '♛', accent: '#ffd400' },
+    { name: 'Grandmaster', min: 2900, icon: '♚', accent: '#fff1a8' },
 ];
 
 function rrTierFor(rating) {
@@ -1549,6 +1550,22 @@ window.signOutFromBanner = async function() {
     await signOut(auth);
     window.location.href = 'login.html';
 };
+
+// Ranked's topbar links here for Achievements and Settings rather than
+// duplicating both modals on that page. Open whichever the hash names, once the
+// profile has loaded so the panels are populated.
+function openDeepLinkedModal() {
+    const target = (location.hash || '').replace('#', '');
+    if (!target) return;
+    if (target === 'achievements' && typeof window.openAchievements === 'function') {
+        window.openAchievements();
+    } else if (target === 'settings' && typeof window.openSettings === 'function') {
+        window.openSettings();
+    } else {
+        return;
+    }
+    history.replaceState(null, '', location.pathname);
+}
 
 // ── Logout ────────────────────────────────────────────────────────────────────
 window.logoutUser = async function() {

@@ -68,9 +68,15 @@ export function scorePuzzle({ correct, msElapsed, timeLimitSeconds }) {
 // Deliberately unrelated to PR. PR measures training depth accumulated slowly;
 // RR measures whether that understanding survives a 15-second clock. A player
 // can legitimately be strong in one and weak in the other.
-export const RR_START = 800;
-export const RR_FLOOR = 100;
-export const K_DUEL   = 40;
+// The ladder spans 0-3,200, matching the range players already read PR on.
+// Everything below is scaled to that span rather than the old 800-2,200 band.
+export const RR_START   = 600;
+export const RR_FLOOR   = 0;
+export const RR_CEILING = 3200;
+// K sized for the span: a duel against an even opponent swings about 40 points,
+// so a season of real play covers meaningful ground without a single session
+// rewriting the ladder.
+export const K_DUEL   = 80;
 // Solo carries a quarter of a duel's weight. Grinding solo moves the needle,
 // but it cannot carry anyone to the top of the ladder on its own.
 export const SOLO_WEIGHT = 0.25;
@@ -78,11 +84,11 @@ export const K_SOLO      = K_DUEL * SOLO_WEIGHT;
 
 export const TIERS = [
     { name: 'Pawn',        min: 0,    icon: '♟', accent: '#9aa0ad' },
-    { name: 'Knight',      min: 1000, icon: '♞', accent: '#6fc3ff' },
-    { name: 'Bishop',      min: 1300, icon: '♝', accent: '#b98cff' },
-    { name: 'Rook',        min: 1600, icon: '♜', accent: '#ff9a5c' },
-    { name: 'Queen',       min: 1900, icon: '♛', accent: '#ffd400' },
-    { name: 'Grandmaster', min: 2200, icon: '♚', accent: '#fff1a8' },
+    { name: 'Knight',      min: 800,  icon: '♞', accent: '#6fc3ff' },
+    { name: 'Bishop',      min: 1400, icon: '♝', accent: '#b98cff' },
+    { name: 'Rook',        min: 1950, icon: '♜', accent: '#ff9a5c' },
+    { name: 'Queen',       min: 2450, icon: '♛', accent: '#ffd400' },
+    { name: 'Grandmaster', min: 2900, icon: '♚', accent: '#fff1a8' },
 ];
 
 export function tierFor(rating) {
@@ -115,8 +121,8 @@ export function expectedScore(myRating, opponentRating) {
 // a solo session. Anchored so a Pawn is expected to take about a third of the
 // points and a Grandmaster nearly all of them.
 export function expectedSoloPerformance(rating) {
-    const t = (rating - RR_START) / 1600;
-    return Math.max(0.30, Math.min(0.92, 0.38 + 0.54 * t));
+    const t = (rating - RR_START) / (RR_CEILING - RR_START);
+    return Math.max(0.30, Math.min(0.94, 0.36 + 0.58 * t));
 }
 
 export function computeSoloDelta({ rating, score, correctCount }) {
@@ -223,7 +229,7 @@ export async function loadRankedProfile(uid) {
 // Applies a rating delta and keeps every derived field consistent in one place,
 // so solo and duel cannot drift apart on how a rating is recorded.
 export async function applyRatingDelta(uid, profile, delta, extra = {}) {
-    const rating = Math.max(RR_FLOOR, profile.rating + delta);
+    const rating = Math.min(RR_CEILING, Math.max(RR_FLOOR, profile.rating + delta));
     const next = {
         ...profile,
         ...extra,
@@ -376,8 +382,43 @@ export function seedFromString(str) {
     return hash >>> 0;
 }
 
-// Blitz Solo: ten puzzles drawn from the two assigned themes, random difficulty
-// mix. Falls back to the broad pool if the themes cannot fill a set.
+// Stratified draw across the three difficulty tiers. Taking the first ten of a
+// shuffled pool inherits the pool's skew, and the library is heavily Easy, so
+// an unstratified set is mostly 15-second puzzles. Round-robin keeps the mix
+// even and makes the difficulty-scaled timers actually mean something.
+//
+// `count` positions, as close to evenly split as the candidates allow; a tier
+// that runs dry simply yields its turn to the others.
+export function buildBalancedSet(candidates, count = PUZZLES_PER_SESSION, rng = Math.random) {
+    const buckets = { Easy: [], Medium: [], Hard: [] };
+    candidates.forEach(pos => { buckets[difficultyOf(pos)].push(pos); });
+
+    const order = ['Easy', 'Medium', 'Hard'];
+    order.forEach(tier => { buckets[tier] = shuffle(buckets[tier], rng); });
+
+    // Start the rotation at a random tier so the first puzzle is not always
+    // Easy and the leftover slot does not always land on the same tier.
+    const offset = Math.floor(rng() * order.length);
+    const out = [];
+    let exhausted = 0;
+    for (let i = 0; out.length < count && exhausted < order.length; i++) {
+        const tier = order[(i + offset) % order.length];
+        if (buckets[tier].length) {
+            out.push(buckets[tier].pop());
+            exhausted = 0;
+        } else if (i % order.length === order.length - 1) {
+            // A full rotation with nothing taken means every tier is empty.
+            exhausted = order.every(t => !buckets[t].length) ? order.length : 0;
+        }
+        if (order.every(t => !buckets[t].length)) break;
+    }
+
+    // Shuffle the result so the tiers are not presented in a predictable cycle.
+    return shuffle(out, rng).slice(0, count);
+}
+
+// Blitz Solo: ten puzzles drawn from the two assigned themes, with an even
+// difficulty mix. Falls back to the broad pool if the themes cannot fill a set.
 export function buildSoloSet(positions, themeIndex, themes, rng = Math.random) {
     const pool = new Map();
     themes.forEach(theme => (themeIndex.get(theme) || []).forEach(pos => pool.set(pos._key, pos)));
@@ -386,13 +427,14 @@ export function buildSoloSet(positions, themeIndex, themes, rng = Math.random) {
         const filler = shuffle(positions, rng).filter(pos => !pool.has(pos._key));
         candidates = candidates.concat(filler);
     }
-    return candidates.slice(0, PUZZLES_PER_SESSION);
+    return buildBalancedSet(candidates, PUZZLES_PER_SESSION, rng);
 }
 
 // Duel: drawn broadly across the taxonomy with no theme announcement, so
-// neither player gains an edge from theme familiarity.
+// neither player gains an edge from theme familiarity. Same even mix, and the
+// shared seed keeps both clients on the identical set.
 export function buildDuelSet(positions, rng = Math.random) {
-    return shuffle(positions, rng).slice(0, PUZZLES_PER_SESSION);
+    return buildBalancedSet(shuffle(positions, rng), PUZZLES_PER_SESSION, rng);
 }
 
 export function difficultyOf(pos) {

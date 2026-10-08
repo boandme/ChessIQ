@@ -142,6 +142,15 @@
                 <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
                 <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
             </button>
+            <a id="achievements-btn" class="icon-btn" href="index.html#achievements" aria-label="Achievements" title="Achievements">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0V4Z"/><path d="M8 6H4v1a4 4 0 0 0 4 4M16 6h4v1a4 4 0 0 1-4 4"/><path d="M12 13v4M9 20h6M10 17h4"/></svg>
+            </a>
+            <a id="settings-btn" class="icon-btn" href="index.html#settings" aria-label="Settings" title="Settings">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.56V21a2 2 0 0 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.56V3a2 2 0 0 1 4 0v.09a1.7 1.7 0 0 0 1 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9v0a1.7 1.7 0 0 0 1.56 1H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
+            </a>
+            <button id="help-btn" class="icon-btn" onclick="openRankedHelp()" aria-label="Help" title="How Ranked works">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.2"/><path d="M9.2 9.2a2.8 2.8 0 0 1 5.4 1c0 1.9-2.8 2.5-2.8 2.5"/><line x1="12" y1="17" x2="12" y2="17.01"/></svg>
+            </button>
         </div>
     </header>
 
@@ -426,6 +435,50 @@
 
     </main>
 
+    <!-- How Ranked works. Local rather than shared with casual: the rules are
+         genuinely different, and a timed mode deserves its own explanation. -->
+    <div id="rk-help-modal" class="rk-modal" hidden onclick="if(event.target===this) closeRankedHelp()">
+        <div class="rk-modal-card" role="dialog" aria-modal="true" aria-labelledby="rk-help-title">
+            <button class="rk-modal-close" onclick="closeRankedHelp()" aria-label="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+            <div class="rk-modal-eyebrow">Competitive play</div>
+            <h2 id="rk-help-title">How Ranked works</h2>
+
+            <div class="rk-help-grid">
+                <section>
+                    <h3>Two modes</h3>
+                    <p><strong>Blitz Solo</strong> spins two random themes, then gives you ten positions from them. <strong>Duels</strong> put you against another player on the identical set, at the same time.</p>
+                </section>
+                <section>
+                    <h3>The clock</h3>
+                    <p>Easy 15s, Medium 22s, Hard 30s — harder positions get more room. Three seconds between puzzles so a new board never lands mid-thought.</p>
+                </section>
+                <section>
+                    <h3>Scoring</h3>
+                    <p>100 points for a correct answer, plus up to 50 for time left. Ten slow correct answers beat five fast ones. Wrong answers and timeouts score zero, never negative.</p>
+                </section>
+                <section>
+                    <h3>Ranked Rating</h3>
+                    <p>Runs 0–3,200 and is completely separate from your PR. Duels carry full weight; Solo carries a quarter and needs at least 4 of 10 correct to move anything.</p>
+                </section>
+                <section>
+                    <h3>Tiers &amp; seasons</h3>
+                    <p>Pawn through Grandmaster. Each season keeps 70% of your rating at rollover, and the tier you held when it closed becomes a permanent badge.</p>
+                </section>
+                <section>
+                    <h3>No help mid-run</h3>
+                    <p>Explanations are locked until the end. Afterwards you get every position back in full, with the complete AI breakdown — and in a Duel, your opponent's answers beside yours.</p>
+                </section>
+            </div>
+
+            <div class="rk-help-keys">
+                <span>Keyboard</span>
+                <kbd>1</kbd> White <kbd>2</kbd> Equal <kbd>3</kbd> Black
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="experience.js"></script>
     <script type="module" src="ranked.js"></script>
     <script type="module">
@@ -441,6 +494,11 @@
             document.getElementById('sidebar').classList.remove('open');
             document.getElementById('sidebar-overlay').classList.remove('show');
         };
+        window.openRankedHelp  = () => { document.getElementById('rk-help-modal').hidden = false; };
+        window.closeRankedHelp = () => { document.getElementById('rk-help-modal').hidden = true; };
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') window.closeRankedHelp();
+        });
     </script>
 </body>
 </html>
