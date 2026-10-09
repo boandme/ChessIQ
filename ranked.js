@@ -18,8 +18,11 @@ import {
     difficultyOf, seededRandom, shuffle, escapeHTML,
 } from './ranked-core.js';
 
+import { initFriends, setOnlineUids, updateMe } from './friends-ui.js';
+import { inviteFriendToDuel, clearDuelInvite, watchDuelInvites, isInviteFresh } from './friends.js';
+
 import {
-    initServerClock, serverNow, enterPresence, leavePresence, watchOnlineCount,
+    initServerClock, serverNow, enterPresence, leavePresence, watchOnlineCount, watchOnlineUids,
     createDuel, joinDuel, startDuel, watchDuel, cancelDuel,
     pushDuelAnswer, markDuelFinished, voidDuel, settleDuel, quickMatch,
 } from './ranked-duel.js';
@@ -94,6 +97,18 @@ onAuthStateChanged(auth, async user => {
         const node = el('duel-online');
         if (node) node.textContent = String(Math.max(1, count));
     });
+    // The friends list and the online counter read the same roster, so a
+    // friend shown as online is genuinely reachable for a challenge.
+    state.unwatchRoster = watchOnlineUids(uids => setOnlineUids(uids));
+
+    initFriends({
+        me: {
+            uid: state.uid, username: state.username,
+            rating: state.profile.rating, tier: state.tier.name,
+        },
+        onChallenge: challengeFriend,
+    });
+    watchIncomingInvites();
 
     try {
         state.positions  = await loadPositions();
@@ -109,7 +124,11 @@ onAuthStateChanged(auth, async user => {
     if (invite) void acceptInvite(invite.trim().toUpperCase());
 });
 
-window.addEventListener('pagehide', () => { void leavePresence(); });
+window.addEventListener('pagehide', () => {
+    void leavePresence();
+    if (state.unwatchRoster)  state.unwatchRoster();
+    if (state.unwatchInvites) state.unwatchInvites();
+});
 
 function renderIdentity(record) {
     const pair = el('rating-pair');
@@ -181,6 +200,7 @@ function paintRating() {
     const season = el('duel-season');
     if (season) season.textContent = CURRENT_SEASON.name;
 
+    updateMe({ rating: state.profile.rating, tier: state.tier.name });
     renderSeasonBadges();
 }
 
@@ -219,7 +239,7 @@ function renderSeasonBadges() {
 }
 
 function setSelectReady(ready) {
-    ['btn-solo', 'btn-duel-quick', 'btn-duel-link'].forEach(id => {
+    ['btn-solo', 'btn-duel-quick', 'btn-duel-link', 'btn-friends'].forEach(id => {
         const node = el(id);
         if (node) node.disabled = !ready;
     });
@@ -399,6 +419,89 @@ window.copyDuelLink = async function() {
     }
 };
 
+// A friend challenge is an ordinary link duel whose link is delivered for you.
+async function challengeFriend(friendUid, friendName) {
+    if (!state.positions) return;
+    state.mode = 'duel';
+    showView('pre');
+    el('pre-wheel').hidden = true;
+    el('pre-duel').hidden = false;
+    el('duel-link-row').hidden = true;
+    setDuelStage('waiting', 'Challenging ' + friendName + '\u2026',
+                 'They will see your challenge on their Ranked page.');
+
+    const duelId = await createDuel({
+        uid: state.uid, name: state.username, profile: state.profile,
+        tier: state.tier, kind: 'friend',
+    });
+    const sent = await inviteFriendToDuel({
+        duelId,
+        me: { uid: state.uid, username: state.username,
+              rating: state.profile.rating, tier: state.tier.name },
+        friendUid,
+    });
+    if (!sent) {
+        setDuelStage('error', 'Could not reach ' + friendName,
+                     'Send them a challenge link instead.');
+        return;
+    }
+    // A link is still offered as a fallback in case they are not looking.
+    el('duel-link-input').value = location.origin + location.pathname + '?duel=' + duelId;
+    el('duel-link-row').hidden = false;
+    enterDuel(duelId, 'host');
+}
+
+// ── Incoming challenges ──────────────────────────────────────────────────────
+function watchIncomingInvites() {
+    if (state.unwatchInvites) state.unwatchInvites();
+    state.unwatchInvites = watchDuelInvites(state.uid, invites => {
+        const entries = Object.entries(invites || {})
+            .filter(([, invite]) => isInviteFresh(invite))
+            .sort((a, b) => (b[1].at || 0) - (a[1].at || 0));
+
+        // Sweep anything stale so the list cannot grow unbounded.
+        Object.keys(invites || {}).forEach(duelId => {
+            if (!isInviteFresh(invites[duelId])) void clearDuelInvite(state.uid, duelId);
+        });
+
+        // Never interrupt a run in progress.
+        if (!entries.length || state.sessionRunning) return hideInviteToast();
+
+        const [duelId, invite] = entries[0];
+        state.activeInvite = { duelId, invite };
+        showInviteToast(invite);
+    });
+}
+
+function showInviteToast(invite) {
+    const toast = el('rk-invite-toast');
+    if (!toast) return;
+    el('rk-invite-title').textContent = (invite.fromUsername || 'A friend') + ' challenged you';
+    el('rk-invite-sub').textContent =
+        (invite.fromTier || 'Pawn') + ' \u00b7 ' + (invite.fromRating ?? '\u2014') + ' RR';
+    toast.hidden = false;
+}
+
+function hideInviteToast() {
+    const toast = el('rk-invite-toast');
+    if (toast) toast.hidden = true;
+}
+
+window.acceptDuelInvite = function() {
+    const pending = state.activeInvite;
+    if (!pending) return;
+    hideInviteToast();
+    void clearDuelInvite(state.uid, pending.duelId);
+    state.activeInvite = null;
+    void acceptInvite(pending.duelId);
+};
+
+window.dismissDuelInvite = function() {
+    if (state.activeInvite) void clearDuelInvite(state.uid, state.activeInvite.duelId);
+    state.activeInvite = null;
+    hideInviteToast();
+};
+
 window.cancelPreSession = async function() {
     if (state.matchHandle) { await state.matchHandle.cancel(); state.matchHandle = null; }
     if (state.unwatchDuel) { state.unwatchDuel(); state.unwatchDuel = null; }
@@ -418,6 +521,12 @@ function enterDuel(duelId, role) {
     state.duelId   = duelId;
     state.duelRole = role;
     state.settled  = false;
+    // Every duel entry point funnels through here, so this is the one place
+    // per-duel flags need clearing. Resetting them only in backToSelect left a
+    // cancelled match able to poison the next one.
+    state.duelStartScheduled = false;
+    state.duelSetPublished   = false;
+    state.awaitingSettle     = false;
 
     if (state.unwatchDuel) state.unwatchDuel();
     state.unwatchDuel = watchDuel(duelId, duel => {
@@ -442,22 +551,27 @@ function enterDuel(duelId, role) {
             return;
         }
 
-        if (duel.status === 'active' && !state.sessionRunning) {
+        // Checked on every snapshot while the duel is live, not only while my
+        // own run is going: an opponent who drops after I finish must still
+        // void the duel rather than leave me waiting on a score that is never
+        // coming.
+        const opponent = opponentOf(duel);
+        const opponentDropped = Boolean(
+            opponent && duel.players && duel.players[opponent.uid] &&
+            duel.players[opponent.uid].connected === false &&
+            duel.status !== 'complete');
+        if (opponentDropped) {
+            void voidDuel(duelId, 'opponent-disconnect');
+            return;
+        }
+
+        if (duel.status === 'active' && !state.sessionRunning && !state.awaitingSettle) {
             renderWaitingRoom(duel);
             scheduleDuelStart(duel);
             return;
         }
 
-        if (state.sessionRunning) {
-            paintOpponentProgress(duel);
-            // If the opponent drops mid-session, the session is voided and
-            // nobody's rating moves.
-            const opponent = opponentOf(duel);
-            if (opponent && duel.players && duel.players[opponent.uid] &&
-                duel.players[opponent.uid].connected === false) {
-                void voidDuel(duelId, 'opponent-disconnect');
-            }
-        }
+        if (state.sessionRunning) paintOpponentProgress(duel);
 
         if (duel.status === 'complete' && state.awaitingSettle) {
             state.awaitingSettle = false;
@@ -519,7 +633,9 @@ function scheduleDuelStart(duel) {
 }
 
 function handleVoid() {
-    if (!state.sessionRunning && !state.awaitingSettle) return;
+    // Reachable from three states: mid-run, waiting on the opponent's score,
+    // or sitting in the waiting room when the other side closes the tab.
+    if (!state.sessionRunning && !state.awaitingSettle && !state.duelStartScheduled) return;
     stopTimers();
     state.sessionRunning = false;
     state.awaitingSettle = false;

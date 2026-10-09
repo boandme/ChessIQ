@@ -282,7 +282,12 @@
                             Find an opponent
                         </button>
                         <button id="btn-duel-link" class="rk-btn rk-btn-ghost rk-btn-wide" onclick="createChallengeLink()" disabled>
-                            Challenge a friend with a link
+                            Challenge with a link
+                        </button>
+                        <button id="btn-friends" class="rk-btn rk-btn-ghost rk-btn-wide" onclick="openFriends()" disabled>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            Friends
+                            <span class="rk-friends-badge" id="rk-friends-badge" hidden>0</span>
                         </button>
                     </footer>
                 </article>
@@ -435,6 +440,22 @@
 
     </main>
 
+    <!-- A friend's challenge, arriving live. Stacked above everything so it is
+         not missed while the player is reading the mode panels. -->
+    <div id="rk-invite-toast" class="rk-invite-toast" hidden role="status" aria-live="polite">
+        <span class="rk-invite-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
+        </span>
+        <div class="rk-invite-body">
+            <div class="rk-invite-title" id="rk-invite-title">Duel challenge</div>
+            <div class="rk-invite-sub" id="rk-invite-sub">—</div>
+        </div>
+        <div class="rk-invite-actions">
+            <button class="rk-mini rk-mini-yes" onclick="acceptDuelInvite()">Accept</button>
+            <button class="rk-mini" onclick="dismissDuelInvite()">Later</button>
+        </div>
+    </div>
+
     <!-- How Ranked works. Local rather than shared with casual: the rules are
          genuinely different, and a timed mode deserves its own explanation. -->
     <div id="rk-help-modal" class="rk-modal" hidden onclick="if(event.target===this) closeRankedHelp()">
@@ -481,6 +502,7 @@
 
     <script type="module" src="experience.js"></script>
     <script type="module" src="ranked.js"></script>
+    <script type="module" src="friends-ui.js"></script>
     <script type="module">
         import { getAuth, signOut } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js';
         window.logoutUser = async () => { await signOut(getAuth()); location.href = 'index.html'; };

@@ -49,8 +49,13 @@ export function timeLimitFor(difficulty) {
 // score 1000, which beats five fast-and-correct (750) — exactly the ordering
 // the spec asks for. Wrong and timeout both score zero, never negative, so a
 // bad position never feels like it ruins the run.
-export const BASE_POINTS       = 100;
-export const MAX_TIME_BONUS    = 50;
+// 220 + up to 100 = 320 a puzzle, so a flawless ten-puzzle run is exactly
+// 3,200 - the same number the rating ladder tops out at. The 2.2:1 ratio of
+// base to bonus is unchanged from the old 100/50, so accuracy still dominates
+// speed by the same margin: ten slow correct answers (2,200) beat five fast
+// ones (1,600).
+export const BASE_POINTS       = 220;
+export const MAX_TIME_BONUS    = 100;
 export const MAX_SESSION_SCORE = PUZZLES_PER_SESSION * (BASE_POINTS + MAX_TIME_BONUS);
 // Solo sessions below this many correct answers record normally but move no
 // rating, which is what stops spam-clicking from inflating the ladder.
@@ -172,6 +177,47 @@ export function applySeasonRollover(profile) {
     };
 }
 
+// ── Scale migration ──────────────────────────────────────────────────────────
+// v1: 800 start, 100 floor, Grandmaster at 2,200, 1,500 max session score.
+// v2: 600 start, 0 floor, Grandmaster at 2,900, 3,200 max session score.
+export const RR_SCALE_VERSION = 2;
+const V1_START      = 800;
+const V1_GM         = 2200;
+const V1_MAX_SCORE  = 1500;
+const V2_GM         = 2900;
+
+// Anchored on the two points that mean the same thing in both scales: where a
+// player starts, and where Grandmaster begins. Everything between is linear,
+// so relative standing is preserved exactly.
+export function migrateRatingToV2(oldRating) {
+    const value = Number(oldRating);
+    if (!Number.isFinite(value)) return RR_START;
+    const scale = (V2_GM - RR_START) / (V1_GM - V1_START);
+    return Math.round(Math.min(RR_CEILING, Math.max(RR_FLOOR, RR_START + (value - V1_START) * scale)));
+}
+
+export function migrateScoreToV2(oldScore) {
+    const value = Number(oldScore);
+    if (!Number.isFinite(value) || value <= 0) return 0;
+    return Math.round(Math.min(MAX_SESSION_SCORE, value * (MAX_SESSION_SCORE / V1_MAX_SCORE)));
+}
+
+function applyScaleMigration(profile) {
+    const migrated = { ...profile };
+    ['rating', 'peakRating', 'seasonStartRating', 'seasonPeakRating'].forEach(key => {
+        if (Number.isFinite(Number(migrated[key]))) migrated[key] = migrateRatingToV2(migrated[key]);
+    });
+    // seasonDelta is a difference, not a point on the scale, so it stretches by
+    // the same factor rather than being re-anchored.
+    if (Number.isFinite(Number(migrated.seasonDelta))) {
+        const scale = (V2_GM - RR_START) / (V1_GM - V1_START);
+        migrated.seasonDelta = Math.round(Number(migrated.seasonDelta) * scale);
+    }
+    migrated.bestSessionScore = migrateScoreToV2(migrated.bestSessionScore);
+    migrated.scaleVersion = RR_SCALE_VERSION;
+    return migrated;
+}
+
 export function blankRankedProfile() {
     return {
         rating:            RR_START,
@@ -188,6 +234,7 @@ export function blankRankedProfile() {
         bestSessionScore:  0,
         badges:            {},
         lastPlayedAt:      0,
+        scaleVersion:      RR_SCALE_VERSION,
     };
 }
 
@@ -195,8 +242,14 @@ export function blankRankedProfile() {
 // the stored season is stale. Returns { profile, rolledOver }.
 export function normalizeRankedProfile(stored) {
     const base    = blankRankedProfile();
-    const profile = { ...base, ...(stored && typeof stored === 'object' ? stored : {}) };
+    let profile   = { ...base, ...(stored && typeof stored === 'object' ? stored : {}) };
     profile.rating = Number.isFinite(Number(profile.rating)) ? Number(profile.rating) : RR_START;
+
+    // A stored profile written before the rescale carries v1 numbers. Convert
+    // once, then stamp the version so it never runs twice.
+    const storedVersion = Number(stored && stored.scaleVersion) || 1;
+    const needsMigration = Boolean(stored) && storedVersion < RR_SCALE_VERSION;
+    if (needsMigration) profile = applyScaleMigration(profile);
 
     if (profile.seasonId !== CURRENT_SEASON.id) {
         // Archive the closing season before carrying anything forward. The badge
@@ -212,7 +265,7 @@ export function normalizeRankedProfile(stored) {
         }
         return { profile: { ...applySeasonRollover(profile), badges }, rolledOver: true };
     }
-    return { profile, rolledOver: false };
+    return { profile, rolledOver: needsMigration, migrated: needsMigration };
 }
 
 export function rankedProfileRef(uid) {
@@ -222,6 +275,8 @@ export function rankedProfileRef(uid) {
 export async function loadRankedProfile(uid) {
     const snap = await get(rankedProfileRef(uid));
     const { profile, rolledOver } = normalizeRankedProfile(snap.exists() ? snap.val() : null);
+    // Persist immediately on a new profile, a season rollover, or a scale
+    // migration, so the stored record never disagrees with what is displayed.
     if (rolledOver || !snap.exists()) await update(rankedProfileRef(uid), profile);
     return profile;
 }

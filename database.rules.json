@@ -47,6 +47,61 @@
       "$uid": {
         ".write": "auth != null && auth.uid === $uid",
 
+        "friendRequests": {
+          "in": {
+            "//": [
+              "A sender writes exactly one node here, keyed by their own uid,",
+              "so a request can never be forged as coming from someone else.",
+              "Deleting is left to the recipient, who already has write access",
+              "through the parent rule."
+            ],
+            "$fromUid": {
+              ".write": "auth != null && auth.uid === $fromUid",
+              ".validate": "!newData.exists() || newData.hasChildren(['username', 'at'])",
+              "username": { ".validate": "newData.isString() && newData.val().length <= 24" },
+              "at":       { ".validate": "newData.isNumber()" },
+              "rating":   { ".validate": "newData.isNumber() || newData.val() === null" },
+              "tier":     { ".validate": "newData.isString() || newData.val() === null" },
+              "$other":   { ".validate": false }
+            }
+          },
+          "out": {
+            "//": "Cleared by the other side when they accept or decline.",
+            "$toUid": {
+              ".write": "auth != null && (auth.uid === $uid || (auth.uid === $toUid && !newData.exists()))"
+            }
+          }
+        },
+
+        "friends": {
+          "$friendUid": {
+            "//": [
+              "Writable by the friend only while a request between the two",
+              "actually exists, which is what makes accept able to write both",
+              "sides at once. Removal is allowed either way so unfriending",
+              "does not leave a dangling half.",
+              "",
+              "NOTE: .write cascades, so the owner can already write here via",
+              "the $uid rule above. This clause exists to let the OTHER party",
+              "complete the handshake, not to restrict the owner."
+            ],
+            ".write": "auth != null && (auth.uid === $uid || (auth.uid === $friendUid && (!newData.exists() || root.child('users/' + $friendUid + '/friendRequests/in/' + $uid).exists() || root.child('users/' + $uid + '/friendRequests/in/' + $friendUid).exists())))",
+            ".validate": "!newData.exists() || newData.hasChildren(['username', 'since'])",
+            "username": { ".validate": "newData.isString() && newData.val().length <= 24" },
+            "since":    { ".validate": "newData.isNumber()" },
+            "$other":   { ".validate": false }
+          }
+        },
+
+        "duelInvites": {
+          "//": "A friend drops a pointer to a duel they just created.",
+          "$duelId": {
+            ".write": "auth != null && (auth.uid === $uid || (newData.exists() && newData.child('from').val() === auth.uid && root.child('users/' + $uid + '/friends/' + auth.uid).exists()))",
+            ".validate": "!newData.exists() || newData.hasChildren(['from', 'fromUsername'])",
+            "from": { ".validate": "newData.val() === auth.uid" }
+          }
+        },
+
         "ranked": {
           ".validate": "newData.hasChildren(['rating', 'seasonId'])",
           "rating": {
@@ -124,7 +179,7 @@
             ],
             ".write": "auth != null && auth.uid === $playerUid",
             "score": {
-              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1500"
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 3200"
             },
             "progress": {
               ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10"

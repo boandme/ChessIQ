@@ -94,6 +94,23 @@ export async function leavePresence() {
 
 // Live count of players on the Ranked page. Entries whose heartbeat is stale
 // are ignored rather than trusted, so a crashed tab does not inflate the number.
+// The friends list needs to know *who* is online, not just how many, so it can
+// mark a friend reachable. Same node, same staleness rule as the counter.
+export function watchOnlineUids(callback) {
+    const roster = ref(db, 'rankedPresence');
+    const handler = onValue(roster, snap => {
+        if (!snap.exists()) return callback([]);
+        const now = serverNow();
+        callback(Object.entries(snap.val())
+            .filter(([, entry]) => {
+                const at = Number(entry && entry.at);
+                return !Number.isFinite(at) || (now - at) < PRESENCE_STALE_MS;
+            })
+            .map(([uid]) => uid));
+    }, () => callback([]));
+    return () => off(roster, 'value', handler);
+}
+
 export function watchOnlineCount(callback) {
     const roster = ref(db, 'rankedPresence');
     const handler = onValue(roster, snap => {
