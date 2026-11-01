@@ -14,11 +14,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="main.css">
     <link rel="stylesheet" href="landing.css">
-    <script>
-        // Arriving here at all counts as having seen the pitch, so a returning
-        // visitor goes straight to the app however they leave this page.
-        try { localStorage.setItem('chessiq-seen', '1'); } catch (_) {}
-    </script>
+    <!-- defer: nothing on this page waits on script, so it must not block
+         the first paint of the hero. -->
+    <script src="landing.js" defer></script>
 </head>
 <body class="ld-body">
 
