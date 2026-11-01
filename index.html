@@ -4,6 +4,23 @@
     <meta charset="UTF-8">
     <title>ChessIQ — Positional Blitz</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        // Someone arriving for the first time gets the landing page, not the
+        // board. Blocking and first in the head so the app never paints
+        // underneath. Any query string (a shared or deep link) skips the gate.
+        (function () {
+            try {
+                var seen = localStorage.getItem('chessiq-seen');
+                localStorage.setItem('chessiq-seen', '1');
+                if (!seen && !location.search && !location.hash) {
+                    location.replace('landing.html');
+                }
+            } catch (_) {
+                // Private mode or storage blocked: show the app rather than
+                // trapping the visitor on the pitch every single load.
+            }
+        })();
+    </script>
     <link rel="icon" href="favicon.ico" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
@@ -125,7 +142,7 @@
             <a href="analytics.html">Analytics</a>
             <a href="changelog.html">Changelog</a>
             <button id="potd-nav-btn" class="potd-nav-btn" onclick="openPOTD()" aria-label="Puzzle of the Day" title="Puzzle of the Day">
-                <span class="potd-nav-icon">📅</span>
+                <span class="potd-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg></span>
                 <span class="potd-nav-label">Daily</span>
             </button>
         </nav>

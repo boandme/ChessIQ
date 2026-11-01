@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChessIQ</title>
+    <meta name="description" content="ChessIQ trains positional judgement. Real positions from real games, one question, then the engine verdict and a written explanation of what you missed.">
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <meta name="theme-color" content="#08080a">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="landing.css">
+    <script>
+        // Arriving here at all counts as having seen the pitch, so a returning
+        // visitor goes straight to the app however they leave this page.
+        try { localStorage.setItem('chessiq-seen', '1'); } catch (_) {}
+    </script>
+</head>
+<body class="ld-body">
+
+<header class="ld-header">
+    <div class="ld-header-inner">
+        <a class="ld-brand" href="landing.html" aria-label="ChessIQ home">
+            <img src="favicon-512.png" alt="" width="30" height="30">
+            <span class="ld-brand-text">Chess<span>IQ</span></span>
+        </a>
+        <div class="ld-header-actions">
+            <a class="ld-btn ld-btn-quiet ld-btn-sm" href="login.html">Sign in</a>
+            <a class="ld-btn ld-btn-primary ld-btn-sm" href="index.html">Start training</a>
+        </div>
+    </div>
+</header>
+
+<main>
+
+    <!-- Hero -->
+    <section class="ld-hero">
+        <div class="ld-wrap ld-hero-grid">
+            <div>
+                <h1 class="ld-h1">Learn to read a chess&nbsp;position.</h1>
+                <p class="ld-lede">
+                    ChessIQ shows you a real position from a real game and asks one question.
+                    Who is better? There is no engine to lean on and no move to calculate.
+                    You make the call, then find out what you missed.
+                </p>
+                <div class="ld-hero-actions">
+                    <a class="ld-btn ld-btn-primary" href="index.html">Start training</a>
+                    <a class="ld-btn ld-btn-quiet" href="login.html">I have an account</a>
+                </div>
+                <p class="ld-hero-note">Free to try. No account needed for your first five positions.</p>
+            </div>
+
+            <div class="ld-demo">
+                <svg class="ld-demo-board" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Chess position, Black to move"><rect x="0" y="0" width="64" height="64" fill="#d9d4c7"/><rect x="64" y="0" width="64" height="64" fill="#44464c"/><rect x="128" y="0" width="64" height="64" fill="#d9d4c7"/><rect x="192" y="0" width="64" height="64" fill="#44464c"/><rect x="256" y="0" width="64" height="64" fill="#d9d4c7"/><rect x="320" y="0" width="64" height="64" fill="#44464c"/><rect x="384" y="0" width="64" height="64" fill="#d9d4c7"/><rect x="448" y="0" width="64" height="64" fill="#44464c"/><rect x="0" y="64" width="64" height="64" fill="#44464c"/><rect x="64" y="64" width="64" height="64" fill="#d9d4c7"/><rect x="128" y="64" width="64" height="64" fill="#44464c"/><rect x="192" y="64" width="64" height="64" fill="#d9d4c7"/><rect x="256" y="64" width="64" height="64" fill="#44464c"/><rect x="320" y="64" width="64" height="64" fill="#d9d4c7"/><rect x="384" y="64" width="64" height="64" fill="#44464c"/><rect x="448" y="64" width="64" height="64" fill="#d9d4c7"/><rect x="0" y="128" width="64" height="64" fill="#d9d4c7"/><rect x="64" y="128" width="64" height="64" fill="#44464c"/><rect x="128" y="128" width="64" height="64" fill="#d9d4c7"/><rect x="192" y="128" width="64" height="64" fill="#44464c"/><rect x="256" y="128" width="64" height="64" fill="#d9d4c7"/><rect x="320" y="128" width="64" height="64" fill="#44464c"/><rect x="384" y="128" width="64" height="64" fill="#d9d4c7"/><rect x="448" y="128" width="64" height="64" fill="#44464c"/><rect x="0" y="192" width="64" height="64" fill="#44464c"/><rect x="64" y="192" width="64" height="64" fill="#d9d4c7"/><rect x="128" y="192" width="64" height="64" fill="#44464c"/><rect x="192" y="192" width="64" height="64" fill="#d9d4c7"/><rect x="256" y="192" width="64" height="64" fill="#44464c"/><rect x="320" y="192" width="64" height="64" fill="#d9d4c7"/><rect x="384" y="192" width="64" height="64" fill="#44464c"/><rect x="448" y="192" width="64" height="64" fill="#d9d4c7"/><rect x="0" y="256" width="64" height="64" fill="#d9d4c7"/><rect x="64" y="256" width="64" height="64" fill="#44464c"/><rect x="128" y="256" width="64" height="64" fill="#d9d4c7"/><rect x="192" y="256" width="64" height="64" fill="#44464c"/><rect x="256" y="256" width="64" height="64" fill="#d9d4c7"/><rect x="320" y="256" width="64" height="64" fill="#44464c"/><rect x="384" y="256" width="64" height="64" fill="#d9d4c7"/><rect x="448" y="256" width="64" height="64" fill="#44464c"/><rect x="0" y="320" width="64" height="64" fill="#44464c"/><rect x="64" y="320" width="64" height="64" fill="#d9d4c7"/><rect x="128" y="320" width="64" height="64" fill="#44464c"/><rect x="192" y="320" width="64" height="64" fill="#d9d4c7"/><rect x="256" y="320" width="64" height="64" fill="#44464c"/><rect x="320" y="320" width="64" height="64" fill="#d9d4c7"/><rect x="384" y="320" width="64" height="64" fill="#44464c"/><rect x="448" y="320" width="64" height="64" fill="#d9d4c7"/><rect x="0" y="384" width="64" height="64" fill="#d9d4c7"/><rect x="64" y="384" width="64" height="64" fill="#44464c"/><rect x="128" y="384" width="64" height="64" fill="#d9d4c7"/><rect x="192" y="384" width="64" height="64" fill="#44464c"/><rect x="256" y="384" width="64" height="64" fill="#d9d4c7"/><rect x="320" y="384" width="64" height="64" fill="#44464c"/><rect x="384" y="384" width="64" height="64" fill="#d9d4c7"/><rect x="448" y="384" width="64" height="64" fill="#44464c"/><rect x="0" y="448" width="64" height="64" fill="#44464c"/><rect x="64" y="448" width="64" height="64" fill="#d9d4c7"/><rect x="128" y="448" width="64" height="64" fill="#44464c"/><rect x="192" y="448" width="64" height="64" fill="#d9d4c7"/><rect x="256" y="448" width="64" height="64" fill="#44464c"/><rect x="320" y="448" width="64" height="64" fill="#d9d4c7"/><rect x="384" y="448" width="64" height="64" fill="#44464c"/><rect x="448" y="448" width="64" height="64" fill="#d9d4c7"/><text x="224.0" y="53.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#111115" stroke="#111115" stroke-width="1.5" paint-order="stroke">♜</text><text x="288.0" y="53.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#111115" stroke="#111115" stroke-width="1.5" paint-order="stroke">♛</text><text x="416.0" y="53.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#111115" stroke="#111115" stroke-width="1.5" paint-order="stroke">♚</text><text x="32.0" y="117.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#111115" stroke="#111115" stroke-width="1.5" paint-order="stroke">♜</text><text x="96.0" y="117.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#111115" stroke="#111115" stroke-width="1.5" paint-order="stroke">♟</text><text x="224.0" y="117.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#111115" stroke="#111115" stroke-width="1.5" paint-order="stroke">♝</text><text x="416.0" y="117.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#111115" stroke="#111115" stroke-width="1.5" paint-order="stroke">♟</text><text x="480.0" y="117.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#111115" stroke="#111115" stroke-width="1.5" paint-order="stroke">♞</text><text x="32.0" y="181.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#111115" stroke="#111115" stroke-width="1.5" paint-order="stroke">♟</text><text x="160.0" y="181.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#111115" stroke="#111115" stroke-width="1.5" paint-order="stroke">♟</text><text x="224.0" y="181.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#fcfcfa" stroke="#111115" stroke-width="1.5" paint-order="stroke">♝</text><text x="288.0" y="181.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#111115" stroke="#111115" stroke-width="1.5" paint-order="stroke">♟</text><text x="480.0" y="181.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#fcfcfa" stroke="#111115" stroke-width="1.5" paint-order="stroke">♟</text><text x="160.0" y="245.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#fcfcfa" stroke="#111115" stroke-width="1.5" paint-order="stroke">♟</text><text x="224.0" y="245.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#111115" stroke="#111115" stroke-width="1.5" paint-order="stroke">♟</text><text x="352.0" y="245.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#111115" stroke="#111115" stroke-width="1.5" paint-order="stroke">♟</text><text x="480.0" y="245.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#fcfcfa" stroke="#111115" stroke-width="1.5" paint-order="stroke">♟</text><text x="224.0" y="309.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#fcfcfa" stroke="#111115" stroke-width="1.5" paint-order="stroke">♟</text><text x="352.0" y="309.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#fcfcfa" stroke="#111115" stroke-width="1.5" paint-order="stroke">♟</text><text x="32.0" y="373.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#fcfcfa" stroke="#111115" stroke-width="1.5" paint-order="stroke">♟</text><text x="224.0" y="373.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#fcfcfa" stroke="#111115" stroke-width="1.5" paint-order="stroke">♝</text><text x="288.0" y="373.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#fcfcfa" stroke="#111115" stroke-width="1.5" paint-order="stroke">♟</text><text x="416.0" y="373.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#fcfcfa" stroke="#111115" stroke-width="1.5" paint-order="stroke">♛</text><text x="160.0" y="437.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#fcfcfa" stroke="#111115" stroke-width="1.5" paint-order="stroke">♟</text><text x="96.0" y="501.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#fcfcfa" stroke="#111115" stroke-width="1.5" paint-order="stroke">♜</text><text x="288.0" y="501.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#fcfcfa" stroke="#111115" stroke-width="1.5" paint-order="stroke">♚</text><text x="480.0" y="501.1" font-size="54" text-anchor="middle" font-family="Segoe UI Symbol, Apple Symbols, DejaVu Sans, serif" fill="#fcfcfa" stroke="#111115" stroke-width="1.5" paint-order="stroke">♜</text></svg>
+                <div class="ld-demo-turn">
+                    <span>Black to move</span>
+                    <span>Hard</span>
+                </div>
+                <div class="ld-demo-choices">
+                    <div class="ld-demo-choice">White</div>
+                    <div class="ld-demo-choice is-picked">Equal</div>
+                    <div class="ld-demo-choice">Black</div>
+                </div>
+                <p class="ld-demo-answer">
+                    <b>Correct.</b> White owns more space and the h-pawn wedge is a real asset,
+                    but the centre is locked and Black holds the light squares. The engine reads
+                    it at +0.4, inside the drawing margin.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="ld-section">
+        <div class="ld-wrap">
+            <p class="ld-kicker">How it works</p>
+            <h2 class="ld-h2">Three steps, then the part that teaches you.</h2>
+
+            <div class="ld-steps">
+                <article class="ld-step">
+                    <div class="ld-step-num">01</div>
+                    <div>
+                        <h3>Look at the position</h3>
+                        <p>
+                            Real games, drawn from tournament play and from Lichess. Nothing is
+                            constructed for the lesson, so you are reading the same awkward
+                            middlegames you get over the board.
+                        </p>
+                    </div>
+                </article>
+                <article class="ld-step">
+                    <div class="ld-step-num">02</div>
+                    <div>
+                        <h3>Make the call</h3>
+                        <p>
+                            White is better, Black is better, or it is level. One judgement, no
+                            move to find. Being close still counts: reading a position as level
+                            when it sits a tenth of a pawn past the line costs you far less than
+                            reading it backwards.
+                        </p>
+                    </div>
+                </article>
+                <article class="ld-step">
+                    <div class="ld-step-num">03</div>
+                    <div>
+                        <h3>Find out why</h3>
+                        <p>
+                            Stockfish gives the verdict. A written breakdown gives the reasoning:
+                            which imbalance decides it, the mistake most players make here, the
+                            move the engine wants and the plan behind it.
+                        </p>
+                    </div>
+                </article>
+            </div>
+
+            <div class="ld-figures">
+                <div class="ld-figure">
+                    <span class="ld-figure-value">1,200+</span>
+                    <span class="ld-figure-label">Positions from real games</span>
+                </div>
+                <div class="ld-figure">
+                    <span class="ld-figure-value">73</span>
+                    <span class="ld-figure-label">Positional themes tracked</span>
+                </div>
+                <div class="ld-figure">
+                    <span class="ld-figure-value">Every one</span>
+                    <span class="ld-figure-label">Explained in writing, not just scored</span>
+                </div>
+                <div class="ld-figure">
+                    <span class="ld-figure-value">0 to 3,200</span>
+                    <span class="ld-figure-label">Rating range you climb through</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why the skill -->
+    <section class="ld-section">
+        <div class="ld-wrap ld-split">
+            <div>
+                <p class="ld-kicker">Why it matters</p>
+                <h2 class="ld-h2">Calculation finds the move. Judgement picks the plan.</h2>
+            </div>
+            <div>
+                <div class="ld-prose">
+                    <p>
+                        Most chess training asks you to calculate. Find the fork, find the mate in
+                        three. That skill is worth having, but it only applies on the handful of
+                        moves where a tactic actually exists.
+                    </p>
+                    <p>
+                        The rest of the game runs on judgement. <strong>Is my structure worse than
+                        it looks. Is their king genuinely safer. Do I have time for this plan, or
+                        am I already defending.</strong> None of those have a forcing answer, and
+                        there is no engine at the board to settle them.
+                    </p>
+                    <p>
+                        Players who can evaluate a position choose better plans, trade into better
+                        endings, and know when to hold instead of push. It is the difference
+                        between knowing an opening and understanding one.
+                    </p>
+                </div>
+
+                <ul class="ld-list">
+                    <li><b>You get the reasoning, not a number</b>
+                        An evaluation bar tells you that you were wrong. ChessIQ tells you which
+                        feature of the position you misread.</li>
+                    <li><b>The difficulty follows you</b>
+                        Start by counting material. Finish on positions decided by one weak square
+                        or a single tempo.</li>
+                    <li><b>Missed positions come back</b>
+                        Anything you get wrong returns later, once enough has happened in between
+                        that you are recalling it rather than remembering it.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Ranked -->
+    <section class="ld-section">
+        <div class="ld-wrap ld-split">
+            <div>
+                <p class="ld-kicker">Ranked</p>
+                <h2 class="ld-h2">Then prove it holds up under a clock.</h2>
+            </div>
+            <div class="ld-prose">
+                <p>
+                    Training is untimed on purpose. Ranked is not. Ten positions, fifteen to
+                    thirty seconds each depending on difficulty, and no explanation at all until
+                    the run is over.
+                </p>
+                <p>
+                    Play solo against two randomly drawn themes, or head to head against another
+                    player on the same ten positions at the same time. Both feed a separate
+                    rating and a seasonal ladder running from Pawn to Grandmaster.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Reviews. Structure is in place; quotes land later. -->
+    <section class="ld-section">
+        <div class="ld-wrap">
+            <p class="ld-kicker">Reviews</p>
+            <h2 class="ld-h2">What players say</h2>
+            <div class="ld-quote-grid">
+                <!-- TODO: replace each slot with a real quote, a name and a rating. -->
+                <figure class="ld-quote">
+                    <span class="ld-quote-mark">&ldquo;</span>
+                    <figcaption class="ld-quote-slot">Review slot 1</figcaption>
+                </figure>
+                <figure class="ld-quote">
+                    <span class="ld-quote-mark">&ldquo;</span>
+                    <figcaption class="ld-quote-slot">Review slot 2</figcaption>
+                </figure>
+                <figure class="ld-quote">
+                    <span class="ld-quote-mark">&ldquo;</span>
+                    <figcaption class="ld-quote-slot">Review slot 3</figcaption>
+                </figure>
+            </div>
+        </div>
+    </section>
+
+    <!-- Reserved for an announcement. Deliberately carries no partner name,
+         mark or detail until it is public. Announcement copy drops in here. -->
+    <section class="ld-section" id="ld-announcement" aria-label="Announcement">
+        <div class="ld-wrap">
+            <p class="ld-kicker">Coming soon</p>
+            <h2 class="ld-h2">Something is on the way.</h2>
+            <div class="ld-reserved">
+                <p>This space is held for an announcement we are not ready to make yet.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Close -->
+    <section class="ld-close">
+        <div class="ld-wrap">
+            <h2 class="ld-h2">Start with one position.</h2>
+            <div class="ld-prose">
+                <p>Five of them are free and take about two minutes. If you can read a board, you can start now.</p>
+            </div>
+            <div class="ld-close-actions">
+                <a class="ld-btn ld-btn-primary" href="index.html">Start training</a>
+                <a class="ld-btn ld-btn-quiet" href="login.html">Create an account</a>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<footer class="ld-footer">
+    <div class="ld-footer-inner">
+        <span class="ld-footer-note">ChessIQ v1.6</span>
+        <nav class="ld-footer-links">
+            <a href="index.html">Training</a>
+            <a href="ranked.html">Ranked</a>
+            <a href="leaderboard.html">Leaderboard</a>
+            <a href="info.html">Information</a>
+            <a href="changelog.html">Changelog</a>
+            <a href="credits.html">Credits</a>
+        </nav>
+    </div>
+</footer>
+
+</body>
+</html>

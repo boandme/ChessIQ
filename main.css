@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Source+Sans+3:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700;800&display=swap');
 
 /* ══════════════════════════════════════════════════════════════════════════
    ChessIQ — Matte black / yellow-light blitz redesign
@@ -32,8 +32,8 @@
     --ease-snap:     cubic-bezier(0.2, 0.9, 0.25, 1);
     --ease-out:      cubic-bezier(0.16, 1, 0.3, 1);
 
-    --font-display:  'Space Grotesk', 'Segoe UI', sans-serif;
-    --font-body:     'Inter', 'Segoe UI', sans-serif;
+    --font-display:  'Archivo', 'Segoe UI', sans-serif;
+    --font-body:     'Source Sans 3', 'Segoe UI', sans-serif;
     --font-mono:     'JetBrains Mono', ui-monospace, monospace;
 }
 
@@ -326,7 +326,7 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
     padding: 10px 18px;
     background: var(--surface-2);
     border: 1px solid var(--line);
-    border-left: 3px solid var(--yellow);
+    border-top: 2px solid var(--yellow);
     font-family: var(--font-body);
     font-size: 0.86rem;
     color: var(--text-dim);
@@ -342,7 +342,7 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
     padding: 11px 18px;
     background: linear-gradient(90deg, var(--yellow-soft), var(--surface-2));
     border: 1px solid var(--yellow-line);
-    border-left: 3px solid var(--yellow);
+    border-top: 2px solid var(--yellow);
     font-family: var(--font-body);
     font-size: 0.88rem;
     color: var(--text-dim);
@@ -364,7 +364,7 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
     padding: 11px 14px 11px 18px;
     background: linear-gradient(90deg, rgba(220,38,38,0.08), var(--surface-2));
     border: 1px solid rgba(220,38,38,0.25);
-    border-left: 3px solid var(--bad);
+    border-top: 2px solid var(--bad);
     font-family: var(--font-body);
     font-size: 0.88rem;
     color: var(--text-dim);
@@ -393,7 +393,7 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
     padding: 14px 16px 14px 18px;
     background: linear-gradient(90deg, rgba(255,212,0,0.09), var(--surface-2));
     border: 1px solid var(--yellow-line);
-    border-left: 3px solid var(--yellow);
+    border-top: 2px solid var(--yellow);
     font-family: var(--font-body);
     font-size: 0.88rem;
     color: var(--text-dim);
@@ -664,7 +664,7 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
     margin-bottom: 18px;
     background: linear-gradient(90deg, var(--surface) 0%, var(--surface-2) 100%);
     border: 1px solid var(--line);
-    border-left: 3px solid var(--yellow);
+    border-top: 2px solid var(--yellow);
     box-shadow: 0 12px 40px rgba(0,0,0,0.4);
     position: relative;
 }
@@ -810,7 +810,7 @@ svg.board, #board svg {
     padding: 12px 18px;
     background: var(--surface-2);
     border: 1px solid var(--line-bright);
-    border-left: 3px solid var(--yellow);
+    border-top: 2px solid var(--yellow);
     position: relative; overflow: hidden;
     min-width: 0; text-align: center;
 }
@@ -876,7 +876,7 @@ svg.board, #board svg {
     display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
     background: var(--surface-2);
     border: 1px solid var(--line);
-    border-left: 3px solid var(--line-bright);
+    border-top: 2px solid var(--line-bright);
     transition: border-color 0.25s ease;
 }
 #resultText, #result p {
@@ -885,8 +885,8 @@ svg.board, #board svg {
     font-size: 1.02rem; font-weight: 600; color: var(--text-dim);
     line-height: 1.45;
 }
-#result.correct { border-left-color: var(--ok); }
-#result.incorrect { border-left-color: var(--bad); }
+#result.correct { border-top-color: var(--ok); }
+#result.incorrect { border-top-color: var(--bad); }
 
 #evaluation-display {
     width: 100%; min-height: 0; padding: 0; text-align: center;
@@ -1523,7 +1523,7 @@ svg.board, #board svg {
 .modal-section {
     background: var(--surface-2);
     border: 1px solid var(--line);
-    border-left: 3px solid var(--yellow);
+    border-top: 2px solid var(--yellow);
     padding: 20px; margin-bottom: 18px; text-align: left;
 }
 .modal-section h3 { margin: 0 0 12px; font-size: 1.12rem; font-weight: 700; color: var(--text); }
@@ -1776,8 +1776,15 @@ svg.board, #board svg {
 }
 .log-row:last-child { border-bottom: none; }
 .log-row:hover { background: var(--surface-2); }
-.log-row.correct { border-left: 2px solid var(--ok); }
-.log-row.incorrect { border-left: 2px solid var(--bad); }
+/* Right/wrong used to read as a coloured left edge on the row. It is now a
+   leading dot, which carries the same information without the bar. */
+.log-row .log-result-icon::before {
+    content: ''; display: inline-block;
+    width: 7px; height: 7px; margin-right: 7px; border-radius: 50%;
+    vertical-align: middle; background: var(--line-bright);
+}
+.log-row.correct   .log-result-icon::before { background: var(--ok); }
+.log-row.incorrect .log-result-icon::before { background: var(--bad); }
 
 .log-num   { color: var(--text-faint); font-size: 0.72rem; }
 .log-result-icon { font-size: 0.9rem; font-weight: 800; }
@@ -1833,7 +1840,7 @@ svg.board, #board svg {
 .content h2 {
     color: var(--text); font-family: var(--font-display); font-weight: 700;
     font-size: 1.3rem; margin: 0 0 10px;
-    padding-left: 14px; border-left: 3px solid var(--yellow);
+    padding-left: 14px; border-top: 2px solid var(--yellow);
 }
 .content p { font-size: 1.02rem; line-height: 1.7; margin: 0 0 12px; }
 .content ul { margin: 0; padding-left: 4px; list-style: none; }
@@ -1851,10 +1858,10 @@ svg.board, #board svg {
 }
 
 /* ── Entrance reveal ──────────────────────────────────────────────────────── */
-.reveal { opacity: 0; transform: translateY(26px); }
-.reveal.in { opacity: 1; transform: none; transition: opacity 0.7s var(--ease-out), transform 0.7s var(--ease-out); }
-.reveal.in.d1 { transition-delay: 0.08s; }
-.reveal.in.d2 { transition-delay: 0.16s; }
+/* .reveal used to start at opacity 0 and fade in on scroll. Content is now
+   simply present on load; the class is kept only so existing markup and the
+   observer teardown stay valid. */
+.reveal, .reveal.in { opacity: 1; transform: none; }
 
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.001s !important; transition-duration: 0.12s !important; }
@@ -2106,7 +2113,7 @@ svg.board, #board svg {
     letter-spacing: 0.12em; text-transform: uppercase;
     color: var(--text-dim); padding: 7px 14px;
     background: var(--surface-2); border: 1px solid var(--line);
-    border-left: 3px solid var(--yellow); margin-bottom: 14px;
+    border-top: 2px solid var(--yellow); margin-bottom: 14px;
 }
 
 .potd-choices {
@@ -2139,7 +2146,7 @@ svg.board, #board svg {
 .potd-result-box {
     padding: 14px 18px;
     background: var(--surface-2); border: 1px solid var(--line);
-    border-left: 3px solid var(--yellow); margin-bottom: 12px;
+    border-top: 2px solid var(--yellow); margin-bottom: 12px;
     display: none;
 }
 .potd-result-box.visible { display: block; }
@@ -2468,7 +2475,7 @@ svg.board, #board svg {
     margin-bottom: 18px;
     background: radial-gradient(120% 170% at 0% 0%, var(--surface-3), var(--bg-2) 75%);
     border: 1px solid var(--line-bright);
-    border-left: 3px solid var(--yellow);
+    border-top: 2px solid var(--yellow);
 }
 .achievements-count {
     font-family: var(--font-mono);
@@ -3436,7 +3443,7 @@ svg.board, #board svg {
     }
 
     .diff-panel-header {
-        border-left: 3px solid var(--yellow);
+        border-top: 2px solid var(--yellow);
         margin: 0 0 12px;
         padding: 2px 0 2px 10px;
     }

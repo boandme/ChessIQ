@@ -1,0 +1,260 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   ChessIQ landing page
+   Shares main.css tokens for colour so the first screen a visitor sees uses
+   the same palette as the app. Layout and type are its own: a marketing page
+   has different rhythm from a dashboard.
+
+   Deliberately absent, as house rules: no gradient text, no glassmorphism,
+   no scroll-triggered fades, no cursor effects, no coloured left-border
+   cards, no icon-box triptych, no badge over the headline. Spacing is a
+   single 8px scale, used consistently.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+    --ld-gutter: 28px;
+    --ld-max: 1240px;
+    /* One spacing scale. Every vertical gap on this page is one of these. */
+    --s1: 8px;  --s2: 16px; --s3: 24px; --s4: 32px;
+    --s5: 48px; --s6: 64px; --s7: 96px; --s8: 128px;
+}
+
+.ld-body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+}
+
+.ld-wrap {
+    max-width: var(--ld-max);
+    margin: 0 auto;
+    padding: 0 var(--ld-gutter);
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.ld-header {
+    position: sticky; top: 0; z-index: 40;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+}
+.ld-header-inner {
+    max-width: var(--ld-max); margin: 0 auto;
+    padding: var(--s2) var(--ld-gutter);
+    display: flex; align-items: center; justify-content: space-between; gap: var(--s3);
+}
+.ld-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.ld-brand img { width: 30px; height: 30px; display: block; }
+.ld-brand-text {
+    font-family: var(--font-display); font-weight: 800; font-size: 1.12rem;
+    letter-spacing: -0.01em; color: var(--text);
+}
+.ld-brand-text span { color: var(--yellow); }
+.ld-header-actions { display: flex; align-items: center; gap: var(--s2); }
+
+/* ── Buttons. Hover moves and brightens; it never fades out. ─────────────── */
+.ld-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+    padding: 14px 26px;
+    border: 1px solid transparent; border-radius: 6px;
+    font-family: var(--font-display); font-weight: 700; font-size: 0.96rem;
+    letter-spacing: 0.01em; text-decoration: none; cursor: pointer;
+    transition: transform 0.18s cubic-bezier(0.2,0.9,0.25,1),
+                background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+.ld-btn-primary { background: var(--yellow); color: #0b0b0d; }
+.ld-btn-primary:hover { background: var(--yellow-bright); transform: translateY(-2px); }
+.ld-btn-primary:active { transform: translateY(0); }
+.ld-btn-quiet {
+    background: transparent; color: var(--text); border-color: var(--line-bright);
+}
+.ld-btn-quiet:hover { border-color: var(--yellow); color: var(--yellow); transform: translateY(-2px); }
+.ld-btn-sm { padding: 10px 18px; font-size: 0.88rem; }
+.ld-btn:focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
+
+/* ── Hero ────────────────────────────────────────────────────────────────── */
+.ld-hero { padding: var(--s8) 0 var(--s7); border-bottom: 1px solid var(--line); }
+.ld-hero-grid {
+    display: grid; grid-template-columns: 1.05fr 0.95fr;
+    gap: var(--s7); align-items: center;
+}
+.ld-h1 {
+    margin: 0 0 var(--s3);
+    font-family: var(--font-display);
+    font-size: clamp(2.8rem, 5.2vw, 4.4rem);
+    font-weight: 800; line-height: 1.02; letter-spacing: -0.035em;
+    color: var(--text);
+}
+.ld-h1 em { font-style: normal; color: var(--yellow); }
+.ld-lede {
+    margin: 0 0 var(--s4); max-width: 46ch;
+    font-size: 1.14rem; line-height: 1.65; color: var(--text-dim);
+}
+.ld-hero-actions { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.ld-hero-note {
+    margin: var(--s3) 0 0;
+    font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.06em;
+    color: var(--text-faint);
+}
+
+/* Board demo. A real position, so the first thing a visitor sees is the
+   actual product rather than an abstraction of it. */
+.ld-demo {
+    border: 1px solid var(--line); background: var(--surface);
+    padding: var(--s3);
+}
+.ld-demo-board { display: block; width: 100%; height: auto; border: 1px solid var(--line); }
+.ld-demo-turn {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin: var(--s2) 0;
+    font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--text-faint);
+}
+.ld-demo-choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s1); }
+.ld-demo-choice {
+    padding: 13px 8px; text-align: center;
+    background: var(--surface-2); border: 1px solid var(--line-bright);
+    font-family: var(--font-display); font-weight: 700; font-size: 0.92rem;
+    color: var(--text-dim);
+}
+.ld-demo-choice.is-picked { border-color: var(--yellow); color: var(--yellow); }
+.ld-demo-answer {
+    margin-top: var(--s2); padding-top: var(--s2);
+    border-top: 1px solid var(--line);
+    font-size: 0.88rem; line-height: 1.6; color: var(--text-dim);
+}
+.ld-demo-answer b { color: var(--ok); font-weight: 700; }
+
+/* ── Section furniture ───────────────────────────────────────────────────── */
+.ld-section { padding: var(--s7) 0; border-bottom: 1px solid var(--line); }
+.ld-kicker {
+    margin: 0 0 var(--s2);
+    font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 0.2em; text-transform: uppercase; color: var(--yellow);
+}
+.ld-h2 {
+    margin: 0 0 var(--s3);
+    font-family: var(--font-display);
+    font-size: clamp(1.9rem, 3vw, 2.6rem);
+    font-weight: 800; line-height: 1.1; letter-spacing: -0.025em; color: var(--text);
+}
+.ld-prose { max-width: 62ch; font-size: 1.04rem; line-height: 1.75; color: var(--text-dim); }
+.ld-prose p { margin: 0 0 var(--s3); }
+.ld-prose p:last-child { margin-bottom: 0; }
+.ld-prose strong { color: var(--text); font-weight: 600; }
+
+/* ── Steps. Numbered rows, not an icon triptych. ─────────────────────────── */
+.ld-steps { margin-top: var(--s5); border-top: 1px solid var(--line); }
+.ld-step {
+    display: grid; grid-template-columns: 96px 1fr; gap: var(--s4);
+    padding: var(--s4) 0; border-bottom: 1px solid var(--line);
+    align-items: start;
+}
+.ld-step-num {
+    font-family: var(--font-mono); font-size: 1.5rem; font-weight: 700;
+    color: var(--yellow); line-height: 1;
+}
+.ld-step h3 {
+    margin: 0 0 10px;
+    font-family: var(--font-display); font-size: 1.28rem; font-weight: 700;
+    letter-spacing: -0.015em; color: var(--text);
+}
+.ld-step p { margin: 0; max-width: 60ch; font-size: 1rem; line-height: 1.7; color: var(--text-dim); }
+
+/* ── Figures. Typographic, no boxes and no icons. ────────────────────────── */
+.ld-figures {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    margin-top: var(--s5); border-top: 1px solid var(--line-bright);
+}
+.ld-figure { padding: var(--s4) var(--s3) var(--s4) 0; }
+.ld-figure + .ld-figure { border-left: 1px solid var(--line); padding-left: var(--s3); }
+.ld-figure-value {
+    display: block;
+    font-family: var(--font-display); font-size: clamp(1.9rem, 3vw, 2.5rem);
+    font-weight: 800; letter-spacing: -0.03em; color: var(--text); line-height: 1;
+}
+.ld-figure-label {
+    display: block; margin-top: 10px;
+    font-size: 0.9rem; line-height: 1.45; color: var(--text-faint);
+}
+
+/* ── Split section ───────────────────────────────────────────────────────── */
+.ld-split { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: var(--s7); align-items: start; }
+
+.ld-list { margin: var(--s4) 0 0; padding: 0; list-style: none; }
+.ld-list li {
+    padding: var(--s3) 0; border-top: 1px solid var(--line);
+    font-size: 1rem; line-height: 1.65; color: var(--text-dim);
+}
+.ld-list li:last-child { border-bottom: 1px solid var(--line); }
+.ld-list b { display: block; margin-bottom: 4px; color: var(--text); font-weight: 600; }
+
+/* ── Reserved sections. Styled now, filled later. ────────────────────────── */
+.ld-reserved {
+    margin-top: var(--s4); padding: var(--s6) var(--s4);
+    border: 1px dashed var(--line-bright); text-align: center;
+}
+.ld-reserved p {
+    margin: 0; max-width: 48ch; margin-inline: auto;
+    font-size: 0.98rem; line-height: 1.65; color: var(--text-faint);
+}
+.ld-quote-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s3); margin-top: var(--s4); }
+.ld-quote {
+    display: flex; flex-direction: column; justify-content: space-between;
+    min-height: 196px; padding: var(--s3);
+    border: 1px dashed var(--line-bright);
+}
+.ld-quote-mark {
+    font-family: var(--font-display); font-size: 2.4rem; font-weight: 800;
+    line-height: 1; color: var(--line-bright);
+}
+.ld-quote-slot {
+    font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--text-faint);
+}
+
+/* ── Closing call to action ──────────────────────────────────────────────── */
+.ld-close { padding: var(--s8) 0; text-align: center; }
+.ld-close .ld-h2 { margin-inline: auto; max-width: 20ch; }
+.ld-close .ld-prose { margin: 0 auto var(--s4); text-align: center; }
+.ld-close-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: var(--s2); }
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+.ld-footer { border-top: 1px solid var(--line); padding: var(--s5) 0; }
+.ld-footer-inner {
+    max-width: var(--ld-max); margin: 0 auto; padding: 0 var(--ld-gutter);
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: var(--s3);
+}
+.ld-footer-links { display: flex; flex-wrap: wrap; gap: var(--s3); }
+.ld-footer-links a {
+    font-size: 0.9rem; color: var(--text-faint); text-decoration: none;
+    transition: color 0.18s ease;
+}
+.ld-footer-links a:hover { color: var(--yellow); }
+.ld-footer-note {
+    font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em;
+    color: var(--text-faint);
+}
+
+/* ── Responsive. Same spacing scale, fewer columns. ──────────────────────── */
+@media (max-width: 1040px) {
+    .ld-hero-grid, .ld-split { grid-template-columns: 1fr; gap: var(--s5); }
+    .ld-hero { padding: var(--s6) 0 var(--s6); }
+    .ld-demo { max-width: 520px; }
+    .ld-figures { grid-template-columns: repeat(2, 1fr); }
+    .ld-figure:nth-child(3) { border-left: none; padding-left: 0; }
+    .ld-figure:nth-child(n+3) { border-top: 1px solid var(--line); }
+    .ld-quote-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 620px) {
+    :root { --ld-gutter: 18px; }
+    .ld-hero { padding: var(--s5) 0; }
+    .ld-section { padding: var(--s6) 0; }
+    .ld-close { padding: var(--s6) 0; }
+    .ld-step { grid-template-columns: 1fr; gap: var(--s2); }
+    .ld-figures { grid-template-columns: 1fr; }
+    .ld-figure { border-left: none !important; padding-left: 0 !important; }
+    .ld-figure + .ld-figure { border-top: 1px solid var(--line); }
+    .ld-header-actions .ld-btn-quiet { display: none; }
+}

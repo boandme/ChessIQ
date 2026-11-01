@@ -17,23 +17,9 @@ const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').match
    1. ENTRANCE REVEALS
    ──────────────────────────────────────────────────────────────────────────── */
 (function reveals() {
-    const els = document.querySelectorAll('.reveal');
-    if (!els.length) return;
-    if (reduceMotion) { els.forEach(e => e.classList.add('in')); return; }
-
-    const io = new IntersectionObserver((entries, obs) => {
-        let i = 0;
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const el = entry.target;
-                el.classList.add('d' + Math.min(i, 2), 'in');
-                i++;
-                obs.unobserve(el);
-            }
-        });
-    }, { threshold: 0.12 });
-
-    els.forEach(el => io.observe(el));
+    // Sections no longer fade in as you scroll: everything is visible on load.
+    // The class is still marked 'in' so any CSS keyed to it stays correct.
+    document.querySelectorAll('.reveal').forEach(el => el.classList.add('in'));
 })();
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -56,7 +42,7 @@ const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').match
     // Internal links are left to navigate the normal, native browser way —
     // no preventDefault, no setTimeout delay. This is what makes navigation
     // feel instant and "tab-like" rather than gated behind an animation.
-    // Content fade-in is already handled by the .reveal IntersectionObserver
+    // Content is visible on load; nothing is revealed on scroll.
     // above, which is unaffected by this change.
 })();
 

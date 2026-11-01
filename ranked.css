@@ -656,9 +656,18 @@ a.rating-rr:hover {
     font-size: 0.84rem;
     border-left: 2px solid transparent;
 }
-.rk-answer-row.is-correct { border-left-color: var(--ok); }
-.rk-answer-row.is-wrong   { border-left-color: var(--bad); }
-.rk-answer-row.is-truth   { border-left-color: var(--yellow); background: var(--yellow-soft); }
+/* Same treatment as the puzzle log: a leading dot instead of a coloured
+   left edge on each answer row. */
+.rk-answer-row { border-left: none; padding-left: 12px; }
+.rk-answer-row .rk-answer-who::before {
+    content: ''; display: inline-block;
+    width: 7px; height: 7px; margin-right: 7px; border-radius: 50%;
+    vertical-align: middle; background: var(--line-bright);
+}
+.rk-answer-row.is-correct .rk-answer-who::before { background: var(--ok); }
+.rk-answer-row.is-wrong   .rk-answer-who::before { background: var(--bad); }
+.rk-answer-row.is-truth   .rk-answer-who::before { background: var(--yellow); }
+.rk-answer-row.is-truth   { background: var(--yellow-soft); }
 .rk-answer-who  { color: var(--text-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rk-answer-what { color: var(--text); font-weight: 600; }
 .rk-answer-time { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-faint); }
