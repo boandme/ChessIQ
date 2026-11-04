@@ -1568,7 +1568,15 @@ function openDeepLinkedModal() {
 }
 
 // ── Logout ────────────────────────────────────────────────────────────────────
+// The landing gate keys off Firebase's own persisted session. Clearing the
+// handover marker on sign-out means the next load goes to the landing page
+// rather than sliding past the gate on a stale marker.
+function clearLandingHandover() {
+    try { sessionStorage.removeItem('chessiq-entered'); } catch (_) {}
+}
+
 window.logoutUser = async function() {
+    clearLandingHandover();
     await signOut(auth);
     window.location.href = 'login.html';
 };

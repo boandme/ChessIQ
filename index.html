@@ -5,19 +5,40 @@
     <title>ChessIQ — Positional Blitz</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>
-        // Someone arriving for the first time gets the landing page, not the
-        // board. Blocking and first in the head so the app never paints
-        // underneath. Any query string (a shared or deep link) skips the gate.
+        // Signed-out visitors land on the pitch; signed-in visitors never see
+        // it. Blocking and first in the head so the app cannot paint first.
         (function () {
             try {
-                var seen = localStorage.getItem('chessiq-seen');
-                localStorage.setItem('chessiq-seen', '1');
-                if (!seen && !location.search && !location.hash) {
+                var hasSession = function (store) {
+                    if (!store) return false;
+                    for (var i = 0; i < store.length; i++) {
+                        if (String(store.key(i)).indexOf('firebase:authUser:') === 0) return true;
+                    }
+                    return false;
+                };
+                if (hasSession(window.localStorage) || hasSession(window.sessionStorage)) return;
+
+                // A shared or deep link always wins over the gate.
+                if (location.search || location.hash) return;
+
+                var entry = performance.getEntriesByType('navigation')[0];
+                var isReload = entry ? entry.type === 'reload'
+                                     : performance.navigation && performance.navigation.type === 1;
+
+                // Same-origin referrer means this was a click inside the app,
+                // including the call to action on the landing page itself.
+                var ref = document.referrer || '';
+                var fromApp = ref.indexOf(location.origin + '/') === 0;
+                // Referrers get stripped by some privacy settings, so the
+                // landing page also leaves a marker when it hands over.
+                var handedOver = sessionStorage.getItem('chessiq-entered') === '1';
+
+                if (isReload || (!fromApp && !handedOver)) {
                     location.replace('landing.html');
                 }
             } catch (_) {
-                // Private mode or storage blocked: show the app rather than
-                // trapping the visitor on the pitch every single load.
+                // Storage or performance API unavailable: show the app rather
+                // than risk trapping someone on the landing page.
             }
         })();
     </script>
@@ -104,6 +125,10 @@
             </ul>
             <h3>Resources</h3>
             <ul>
+                <li><a href="landing.html" onclick="closeSidebar()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></svg>
+                    About ChessIQ
+                </a></li>
                 <li><a href="info.html" onclick="closeSidebar()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/></svg>
                     Information
