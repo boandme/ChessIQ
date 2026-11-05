@@ -11,6 +11,7 @@ import {
     auth, db, ref, get, onAuthStateChanged,
     PUZZLES_PER_SESSION, COUNTDOWN_SECONDS, MAX_SESSION_SCORE, SOLO_MIN_CORRECT,
     timeLimitFor, scorePuzzle, computeSoloDelta, computeDuelDelta,
+    PLACEMENT_GAMES, isProvisional, placementProgress,
     tierFor, tierProgress, nextTierFor, CURRENT_SEASON, TIERS,
     loadRankedProfile, applyRatingDelta, recordSession,
     loadPositions, buildThemeIndex, spinnableThemes, buildSoloSet, buildDuelSet,
@@ -172,6 +173,18 @@ function paintRating() {
     setStanding('standing-tier-icon', state.tier.icon);
     setStanding('standing-tier-name', state.tier.name);
     setStanding('standing-games', String(games));
+
+    // The placement chip only exists while it means something.
+    const placeChip = el('standing-placement');
+    if (placeChip) {
+        if (isProvisional(p)) {
+            placeChip.textContent =
+                'Placement ' + placementProgress(p) + '/' + PLACEMENT_GAMES;
+            placeChip.hidden = false;
+        } else {
+            placeChip.hidden = true;
+        }
+    }
     setStanding('standing-record',
         `${p.duelWins || 0}\u2013${p.duelLosses || 0}` + ((p.duelDraws || 0) ? ` (${p.duelDraws}D)` : ''));
     setStanding('standing-best', p.bestSessionScore ? String(p.bestSessionScore) : '\u2014');
@@ -845,8 +858,12 @@ async function endSession() {
 // ── Solo result ──────────────────────────────────────────────────────────────
 async function finishSoloReview() {
     const correctCount = state.results.filter(r => r.correct).length;
-    const { delta, applied, reason } =
-        computeSoloDelta({ rating: state.profile.rating, score: state.score, correctCount });
+    const { delta, applied, reason, provisional, multiplier } = computeSoloDelta({
+        rating: state.profile.rating,
+        score: state.score,
+        correctCount,
+        profile: state.profile,
+    });
 
     const before = state.profile.rating;
     if (applied && delta !== 0) {
@@ -874,7 +891,11 @@ async function finishSoloReview() {
 
     showView('review');
     el('review-body').innerHTML =
-        renderSummary({ delta: applied ? delta : 0, before, correctCount, note: applied ? '' : reason }) +
+        renderSummary({
+            delta: applied ? delta : 0, before, correctCount,
+            note: applied ? '' : reason,
+            provisional: applied && provisional, multiplier,
+        }) +
         renderBreakdown();
 }
 
@@ -888,10 +909,11 @@ async function finishDuelReview(duel) {
     const myScore  = isHost ? duel.result.hostScore : duel.result.guestScore;
     const opScore  = isHost ? duel.result.guestScore : duel.result.hostScore;
 
-    const { delta } = computeDuelDelta({
+    const { delta, provisional, multiplier } = computeDuelDelta({
         rating: state.profile.rating,
         opponentRating: (opponent && opponent.rating) || state.profile.rating,
         myScore, opponentScore: opScore,
+        profile: state.profile,
     });
 
     const won  = myScore > opScore;
@@ -926,7 +948,10 @@ async function finishDuelReview(duel) {
     showView('review');
     el('review-body').innerHTML =
         renderDuelHeader({ won, draw, myScore, opScore, opponent }) +
-        renderSummary({ delta, before, correctCount: state.results.filter(r => r.correct).length, note: '' }) +
+        renderSummary({
+            delta, before, correctCount: state.results.filter(r => r.correct).length,
+            note: '', provisional, multiplier,
+        }) +
         renderBreakdown(opponentAnswers, opponent);
 }
 
@@ -948,7 +973,7 @@ function renderDuelHeader({ won, draw, myScore, opScore, opponent }) {
     '</section>';
 }
 
-function renderSummary({ delta, before, correctCount, note }) {
+function renderSummary({ delta, before, correctCount, note, provisional, multiplier }) {
     const accuracy = Math.round((correctCount / PUZZLES_PER_SESSION) * 100);
     const avgMs = state.results.length
         ? state.results.reduce((sum, r) => sum + r.ms, 0) / state.results.length
@@ -976,6 +1001,14 @@ function renderSummary({ delta, before, correctCount, note }) {
                 tier.icon + ' ' + tier.name + '</div>' +
             (note ? '<p class="rk-rating-note">' + escapeHTML(note) +
                     ' — session recorded, rating unchanged.</p>' : '') +
+            // Placement moves the rating several times faster. Saying so turns
+            // a number that looks volatile into one that looks purposeful.
+            (provisional
+                ? '<p class="rk-rating-note is-placement">Placement ' +
+                  placementProgress(state.profile) + ' of ' + PLACEMENT_GAMES +
+                  ' — ratings move ' + (multiplier || 1).toFixed(1) +
+                  '\u00d7 faster until your placement finishes.</p>'
+                : '') +
         '</div>' +
         '<div class="rk-review-actions">' +
             '<button class="rk-btn rk-btn-primary" onclick="backToSelect()">Play again</button>' +

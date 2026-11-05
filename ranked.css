@@ -18,6 +18,24 @@
    hierarchy is carried by size and colour, not by two equal chips. */
 .rating-pair { display: flex; align-items: center; gap: 10px; }
 
+/* Placement chip under the games-played figure. It explains the large swings
+   a new account sees, so it reads as a status rather than a warning. */
+.rk-standing-placement {
+    display: inline-block;
+    /* The stat card is a flex column, so without this the chip stretches to
+       the card's full width and reads as a banner rather than a tag. */
+    align-self: flex-start;
+    margin-top: 5px;
+    padding: 2px 8px;
+    font-family: var(--font-mono);
+    font-size: 0.58rem; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--yellow);
+    border: 1px solid var(--yellow-line);
+    background: var(--yellow-soft);
+}
+.rk-rating-note.is-placement { color: var(--yellow); }
+
 /* -- Ranked Rating: the loud one -- */
 .rating-rr {
     --tier-accent: var(--yellow);

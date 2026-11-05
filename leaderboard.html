@@ -209,11 +209,32 @@
             .lb-boards .lb-row { grid-template-columns: 48px minmax(0,1fr) 74px 74px 66px; padding: 0 16px; }
             .lb-boards .lb-col-headers { padding: 10px 16px; }
         }
+        /* Between 1040 and 1180 the two boards stay side by side on tighter
+           columns rather than stacking. Accuracy and Duels are the first to
+           go, since both are secondary to the rating itself. */
         @media (max-width: 1180px) {
-            .lb-boards { grid-template-columns: 1fr; }
+            .lb-boards { gap: 14px; padding: 18px 18px 6px; }
+            .lb-boards .lb-col-headers,
+            .lb-boards .lb-row { grid-template-columns: 38px minmax(0,1fr) 64px 64px; padding: 0 12px; }
+            .lb-boards .lb-col-headers { padding: 9px 12px; }
+            .lb-boards .lb-col-label:nth-child(5),
+            .lb-boards .lb-row > :nth-child(5) { display: none; }
+            .lb-boards .lb-username { font-size: 0.94rem; }
+            .lb-boards .lb-pr { font-size: 1.08rem; }
+            .lb-board-title h2 { font-size: 1.05rem; }
+        }
+        /* Stacked. One board above the other, each with the full width back,
+           so the fifth column the side-by-side layout dropped returns. */
+        @media (max-width: 1040px) {
+            .lb-boards { grid-template-columns: 1fr; gap: 18px; padding: 22px 30px 6px; }
             .lb-boards .lb-col-headers,
             .lb-boards .lb-row { grid-template-columns: 58px minmax(0,1fr) 92px 92px 82px; padding: 0 22px; }
             .lb-boards .lb-col-headers { padding: 11px 22px; }
+            .lb-boards .lb-col-label:nth-child(5),
+            .lb-boards .lb-row > :nth-child(5) { display: block; }
+            .lb-boards .lb-username { font-size: 1.02rem; }
+            .lb-boards .lb-pr { font-size: 1.22rem; }
+            .lb-board-title h2 { font-size: 1.65rem; }
         }
         @media (max-width: 760px) {
             .lb-boards { padding: 12px 14px 4px; gap: 14px; }
@@ -639,7 +660,7 @@
                         <h2>Casual &middot; PR</h2>
                     </div>
                     <div class="lb-board-meta">
-                        <span id="lb-player-count">\u2014</span> players
+                        <span id="lb-casual-count">&mdash;</span> players
                     </div>
                 </header>
                 <div class="lb-col-headers lb-cols-casual">
@@ -784,6 +805,9 @@
 
             onValue(usersRef, (snapshot) => {
                 if (!snapshot.exists()) {
+                    // Both boards get the empty state. Returning here used to
+                    // leave the ranked board spinning for good.
+                    allPlayers = [];
                     renderEmpty();
                     return;
                 }
@@ -839,6 +863,15 @@
         }
 
         let allPlayers = [];
+
+        // Two places show the player count: the header card and the casual
+        // board's own meta line.
+        function setCount(value) {
+            ['lb-player-count', 'lb-casual-count'].forEach(function(id) {
+                const node = document.getElementById(id);
+                if (node) node.textContent = value;
+            });
+        }
 
         // Both boards render on every snapshot \u2014 no toggle, nothing hidden.
         function renderActiveBoard() {
@@ -917,8 +950,7 @@
         function renderLeaderboard(players) {
             const list = document.getElementById('lb-list');
 
-            // Player count
-            document.getElementById('lb-player-count').textContent = players.length;
+            setCount(String(players.length));
 
             // Your rank
             const yourIdx = players.findIndex(p => p.uid === currentUID);
@@ -960,16 +992,23 @@
             list.innerHTML = html;
         }
 
+        // Neither board is ever left on its loading spinner: whatever happens
+        // to the snapshot happens to both lists.
+        function setBoth(html) {
+            const casual = document.getElementById('lb-list');
+            const ranked = document.getElementById('lb-ranked-list');
+            if (casual) casual.innerHTML = html;
+            if (ranked) ranked.innerHTML = html;
+        }
+
         function renderEmpty() {
-            document.getElementById('lb-list').innerHTML =
-                `<div class="lb-empty">NO PLAYERS YET — BE THE FIRST TO PLAY</div>`;
-            document.getElementById('lb-player-count').textContent = '0';
+            setBoth(`<div class="lb-empty">NO PLAYERS YET — BE THE FIRST TO PLAY</div>`);
+            setCount('0');
             document.getElementById('lb-your-rank').textContent = '—';
         }
 
         function renderError(msg) {
-            document.getElementById('lb-list').innerHTML =
-                `<div class="lb-error">FAILED TO LOAD — ${escHtml(msg)}</div>`;
+            setBoth(`<div class="lb-error">FAILED TO LOAD — ${escHtml(msg)}</div>`);
         }
 
         function updateTimestamp() {

@@ -82,10 +82,55 @@ export const RR_CEILING = 3200;
 // so a season of real play covers meaningful ground without a single session
 // rewriting the ladder.
 export const K_DUEL   = 80;
-// Solo carries a quarter of a duel's weight. Grinding solo moves the needle,
-// but it cannot carry anyone to the top of the ladder on its own.
-export const SOLO_WEIGHT = 0.25;
+// Solo carries just under half a duel's weight. Grinding solo moves the
+// needle properly now, but a duel still counts for more, so the ladder cannot
+// be climbed to the top without facing anyone.
+export const SOLO_WEIGHT = 0.45;
 export const K_SOLO      = K_DUEL * SOLO_WEIGHT;
+// The performance gap feeding the solo delta is a fraction, and a realistic
+// session lands within about half the scale of its expectation. Dividing by
+// that span lets a strong session use the whole of K instead of a sliver.
+export const SOLO_GAIN_SPAN = 0.5;
+
+// ── Placement ───────────────────────────────────────────────────────────────
+// A new account's rating is a guess, so for the first ten rated games it is
+// allowed to move several times faster and land near the truth quickly. The
+// multiplier decays linearly to 1 rather than switching off at game ten, so
+// nobody watches their gains fall off a cliff mid-session.
+//
+// Losses during placement are damped: a bad first session should inform the
+// estimate, not bury a player who has not worked out the clock yet.
+export const PLACEMENT_GAMES     = 10;
+export const PLACEMENT_MAX_MULT  = 2.6;
+export const PLACEMENT_LOSS_DAMP = 0.65;
+// No single session may rewrite the ladder, placement included.
+export const MAX_EVENT_DELTA = 180;
+
+export function gamesPlayed(profile) {
+    if (!profile) return 0;
+    return (profile.soloPlayed || 0) + (profile.duelPlayed || 0);
+}
+
+export function isProvisional(profile) {
+    return gamesPlayed(profile) < PLACEMENT_GAMES;
+}
+
+export function placementProgress(profile) {
+    return Math.min(PLACEMENT_GAMES, gamesPlayed(profile));
+}
+
+// `played` is the count BEFORE this game is recorded, so the very first
+// session sees the full multiplier.
+export function placementMultiplier(played, delta) {
+    if (played >= PLACEMENT_GAMES) return 1;
+    const t    = Math.max(0, played) / PLACEMENT_GAMES;
+    const mult = PLACEMENT_MAX_MULT - (PLACEMENT_MAX_MULT - 1) * t;
+    return delta < 0 ? 1 + (mult - 1) * PLACEMENT_LOSS_DAMP : mult;
+}
+
+function clampDelta(delta) {
+    return Math.max(-MAX_EVENT_DELTA, Math.min(MAX_EVENT_DELTA, Math.round(delta)));
+}
 
 export const TIERS = [
     { name: 'Pawn',        min: 0,    icon: '♟', accent: '#9aa0ad' },
@@ -123,35 +168,54 @@ export function expectedScore(myRating, opponentRating) {
 }
 
 // What fraction of the maximum a player at this rating is expected to score in
-// a solo session. Anchored so a Pawn is expected to take about a third of the
-// points and a Grandmaster nearly all of them.
+// a solo session. The bottom of the curve used to sit at 0.36, which asked a
+// brand-new player for 1,152 of 3,200 before the ladder credited them with
+// anything. The entry bar is lower now, so climbing out of Pawn feels like
+// climbing rather than treading water; the top is unchanged, because a
+// Grandmaster beating expectation should still be hard.
 export function expectedSoloPerformance(rating) {
     const t = (rating - RR_START) / (RR_CEILING - RR_START);
-    return Math.max(0.30, Math.min(0.94, 0.36 + 0.58 * t));
+    return Math.max(0.22, Math.min(0.94, 0.26 + 0.68 * t));
 }
 
-export function computeSoloDelta({ rating, score, correctCount }) {
+export function computeSoloDelta({ rating, score, correctCount, profile = null }) {
     if (correctCount < SOLO_MIN_CORRECT) {
-        return { delta: 0, applied: false, reason: 'Needs ' + SOLO_MIN_CORRECT + '/10 correct' };
+        return {
+            delta: 0, applied: false, provisional: false, multiplier: 1,
+            reason: 'Needs ' + SOLO_MIN_CORRECT + '/10 correct',
+        };
     }
     const performance = score / MAX_SESSION_SCORE;
     const expected    = expectedSoloPerformance(rating);
-    const delta       = Math.round(K_SOLO * (performance - expected) * 2);
-    return { delta, applied: true, reason: '' };
+    const raw         = K_SOLO * (performance - expected) / SOLO_GAIN_SPAN;
+    const played      = gamesPlayed(profile);
+    const multiplier  = placementMultiplier(played, raw);
+    const delta       = clampDelta(raw * multiplier);
+    return {
+        delta, applied: true, reason: '',
+        provisional: played < PLACEMENT_GAMES,
+        multiplier,
+    };
 }
 
 // Win/loss drives the sign; margin scales the magnitude, so a blowout is worth
 // more than squeaking through. Bounded to 0.75x..1.25x so margin never
 // outweighs the result itself.
-export function computeDuelDelta({ rating, opponentRating, myScore, opponentScore }) {
+export function computeDuelDelta({ rating, opponentRating, myScore, opponentScore, profile = null }) {
     const expected = expectedScore(rating, opponentRating);
     const actual   = myScore > opponentScore ? 1 : (myScore === opponentScore ? 0.5 : 0);
     const margin   = Math.min(1, Math.abs(myScore - opponentScore) / MAX_SESSION_SCORE);
     const marginMult = 0.75 + 0.5 * margin;
-    const delta = Math.round(K_DUEL * (actual - expected) * marginMult);
+    const raw        = K_DUEL * (actual - expected) * marginMult;
+    const played     = gamesPlayed(profile);
+    const multiplier = placementMultiplier(played, raw);
+    const delta      = clampDelta(raw * multiplier);
+    const provisional = played < PLACEMENT_GAMES;
     // A decided duel always moves the rating, so a win is never worth nothing.
-    if (delta === 0 && actual !== 0.5) return { delta: actual === 1 ? 1 : -1, expected, actual };
-    return { delta, expected, actual };
+    if (delta === 0 && actual !== 0.5) {
+        return { delta: actual === 1 ? 1 : -1, expected, actual, provisional, multiplier };
+    }
+    return { delta, expected, actual, provisional, multiplier };
 }
 
 // ── Seasons ──────────────────────────────────────────────────────────────────

@@ -427,7 +427,7 @@
             display: flex;
             align-items: flex-start;
             justify-content: space-between;
-            padding: 20px 24px 16px;
+            padding: 15px 22px 12px;
             border-bottom: 1px solid var(--line);
         }
         .an-radar-title-group { display: flex; flex-direction: column; gap: 4px; }
@@ -440,7 +440,7 @@
         }
         .an-radar-title {
             font-family: var(--font-display);
-            font-size: 1.4rem; font-weight: 700;
+            font-size: 1.22rem; font-weight: 700;
             color: var(--text);
             letter-spacing: -0.01em;
             margin: 0;
@@ -493,19 +493,21 @@
         }
 
         .an-radar-body {
-            padding: 24px;
+            padding: 18px 20px 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
-            min-height: 580px;
+            gap: 15px;
+            /* Sized so the puzzle log's header clears the fold on a 768px
+               laptop. The chart is still the largest thing on the page. */
+            min-height: 446px;
             justify-content: center;
         }
 
         /* ── Radar SVG container ─────────────────────────────────────────────── */
         #an-radar-container {
             width: 100%;
-            max-width: 540px;
+            max-width: 430px;
             position: relative;
         }
         #an-radar-svg {
@@ -551,9 +553,9 @@
         .an-radar-legend {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
-            gap: 6px 12px;
+            gap: 4px 10px;
             width: 100%;
-            max-width: 460px;
+            max-width: 400px;
             padding-top: 4px;
             border-top: 1px solid var(--line);
         }
