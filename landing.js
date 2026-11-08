@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════════════
 //  ChessIQ — landing page
 //
-//  The landing page is static by design: the hero board is a build-time SVG
-//  and every section is plain markup, so nothing here renders content. This
-//  file owns the one piece of behaviour the page has, which is recording the
-//  handover when a visitor leaves for the app.
+//  The homepage brings its own CSS and its own script, inline, including the
+//  three.js hero. This file owns the one behaviour that belongs to the site
+//  rather than to the page: recording the handover when a visitor leaves for
+//  the app.
 //
 //  The redirect that sends people here is NOT in this file. It sits inline and
 //  blocking at the top of index.html's <head>, because it has to run before
