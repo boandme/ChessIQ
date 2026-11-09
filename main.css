@@ -44,7 +44,34 @@
    when it should not" bugs. Keep this rule above everything that sets display. */
 [hidden] { display: none !important; }
 
-html { scroll-behavior: smooth; background: var(--bg); }
+/* ── Scrollbars ───────────────────────────────────────────────────────────── */
+/* color-scheme is the reason the page scrollbar was a light OS widget: with
+   nothing declaring the page dark, the browser paints its light default. It
+   also darkens native form controls, select menus and the autofill wash.
+   scrollbar-width and scrollbar-color inherit, so setting them on html
+   reaches every scroll container, and the more specific rules further down
+   this file (modals, admin panels) still win where they are set. */
+html {
+    scroll-behavior: smooth;
+    background: var(--bg);
+    color-scheme: dark;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-bright) var(--bg-2);
+}
+
+/* Chromium and Safari. The thumb is inset by its own border so it reads as a
+   floating bar rather than filling the gutter edge to edge, and it picks up
+   the brand yellow only on hover. */
+::-webkit-scrollbar { width: 11px; height: 11px; }
+::-webkit-scrollbar-track { background: var(--bg-2); }
+::-webkit-scrollbar-thumb {
+    background: var(--line-bright);
+    border: 3px solid var(--bg-2);
+    border-radius: 7px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--yellow-deep); }
+::-webkit-scrollbar-thumb:active { background: var(--yellow); }
+::-webkit-scrollbar-corner { background: var(--bg-2); }
 
 body {
     margin: 0;
@@ -1926,6 +1953,10 @@ svg.board, #board svg {
 /* ══════════════════════════════════════════════════════════════════════════
    LIGHT MODE (toggled via data-theme="light" on <html>)
    ══════════════════════════════════════════════════════════════════════════ */
+/* The scrollbar tokens above are variables, so the bar re-colours with the
+   theme on its own. Only the browser's own UI hint has to be flipped. */
+[data-theme="light"] { color-scheme: light; }
+
 [data-theme="light"] {
     --bg:            #f5f5f0;
     --bg-2:          #eeede8;

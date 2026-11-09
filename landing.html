@@ -23,6 +23,7 @@
      crossing from here into Casual does not change design systems. */
   --y:#ffd400;
   --y-bright:#ffe24d;
+  --y-deep:#b89600;
   --k:#08080a;
   --surface:#121216;
   --surface-2:#17171c;
@@ -49,7 +50,15 @@
   --out:cubic-bezier(.16,1,.3,1);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{background:var(--k);scroll-behavior:smooth}
+/* The page scrollbar. Without color-scheme the browser paints it from its
+   light default, which on a black page is a white strip down the edge. */
+html{background:var(--k);scroll-behavior:smooth;color-scheme:dark;scrollbar-width:thin;scrollbar-color:var(--line-bright) var(--surface-2)}
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-track{background:var(--surface-2)}
+::-webkit-scrollbar-thumb{background:var(--line-bright);border:3px solid var(--surface-2);border-radius:7px}
+::-webkit-scrollbar-thumb:hover{background:var(--y-deep)}
+::-webkit-scrollbar-thumb:active{background:var(--y)}
+::-webkit-scrollbar-corner{background:var(--surface-2)}
 body{background:var(--k);color:var(--w);font-family:var(--ui);font-size:17px;line-height:1.55;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 ::selection{background:var(--y);color:var(--k)}
 a{color:inherit;text-decoration:none}
