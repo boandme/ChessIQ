@@ -78,19 +78,23 @@ export function scorePuzzle({ correct, msElapsed, timeLimitSeconds }) {
 export const RR_START   = 600;
 export const RR_FLOOR   = 0;
 export const RR_CEILING = 3200;
-// K sized for the span: a duel against an even opponent swings about 40 points,
-// so a season of real play covers meaningful ground without a single session
-// rewriting the ladder.
-export const K_DUEL   = 80;
-// Solo carries just under half a duel's weight. Grinding solo moves the
-// needle properly now, but a duel still counts for more, so the ladder cannot
-// be climbed to the top without facing anyone.
-export const SOLO_WEIGHT = 0.45;
+// K sized for the span. A duel against an even opponent swings about 43
+// points, so a season of real play covers meaningful ground without a single
+// session rewriting the ladder.
+export const K_DUEL   = 100;
+// Solo carries just under half a duel's weight. From Rook upward a duel win
+// is worth at least as much as a 90% solo session, so the top of the ladder
+// still cannot be reached without facing anyone. Lower down a strong solo
+// session pays more, which is correct rather than a leak: down there it is
+// beating a 26% expectation, while an even duel is a coin flip.
+export const SOLO_WEIGHT = 0.46;
 export const K_SOLO      = K_DUEL * SOLO_WEIGHT;
 // The performance gap feeding the solo delta is a fraction, and a realistic
-// session lands within about half the scale of its expectation. Dividing by
-// that span lets a strong session use the whole of K instead of a sliver.
-export const SOLO_GAIN_SPAN = 0.5;
+// session lands within about 0.42 of the scale of its expectation. Dividing
+// by that span lets a strong session use the whole of K instead of a sliver.
+// Tightening it from 0.5 is most of why settled play now moves properly: a
+// session worth +4 at RR 2000 is worth +7, and a strong one goes +20 to +30.
+export const SOLO_GAIN_SPAN = 0.42;
 
 // ── Placement ───────────────────────────────────────────────────────────────
 // A new account's rating is a guess, so for the first ten rated games it is
@@ -101,9 +105,16 @@ export const SOLO_GAIN_SPAN = 0.5;
 // Losses during placement are damped: a bad first session should inform the
 // estimate, not bury a player who has not worked out the clock yet.
 export const PLACEMENT_GAMES     = 10;
-export const PLACEMENT_MAX_MULT  = 2.6;
+// Pulled back from 2.6 because the settled rate underneath it is now about
+// 1.5x what it was, so placement reaches a sensible estimate just as fast
+// with a smaller multiplier. At 2.6 a flawless first placement session hit
+// the clamp below, which should stay a backstop rather than a routine
+// ceiling that quietly flattens the first few games.
+export const PLACEMENT_MAX_MULT  = 1.9;
 export const PLACEMENT_LOSS_DAMP = 0.65;
-// No single session may rewrite the ladder, placement included.
+// No single session may rewrite the ladder, placement included. Settled play
+// now peaks at about 115, so this never bites during normal play; it is
+// reachable only by an extreme placement event, which is its whole purpose.
 export const MAX_EVENT_DELTA = 180;
 
 export function gamesPlayed(profile) {
@@ -199,13 +210,19 @@ export function computeSoloDelta({ rating, score, correctCount, profile = null }
 }
 
 // Win/loss drives the sign; margin scales the magnitude, so a blowout is worth
-// more than squeaking through. Bounded to 0.75x..1.25x so margin never
+// more than squeaking through. Bounded to 0.85x..1.15x so margin never
 // outweighs the result itself.
+//
+// The band used to be 0.75x..1.25x, which sounds even-handed but was not:
+// margin is measured against MAX_SESSION_SCORE, and a realistic duel decided
+// by two or three hundred points scores a margin near 0.06, so virtually
+// every duel was discounted to about 0.78x. Narrowing the band raises the
+// typical duel without making blowouts matter less than the result.
 export function computeDuelDelta({ rating, opponentRating, myScore, opponentScore, profile = null }) {
     const expected = expectedScore(rating, opponentRating);
     const actual   = myScore > opponentScore ? 1 : (myScore === opponentScore ? 0.5 : 0);
     const margin   = Math.min(1, Math.abs(myScore - opponentScore) / MAX_SESSION_SCORE);
-    const marginMult = 0.75 + 0.5 * margin;
+    const marginMult = 0.85 + 0.30 * margin;
     const raw        = K_DUEL * (actual - expected) * marginMult;
     const played     = gamesPlayed(profile);
     const multiplier = placementMultiplier(played, raw);

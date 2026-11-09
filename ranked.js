@@ -1223,13 +1223,13 @@ function renderSummary({ delta, before, correctCount, note, provisional, multipl
             '<div class="rk-rating-tier" style="--tier-accent:' + tier.accent + '">' +
                 tier.icon + ' ' + tier.name + '</div>' +
             (note ? '<p class="rk-rating-note">' + escapeHTML(note) +
-                    ' — session recorded, rating unchanged.</p>' : '') +
+                    ': session recorded, rating unchanged.</p>' : '') +
             // Placement moves the rating several times faster. Saying so turns
             // a number that looks volatile into one that looks purposeful.
             (provisional
                 ? '<p class="rk-rating-note is-placement">Placement ' +
                   placementProgress(state.profile) + ' of ' + PLACEMENT_GAMES +
-                  ' — ratings move ' + (multiplier || 1).toFixed(1) +
+                  '. Ratings move ' + (multiplier || 1).toFixed(1) +
                   '\u00d7 faster until your placement finishes.</p>'
                 : '') +
         '</div>' +
