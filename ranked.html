@@ -276,7 +276,7 @@
 
                     <ul class="rk-points">
                         <li>Both players answer the identical set, simultaneously</li>
-                        <li>Live opponent progress — position only, never their answers</li>
+                        <li>A live score comparison, updated as each answer lands</li>
                         <li>A disconnect voids the duel; nobody's rating moves</li>
                     </ul>
 
@@ -404,9 +404,35 @@
                         </div>
                     </div>
 
-                    <div class="rk-duel-progress" id="duel-progress-wrap" hidden>
-                        <span class="rk-duel-progress-label" id="duel-progress-label">Opponent</span>
-                        <div class="rk-duel-progress-track"><span id="duel-progress-fill"></span></div>
+                    <!-- Live score comparison. Replaces the opponent progress
+                         bar: who is ahead is the thing a player actually wants
+                         to know mid-duel, and a points total gives nothing
+                         away about the verdicts behind it. -->
+                    <div class="rk-dscore" id="duel-score" data-state="level" hidden>
+                        <div class="rk-dscore-head">
+                            <span class="rk-dscore-who">You</span>
+                            <span class="rk-dscore-gap" id="duel-score-gap" data-state="level">Level</span>
+                            <span class="rk-dscore-who rk-dscore-who-op" id="duel-name-op">Opponent</span>
+                        </div>
+                        <div class="rk-dscore-row">
+                            <span class="rk-dscore-value rk-dscore-me" id="duel-score-me">0</span>
+                            <span class="rk-dscore-dash" aria-hidden="true"></span>
+                            <span class="rk-dscore-value rk-dscore-op" id="duel-score-op">0</span>
+                        </div>
+                        <div class="rk-dscore-track" role="img" aria-label="Score share">
+                            <span class="rk-dscore-bar" id="duel-score-bar"></span>
+                        </div>
+                        <div class="rk-dscore-foot">
+                            <span class="rk-dscore-side">
+                                <span class="rk-dpips" id="duel-pips-me" aria-hidden="true"></span>
+                                <span class="rk-dscore-count" id="duel-count-me">0/10</span>
+                            </span>
+                            <span class="rk-dscore-conn" id="duel-connection" hidden></span>
+                            <span class="rk-dscore-side rk-dscore-side-op">
+                                <span class="rk-dscore-count" id="duel-count-op">0/10</span>
+                                <span class="rk-dpips" id="duel-pips-op" aria-hidden="true"></span>
+                            </span>
+                        </div>
                     </div>
 
                     <div class="rk-call">

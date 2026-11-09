@@ -465,19 +465,119 @@ a.rating-rr:hover {
     color: var(--text-dim); min-width: 4ch; text-align: right;
 }
 
-.rk-duel-progress { display: flex; align-items: center; gap: 10px; }
-.rk-duel-progress-label {
-    font-family: var(--font-mono); font-size: 0.68rem;
-    color: var(--text-faint); white-space: nowrap;
+/* ── Live duel scoreboard ─────────────────────────────────────────────────── */
+/* Mine is always on the left in the brand yellow, theirs always on the right
+   in the cool tone the old progress bar used, so a glance tells you which
+   number is yours without reading the labels. */
+.rk-dscore {
+    position: relative;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    padding: 12px 14px 11px;
+    display: flex; flex-direction: column; gap: 9px;
 }
-.rk-duel-progress-track {
-    flex: 1; height: 4px; background: var(--surface-3);
-    border-radius: 100px; overflow: hidden;
+.rk-dscore::before {
+    content: ''; position: absolute; left: -1px; top: -1px; bottom: -1px;
+    width: 2px; background: var(--yellow);
+    transform: scaleY(0.001); transform-origin: top;
+    transition: transform 0.45s var(--ease-out);
 }
-.rk-duel-progress-track span {
-    display: block; height: 100%; width: 0;
-    background: #6fc3ff;
-    transition: width 0.4s var(--ease-out);
+.rk-dscore[data-state="ahead"]::before  { transform: scaleY(1); }
+.rk-dscore[data-state="behind"]::before { background: #6fc3ff; transform: scaleY(1); transform-origin: bottom; }
+
+.rk-dscore-head {
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px;
+}
+.rk-dscore-who {
+    font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-dim);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.rk-dscore-who-op { text-align: right; }
+.rk-dscore-gap {
+    font-family: var(--font-mono); font-size: 0.64rem; font-weight: 800;
+    letter-spacing: 0.08em; padding: 2px 8px;
+    border: 1px solid var(--line-bright); color: var(--text-dim);
+    white-space: nowrap;
+}
+.rk-dscore-gap[data-state="ahead"]  { color: var(--yellow); border-color: var(--yellow-line); background: var(--yellow-soft); }
+.rk-dscore-gap[data-state="behind"] { color: #6fc3ff; border-color: rgba(111,195,255,0.3); background: rgba(111,195,255,0.1); }
+
+.rk-dscore-row {
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px;
+}
+.rk-dscore-value {
+    font-family: var(--font-display); font-weight: 800; font-size: 1.95rem;
+    line-height: 1; letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+}
+.rk-dscore-me { color: var(--yellow); }
+.rk-dscore-op { color: #6fc3ff; text-align: right; }
+.rk-dscore-dash { width: 10px; height: 1px; background: var(--line-bright); }
+
+.rk-dscore-track {
+    position: relative; height: 5px; background: rgba(111,195,255,0.28);
+    overflow: hidden;
+}
+.rk-dscore-bar {
+    position: absolute; inset: 0 auto 0 0; width: 50%;
+    background: var(--yellow);
+    transition: width 0.45s var(--ease-out);
+}
+
+.rk-dscore-foot {
+    display: grid; grid-template-columns: 1fr auto 1fr;
+    align-items: center; gap: 8px;
+}
+.rk-dscore-side { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.rk-dscore-side-op { justify-content: flex-end; }
+.rk-dscore-count {
+    font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700;
+    color: var(--text-dim); white-space: nowrap;
+}
+.rk-dscore-conn {
+    font-family: var(--font-mono); font-size: 0.58rem; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--bad);
+    white-space: nowrap;
+}
+
+/* Ten dots per player. Mine carry correctness, which my own pip row already
+   shows; theirs carry answered-or-not only. */
+.rk-dpips { display: flex; gap: 2px; }
+.rk-dpip {
+    width: 5px; height: 5px; background: var(--surface-3);
+    transition: background 0.2s ease;
+}
+.rk-dpip.is-correct { background: var(--yellow); }
+.rk-dpip.is-wrong   { background: var(--line-bright); }
+.rk-dpip.is-done    { background: #6fc3ff; }
+
+@media (max-width: 420px) {
+    .rk-dscore-value { font-size: 1.55rem; }
+    .rk-dscore-who   { font-size: 0.56rem; letter-spacing: 0.1em; }
+}
+
+/* Live figures on the waiting panel, so the opponent's score is visible
+   climbing while you wait for them to finish. */
+.rk-waiting-score {
+    display: flex; justify-content: center; gap: 34px; margin-top: 20px;
+}
+.rk-waiting-figure { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.rk-waiting-figure b {
+    font-family: var(--font-display); font-weight: 800; font-size: 2.1rem;
+    line-height: 1; font-variant-numeric: tabular-nums; color: var(--yellow);
+}
+.rk-waiting-figure:last-child b { color: #6fc3ff; }
+.rk-waiting-figure small {
+    font-family: var(--font-mono); font-size: 0.6rem; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim);
+    max-width: 14ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* Waiting-on-opponent note under the result spinner. */
+.rk-waiting-note {
+    font-family: var(--font-mono); font-size: 0.68rem; line-height: 1.6;
+    color: var(--text-dim); max-width: 46ch; margin: 8px auto 0;
 }
 
 .rk-board-wrap { position: relative; }
