@@ -9,10 +9,169 @@
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=2">
     <meta name="theme-color" content="#08080a">
     <meta name="description" content="Credits and acknowledgments for ChessIQ, the positional chess-training application.">
-    <title>ChessIQ — Credits</title>
+    <title>ChessIQ | Credits</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="main.css">
+    <style>
+        /* ══════════════════════════════════════════════════════════════════
+           Credits page.
+
+           Scoped to .cr-* on purpose. The shared .content rules in main.css
+           still dress info.html, and two of them are patterns this project
+           does not want: the colour-left-border list item, and an h2 that
+           sets padding-left against a border-top. Nothing here inherits
+           them, and info.html is left exactly as it was.
+           ══════════════════════════════════════════════════════════════════ */
+        .credits {
+            width: 100%; max-width: 940px; margin: 0 auto 36px;
+            color: var(--text-dim);
+        }
+
+        /* ── masthead ─────────────────────────────────────────────────────── */
+        .cr-top {
+            position: relative;
+            background: var(--surface);
+            border: 1px solid var(--line-bright);
+            box-shadow: 0 24px 70px rgba(0,0,0,0.5);
+            padding: 42px 46px 36px;
+        }
+        .cr-top::before {
+            content: ''; position: absolute; top: -1px; left: -1px; right: -1px;
+            height: 2px; background: var(--yellow);
+        }
+        .cr-kicker {
+            display: inline-flex; align-items: center; gap: 9px;
+            font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700;
+            letter-spacing: 0.22em; text-transform: uppercase; color: var(--yellow);
+            margin-bottom: 20px;
+        }
+        .cr-kicker i {
+            width: 6px; height: 6px; background: var(--yellow); display: block;
+        }
+        .cr-top h1 {
+            color: var(--text); font-family: var(--font-display); font-weight: 800;
+            font-size: clamp(2rem, 4.4vw, 2.9rem); line-height: 1.05;
+            letter-spacing: -0.02em; margin: 0;
+        }
+        .cr-sub {
+            font-size: 1.06rem; line-height: 1.65; margin: 16px 0 0; max-width: 62ch;
+        }
+        .cr-meta {
+            display: flex; flex-wrap: wrap; gap: 10px 28px;
+            margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--line);
+            font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700;
+            letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-dim);
+        }
+        .cr-meta b { color: var(--text); font-weight: 700; }
+
+        /* ── review panel ─────────────────────────────────────────────────── */
+        /* Deliberately the same three-across strip the homepage uses for the
+           same claim, so the two pages state it the same way. */
+        .cr-panel {
+            display: flex; flex-wrap: wrap; margin: 0; padding: 0;
+            background: var(--surface-2);
+            border: 1px solid var(--line-bright); border-top: 0;
+        }
+        .cr-panel li {
+            list-style: none; flex: 1 1 200px;
+            padding: 24px 28px; border-left: 1px solid var(--line);
+        }
+        .cr-panel li:first-child { border-left: 0; }
+        .cr-panel b {
+            display: block; font-family: var(--font-display); font-weight: 800;
+            font-size: 2.5rem; line-height: 1; color: var(--yellow);
+        }
+        .cr-panel span {
+            display: block; margin-top: 9px;
+            font-size: 0.78rem; font-weight: 600; letter-spacing: 0.14em;
+            text-transform: uppercase; color: var(--text-dim);
+        }
+
+        /* ── sections ─────────────────────────────────────────────────────── */
+        .cr-sec {
+            display: grid; grid-template-columns: 148px minmax(0, 1fr);
+            gap: 0 34px;
+            padding: 34px 0; border-bottom: 1px solid var(--line);
+        }
+        .cr-sec:last-of-type { border-bottom: 0; }
+        .cr-sec > header { position: relative; }
+        .cr-num {
+            display: block; font-family: var(--font-mono); font-size: 0.7rem;
+            font-weight: 700; letter-spacing: 0.2em; color: var(--yellow-deep);
+            margin-bottom: 8px;
+        }
+        .cr-sec h2 {
+            color: var(--text); font-family: var(--font-display); font-weight: 700;
+            font-size: 1.04rem; line-height: 1.25; letter-spacing: 0.01em;
+            margin: 0; padding: 0; border: 0;
+        }
+        .cr-body p { font-size: 1.02rem; line-height: 1.72; margin: 0 0 12px; }
+        .cr-body p:last-child { margin-bottom: 0; }
+        .cr-body strong { color: var(--text); font-weight: 600; }
+        .cr-body a {
+            color: var(--yellow); text-decoration: none;
+            border-bottom: 1px solid var(--yellow-line);
+            transition: border-color 0.2s ease, color 0.2s ease;
+        }
+        .cr-body a:hover { border-bottom-color: var(--yellow); color: var(--yellow-bright); }
+
+        /* ── contributor rows ─────────────────────────────────────────────── */
+        .cr-people { margin: 0; padding: 0; list-style: none; }
+        .cr-people li {
+            display: grid; grid-template-columns: minmax(0, 1fr) auto;
+            gap: 6px 20px; align-items: baseline;
+            padding: 13px 0; border-top: 1px solid var(--line);
+            background: none;
+        }
+        .cr-people li:first-child { border-top: 0; padding-top: 0; }
+        .cr-people .role {
+            font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700;
+            letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim);
+        }
+        .cr-people .name { font-size: 1.02rem; color: var(--text); }
+
+        /* ── legal ────────────────────────────────────────────────────────── */
+        .cr-legal {
+            margin-top: 30px;
+            background: var(--surface); border: 1px solid var(--line);
+            padding: 30px 34px;
+        }
+        .cr-legal > h2 {
+            color: var(--text); font-family: var(--font-display); font-weight: 700;
+            font-size: 1.04rem; margin: 0 0 4px; padding: 0; border: 0;
+        }
+        .cr-legal > p.cr-legal-intro {
+            font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700;
+            letter-spacing: 0.16em; text-transform: uppercase;
+            color: var(--text-dim); margin: 0 0 22px;
+        }
+        .cr-legal dl { margin: 0; }
+        .cr-legal dt {
+            font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700;
+            letter-spacing: 0.14em; text-transform: uppercase; color: var(--yellow);
+            margin-top: 20px;
+        }
+        .cr-legal dt:first-of-type { margin-top: 0; }
+        .cr-legal dd {
+            margin: 7px 0 0; font-size: 0.97rem; line-height: 1.68;
+        }
+
+        .cr-foot {
+            margin-top: 24px; font-family: var(--font-mono);
+            font-size: 0.7rem; font-weight: 700; letter-spacing: 0.16em;
+            text-transform: uppercase; color: var(--text-dim); text-align: center;
+        }
+
+        @media (max-width: 760px) {
+            .cr-top { padding: 30px 22px 26px; }
+            .cr-sec { grid-template-columns: 1fr; gap: 14px; padding: 28px 0; }
+            .cr-panel li { flex: 1 1 100%; border-left: 0; border-top: 1px solid var(--line); }
+            .cr-panel li:first-child { border-top: 0; }
+            .cr-legal { padding: 24px 20px; }
+            .cr-people li { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
 
@@ -73,7 +232,7 @@
                 </a></li>
             </ul>
         </nav>
-        <div class="sidebar-foot">v1.6 — ACTIVE</div>
+        <div class="sidebar-foot">v1.6 / ACTIVE</div>
     </aside>
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
 
@@ -105,50 +264,95 @@
         </div>
     </header>
 
-    <main class="content reveal">
-        <div class="page-kicker">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
-            <span>ChessIQ</span>
+    <main class="credits reveal">
+
+        <div class="cr-top">
+            <span class="cr-kicker"><i aria-hidden="true"></i>Credits</span>
+            <h1>Credits and acknowledgments</h1>
+            <p class="cr-sub">Everyone and everything that went into ChessIQ: the people who reviewed the chess, the services that supply the positions, and the terms the project runs on.</p>
+            <div class="cr-meta">
+                <span>Version <b>1.6</b></span>
+                <span>Status <b>Active development</b></span>
+                <span>Independent <b>Student project</b></span>
+            </div>
         </div>
-        <h1>Credits &amp; Acknowledgments</h1>
 
-        <section>
-            <h2>Project</h2>
-            <p><strong>ChessIQ</strong> is an independent student-built chess-training project created and designed by <em>Boandme</em>. The app was built to make positional evaluation practice more accessible, turning real chess positions into short, reflective training rounds.</p>
+        <ul class="cr-panel" aria-label="Chess review panel">
+            <li><b>1</b><span>International Master</span></li>
+            <li><b>2</b><span>National Masters</span></li>
+            <li><b>2000+</b><span>Reviewer rating floor</span></li>
+        </ul>
+
+        <section class="cr-sec">
+            <header><span class="cr-num">01</span><h2>Project</h2></header>
+            <div class="cr-body">
+                <p><strong>ChessIQ</strong> is an independent, student-built chess-training project created and designed by <strong>Boandme</strong>. It exists to make positional evaluation practice something you can actually sit down and do, by turning real chess positions into short, reflective training rounds.</p>
+            </div>
         </section>
 
-        <section>
-            <h2>Chess review &amp; quality</h2>
-            <p>ChessIQ is peer reviewed by an <strong>International Master</strong> and <strong>two National Masters</strong>. Their feedback helps keep the project connected to practical, high-level chess thinking and supports the app’s commitment to a high-quality training experience.</p>
+        <section class="cr-sec">
+            <header><span class="cr-num">02</span><h2>Chess review and quality</h2></header>
+            <div class="cr-body">
+                <p>ChessIQ is peer reviewed by an <strong>International Master</strong> and <strong>two National Masters</strong>, with play testing from club players rated 2000 and above. Their feedback keeps the project connected to practical, high-level chess thinking, and it is the main check on whether a position's stated evaluation and written explanation hold up.</p>
+                <p>Reviewer names are published only with permission, which is why this page names titles rather than people.</p>
+            </div>
         </section>
 
-        <section>
-            <h2>Data &amp; technology</h2>
-            <p>Real-game position data is sourced through the <a href="https://lichess.org" target="_blank" rel="noopener noreferrer">Lichess</a> ecosystem. ChessIQ uses chess-engine evaluation and position-processing tools to prepare puzzles, organize difficulty, and support the feedback shown after each answer.</p>
-            <p>Thank you to the open chess and developer communities whose tools, game data, and ideas make ambitious student projects possible.</p>
+        <section class="cr-sec">
+            <header><span class="cr-num">03</span><h2>Data and technology</h2></header>
+            <div class="cr-body">
+                <p>Real-game position data is sourced through the <a href="https://lichess.org" target="_blank" rel="noopener noreferrer">Lichess</a> ecosystem. ChessIQ uses chess-engine evaluation and position-processing tools to prepare puzzles, organize difficulty, and support the feedback shown after each answer.</p>
+                <p>Thank you to the open chess and developer communities whose tools, game data, and ideas make ambitious student projects possible.</p>
+            </div>
         </section>
 
-        <section>
-            <h2>Design &amp; contributors</h2>
-            <ul>
-                <li><strong>Testing</strong> — <a href="https://entyx.github.io/entyprojects/" target="_blank" rel="noopener noreferrer">EntyXD</a></li>
-                <li><strong>Icons and visual assets</strong> — <a href="https://uxwing.com" target="_blank" rel="noopener noreferrer">UXWing</a></li>
-                <li><strong>Image editing and selected UI design</strong> — <a href="https://www.etsy.com/shop/plumpalettecreations/?etsrc=sdt" target="_blank" rel="noopener noreferrer">PlumPaletteCreations</a></li>
-            </ul>
+        <section class="cr-sec">
+            <header><span class="cr-num">04</span><h2>Design and contributors</h2></header>
+            <div class="cr-body">
+                <ul class="cr-people">
+                    <li>
+                        <span class="name"><a href="https://entyx.github.io/entyprojects/" target="_blank" rel="noopener noreferrer">EntyXD</a></span>
+                        <span class="role">Testing</span>
+                    </li>
+                    <li>
+                        <span class="name"><a href="https://uxwing.com" target="_blank" rel="noopener noreferrer">UXWing</a></span>
+                        <span class="role">Icons and visual assets</span>
+                    </li>
+                    <li>
+                        <span class="name"><a href="https://www.etsy.com/shop/plumpalettecreations/?etsrc=sdt" target="_blank" rel="noopener noreferrer">PlumPaletteCreations</a></span>
+                        <span class="role">Image editing and UI design</span>
+                    </li>
+                </ul>
+            </div>
         </section>
 
-        <section>
-            <h2>Community &amp; feedback</h2>
-            <p>ChessIQ grows through the players who use it, test it, and share what would make their training better. Feedback, feature ideas, and thoughtful criticism are always welcome. You can read the project introduction and join the conversation in the <a href="https://www.chess.com/blog/boandme/train-smarter-introducing-chessiq-the-positional-puzzle-trainer" target="_blank" rel="noopener noreferrer">Chess.com feature on ChessIQ</a>.</p>
+        <section class="cr-sec">
+            <header><span class="cr-num">05</span><h2>Community and feedback</h2></header>
+            <div class="cr-body">
+                <p>ChessIQ grows through the players who use it, test it, and say what would make their training better. Feature ideas and thoughtful criticism are always welcome. You can read the project introduction and join the conversation in the <a href="https://www.chess.com/blog/boandme/train-smarter-introducing-chessiq-the-positional-puzzle-trainer" target="_blank" rel="noopener noreferrer">Chess.com feature on ChessIQ</a>.</p>
+            </div>
         </section>
 
-        <section>
-            <h2>Privacy, security &amp; ownership</h2>
-            <p><strong>Privacy:</strong> ChessIQ only asks for the account information needed to run the site, save progress, display leaderboard data, and keep the experience working. Do not share sensitive personal information through the website. Account, rating, puzzle, and leaderboard data may be stored by the services used to operate ChessIQ.</p>
-            <p><strong>Security:</strong> Users are responsible for keeping their login information private. As ChessIQ continues to develop, features may change, data may be corrected or removed, and suspicious activity, abuse, cheating, scraping, or attempts to disrupt the service may lead to account limits or removal.</p>
-            <p><strong>Ownership:</strong> ChessIQ, PositionGuesser, the PR system, interface design, gameplay flow, original text, custom code, and related concepts belong to their creator unless otherwise credited. Please do not copy, clone, resell, redistribute, or present this project or its core idea as your own without written permission.</p>
-            <p><strong>Disclaimer:</strong> ChessIQ is an educational chess-training project. It is offered as-is, without guarantees of uninterrupted service, perfect accuracy, saved-data availability, or fitness for a particular purpose. Third-party assets and services belong to their respective owners. This notice is not legal advice.</p>
-        </section>
+        <div class="cr-legal">
+            <h2>Privacy, security and ownership</h2>
+            <p class="cr-legal-intro">The terms this project runs on</p>
+            <dl>
+                <dt>Privacy</dt>
+                <dd>ChessIQ only asks for the account information needed to run the site, save progress, display leaderboard data, and keep the experience working. Do not share sensitive personal information through the website. Account, rating, puzzle, and leaderboard data may be stored by the services used to operate ChessIQ.</dd>
+
+                <dt>Security</dt>
+                <dd>Users are responsible for keeping their login information private. As ChessIQ continues to develop, features may change and data may be corrected or removed. Suspicious activity, abuse, cheating, scraping, or attempts to disrupt the service may lead to account limits or removal.</dd>
+
+                <dt>Ownership</dt>
+                <dd>ChessIQ, PositionGuesser, the PR system, interface design, gameplay flow, original text, custom code, and related concepts belong to their creator unless otherwise credited. Please do not copy, clone, resell, redistribute, or present this project or its core idea as your own without written permission.</dd>
+
+                <dt>Disclaimer</dt>
+                <dd>ChessIQ is an educational chess-training project. It is offered as-is, without guarantees of uninterrupted service, perfect accuracy, saved-data availability, or fitness for a particular purpose. Third-party assets and services belong to their respective owners. This notice is not legal advice.</dd>
+            </dl>
+        </div>
+
+        <p class="cr-foot">ChessIQ v1.6 / Built independently</p>
+
     </main>
 
     <!-- Help modal -->
@@ -158,14 +362,14 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
             </button>
             <h2>Welcome to ChessIQ</h2>
-            <p class="modal-intro">Train your positional knowledge and master the art of self-analysis — a skill invaluable for chess players of every level.</p>
+            <p class="modal-intro">Train your positional knowledge and master the art of self-analysis, a skill invaluable for chess players of every level.</p>
             <div class="modal-section">
                 <h3>How To Play</h3>
                 <p class="modal-instruction-intro">You'll be given a position. Read it, then call who holds the advantage:</p>
                 <ul class="modal-list">
-                    <li><strong>White Winning</strong> — choose the White tile</li>
-                    <li><strong>Black Winning</strong> — choose the Black tile</li>
-                    <li><strong>Equal Position</strong> — choose the Equal tile</li>
+                    <li><strong>White Winning</strong>: choose the White tile</li>
+                    <li><strong>Black Winning</strong>: choose the Black tile</li>
+                    <li><strong>Equal Position</strong>: choose the Equal tile</li>
                 </ul>
             </div>
             <button class="got-it-btn" onclick="closeModal()">Got It</button>

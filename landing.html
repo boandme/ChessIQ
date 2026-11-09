@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ChessIQ — Read the board</title>
+<title>ChessIQ | Read the board</title>
 <meta name="description" content="Learn to read a chess position. Real games, one judgment call, a written explanation. Climb the ranked ladder from Pawn to Grandmaster.">
 <link rel="icon" href="favicon.ico?v=2" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=2">
@@ -12,26 +12,39 @@
 <meta name="theme-color" content="#000000">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Big+Shoulders+Display:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- Records the handover marker when a visitor leaves for the app. Without it
      the signed-out gate in index.html can bounce them straight back here,
      because some privacy settings strip the referrer it otherwise reads. -->
 <script src="landing.js" defer></script>
 <style>
 :root{
-  --y:#FFE100;
-  --k:#000000;
-  --w:#FFFFFF;
-  --w70:rgba(255,255,255,.72);
-  --w45:rgba(255,255,255,.45);
-  --w20:rgba(255,255,255,.2);
-  --w08:rgba(255,255,255,.08);
-  --y40:rgba(255,225,0,.4);
-  --y15:rgba(255,225,0,.15);
+  /* Palette and type are the app's own tokens from main.css, so a visitor
+     crossing from here into Casual does not change design systems. */
+  --y:#ffd400;
+  --y-bright:#ffe24d;
+  --k:#08080a;
+  --surface:#121216;
+  --surface-2:#17171c;
+  --line:#26262e;
+  --line-bright:#34343f;
+  --ok:#c6ff42;
+  --bad:#ff4d4d;
+  --w:#f3f3f5;
+  --w70:rgba(243,243,245,.74);
+  --w45:rgba(243,243,245,.56);
+  --w20:rgba(243,243,245,.22);
+  --w08:rgba(243,243,245,.08);
+  --y40:rgba(255,212,0,.4);
+  --y15:rgba(255,212,0,.15);
   --disp:'Big Shoulders Display', Impact, sans-serif;
-  --ui:'Chakra Petch', system-ui, sans-serif;
+  --head:'Archivo', 'Segoe UI', sans-serif;
+  --ui:'Source Sans 3', 'Segoe UI', sans-serif;
   --mono:'JetBrains Mono', ui-monospace, monospace;
   --pad:clamp(16px, 4vw, 64px);
+  /* One section rhythm for the whole page. Every band uses it, so the
+     vertical spacing cannot drift per section. */
+  --sec:clamp(100px, 12vw, 180px);
   --ease:cubic-bezier(.7,0,.2,1);
   --out:cubic-bezier(.16,1,.3,1);
 }
@@ -50,16 +63,9 @@ img,svg,canvas{display:block}
 .ol{color:transparent;-webkit-text-stroke:1.5px var(--y)}
 .olw{color:transparent;-webkit-text-stroke:1px var(--w45)}
 .mono{font-family:var(--mono);font-size:11px;letter-spacing:.06em;line-height:1.5}
-.h2{font-family:var(--ui);font-weight:600;font-size:clamp(28px,3.4vw,48px);line-height:1.08;letter-spacing:-.01em;max-width:18ch}
+.h2{font-family:var(--head);font-weight:700;font-size:clamp(28px,3.4vw,46px);line-height:1.1;letter-spacing:-.015em;max-width:20ch}
 .lead{color:var(--w70);font-size:clamp(16px,1.25vw,19px);max-width:46ch}
 
-/* ---------- global overlays ---------- */
-.scan{position:fixed;inset:0;pointer-events:none;z-index:90;background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px);mix-blend-mode:screen}
-.reticle-cursor{position:fixed;left:0;top:0;width:34px;height:34px;margin:-17px 0 0 -17px;pointer-events:none;z-index:95;opacity:0;transition:width .25s var(--out),height .25s var(--out),margin .25s var(--out),opacity .3s}
-.reticle-cursor::before,.reticle-cursor::after{content:'';position:absolute;inset:0;border:1px solid var(--y);clip-path:polygon(0 0,30% 0,30% 1px,1px 1px,1px 30%,0 30%,0 70%,1px 70%,1px calc(100% - 1px),30% calc(100% - 1px),30% 100%,0 100%,0 0,100% 0,100% 30%,calc(100% - 1px) 30%,calc(100% - 1px) 1px,70% 1px,70% 0,100% 0,100% 100%,70% 100%,70% calc(100% - 1px),calc(100% - 1px) calc(100% - 1px),calc(100% - 1px) 70%,100% 70%)}
-.reticle-cursor::after{display:none}
-.reticle-cursor.hot{width:54px;height:54px;margin:-27px 0 0 -27px}
-@media (pointer:fine){.reticle-cursor.on{opacity:1}}
 
 /* ---------- boot ---------- */
 .boot{display:none}
@@ -73,8 +79,8 @@ img,svg,canvas{display:block}
 .boot-mark{position:absolute;top:var(--pad);left:var(--pad);font-family:var(--disp);font-weight:900;font-size:clamp(80px,16vw,240px);line-height:.8;color:transparent;-webkit-text-stroke:1px var(--y40)}
 
 /* ---------- nav ---------- */
-.nav{position:fixed;top:0;left:0;right:0;z-index:80;display:flex;align-items:center;gap:28px;padding:18px var(--pad);transition:background .3s,backdrop-filter .3s}
-.nav.solid{background:rgba(0,0,0,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.nav{position:fixed;top:0;left:0;right:0;z-index:80;display:flex;align-items:center;gap:28px;padding:18px var(--pad);transition:background .3s,border-color .3s;border-bottom:1px solid transparent}
+.nav.solid{background:var(--k);border-bottom-color:var(--line)}
 .logo{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:900;font-size:26px;letter-spacing:.02em;text-transform:uppercase}
 .logo svg{width:30px;height:30px}
 .nav-links{display:flex;gap:4px;margin-left:auto}
@@ -141,7 +147,7 @@ img,svg,canvas{display:block}
 @keyframes drip{to{top:100%}}
 
 /* ---------- try ---------- */
-.try{position:relative;padding:clamp(100px,14vw,200px) var(--pad) clamp(80px,10vw,160px);overflow:hidden}
+.try{position:relative;padding:var(--sec) var(--pad);overflow:hidden}
 .try-word{position:absolute;top:clamp(20px,4vw,60px);right:calc(var(--pad) * -.3);font-size:clamp(120px,19vw,340px);white-space:nowrap;-webkit-text-stroke-color:var(--w20);pointer-events:none}
 .try-stage{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:clamp(40px,7vw,120px)}
 .board-wrap{perspective:1400px;flex:0 0 auto}
@@ -184,7 +190,8 @@ img,svg,canvas{display:block}
 .choice[aria-pressed="true"]::before{transform:none}
 .choice[aria-pressed="true"] .g{-webkit-text-stroke-color:var(--k)}
 .choices.locked .choice:not([aria-pressed="true"]){opacity:.35}
-.verdict{margin-top:28px;border-left:2px solid var(--y);padding:4px 0 4px 22px}
+.verdict{position:relative;margin-top:28px;background:var(--surface);border:1px solid var(--line-bright);padding:22px}
+.verdict::before{content:'';position:absolute;left:-1px;right:-1px;top:-1px;height:2px;background:var(--y)}
 .verdict[hidden]{display:none}
 .v-head{display:flex;align-items:baseline;gap:18px;flex-wrap:wrap}
 .v-res{font-family:var(--disp);font-weight:900;font-size:clamp(48px,5vw,72px);line-height:.85;text-transform:uppercase;color:transparent;-webkit-text-stroke:1.5px var(--y)}
@@ -196,7 +203,7 @@ img,svg,canvas{display:block}
 .reset:hover{color:var(--y)}
 
 /* ---------- how ---------- */
-.how{position:relative;padding:clamp(80px,10vw,160px) var(--pad);min-height:clamp(1200px,96vw,1450px)}
+.how{position:relative;padding:var(--sec) var(--pad);min-height:clamp(1200px,96vw,1450px)}
 .how-title{font-size:clamp(90px,13vw,230px);position:relative;z-index:1;text-align:right}
 .how-title span{display:block}
 .how-title span:nth-child(2){padding-right:1.1em;-webkit-text-stroke-color:var(--w45)}
@@ -227,7 +234,7 @@ img,svg,canvas{display:block}
 @keyframes mq{to{transform:translateX(-50%)}}
 
 /* ---------- ranked ---------- */
-.ranked{position:relative;padding:clamp(100px,12vw,180px) 0 clamp(60px,8vw,120px);overflow:hidden}
+.ranked{position:relative;padding:var(--sec) 0;overflow:hidden}
 .rk-word{display:flex;white-space:nowrap;gap:.18em;font-size:clamp(170px,30vw,560px);will-change:transform;padding-left:var(--pad)}
 .rk-word span:nth-child(even){-webkit-text-stroke-color:var(--w20)}
 .rk-intro{position:relative;display:flex;flex-wrap:wrap;justify-content:space-between;gap:40px 80px;align-items:flex-end;padding:0 var(--pad);margin-top:clamp(28px,3vw,48px)}
@@ -276,6 +283,7 @@ img,svg,canvas{display:block}
 .mode .mi .w{stroke:var(--w)}
 .mode h3{font-family:var(--disp);font-weight:900;font-size:clamp(44px,4.4vw,70px);line-height:.85;text-transform:uppercase}
 .mode p{color:var(--w70);max-width:40ch}
+.modes .rk-note{border-top:1px solid var(--w20);padding-top:18px;margin-top:0;color:var(--w70)}
 
 /* tiers */
 .tiers{position:relative;margin-top:clamp(80px,10vw,160px);padding:0 var(--pad)}
@@ -315,7 +323,7 @@ img,svg,canvas{display:block}
 .track-line .end{position:absolute;right:0;top:26px;font-family:var(--mono);font-size:10px;color:var(--w45)}
 
 /* result screen */
-.result{position:relative;margin-top:clamp(100px,12vw,180px);padding:clamp(40px,5vw,70px) var(--pad);overflow:hidden;border-top:1px solid var(--w08);border-bottom:1px solid var(--w08)}
+.result{position:relative;margin-top:var(--sec);padding:clamp(40px,5vw,70px) var(--pad);overflow:hidden;border-top:1px solid var(--w08);border-bottom:1px solid var(--w08)}
 .result-meta{position:relative;z-index:2;color:var(--w45);display:flex;justify-content:space-between}
 .result-word{position:relative;display:flex;justify-content:center;align-items:center;margin-top:10px}
 .result-word .disp{font-size:clamp(130px,21vw,380px);color:transparent;-webkit-text-stroke:1.5px var(--y)}
@@ -323,7 +331,7 @@ img,svg,canvas{display:block}
 .score.l{left:0;color:var(--y)}
 .score.r{right:0;color:var(--w)}
 .cards{position:relative;z-index:2;display:flex;justify-content:center;gap:14px;margin-top:clamp(-120px,-8vw,-40px);flex-wrap:wrap}
-.pcard{position:relative;width:min(330px,100%);background:rgba(0,0,0,.82);border:1px solid var(--w20);text-align:center;padding:26px 22px 0;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.pcard{position:relative;width:min(330px,100%);background:var(--surface);border:1px solid var(--line-bright);text-align:center;padding:26px 22px 0}
 .pcard .role{font-size:12px;font-weight:600;letter-spacing:.2em;color:var(--w45);text-transform:uppercase}
 .pcard .who{font-family:var(--disp);font-weight:900;font-size:44px;line-height:1;text-transform:uppercase;margin-top:4px}
 .pcard hr{border:0;height:1px;background:var(--w20);margin:16px 10%}
@@ -340,7 +348,7 @@ img,svg,canvas{display:block}
 .result-act{display:flex;justify-content:center;margin-top:34px;position:relative;z-index:2}
 
 /* ---------- ladder ---------- */
-.ladder{position:relative;padding:clamp(100px,12vw,180px) var(--pad);display:flex;flex-wrap:wrap;gap:50px clamp(40px,8vw,140px);align-items:flex-start}
+.ladder{position:relative;padding:var(--sec) var(--pad);display:flex;flex-wrap:wrap;gap:50px clamp(40px,8vw,140px);align-items:flex-start}
 .ladder-side{flex:0 1 420px;position:sticky;top:120px}
 .ladder-side .disp{font-size:clamp(90px,10vw,180px);display:block;margin-bottom:28px}
 .ladder-side .lead{margin-top:14px}
@@ -365,7 +373,7 @@ img,svg,canvas{display:block}
 .gap i{width:4px;height:4px;background:var(--w45);transform:rotate(45deg)}
 
 /* ---------- why ---------- */
-.why{position:relative;padding:clamp(100px,12vw,180px) var(--pad);overflow:hidden}
+.why{position:relative;padding:var(--sec) var(--pad);overflow:hidden}
 .versus{position:relative}
 .versus .disp{display:block;font-size:clamp(84px,14vw,260px);white-space:nowrap}
 .vs-a{position:relative;display:inline-block!important;-webkit-text-stroke-color:var(--w20)!important}
@@ -376,28 +384,40 @@ img,svg,canvas{display:block}
 .why-copy .col h3{font-size:14px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--w45);margin-bottom:10px}
 .why-copy .col.j h3{color:var(--y)}
 .why-copy .col p{color:var(--w70);font-size:18px}
-.intel{position:relative;margin-top:clamp(80px,10vw,150px);min-height:620px}
-.intel svg.links{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.intel svg.links path{fill:none;stroke:var(--w20);stroke-width:1;stroke-dasharray:3 6}
-.intel-core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:220px;height:220px}
-.intel-core svg{width:100%;height:100%;animation:spin 40s linear infinite}
-.intel-core svg *{fill:none}
-@keyframes spin{to{transform:rotate(360deg)}}
-.intel-core b{position:absolute;inset:0;display:grid;place-items:center;font-family:'Apple Symbols','Segoe UI Symbol',serif;font-size:96px;font-weight:400;color:transparent;-webkit-text-stroke:1.5px var(--y)}
-.file{position:absolute;width:min(330px,86vw);padding:22px 22px 24px;background:var(--k);border:1px solid var(--w20)}
-.file::before{content:'';position:absolute;left:-1px;top:-1px;width:40px;height:3px;background:var(--y)}
-.file h3{font-size:22px;font-weight:600;line-height:1.15;margin:8px 0 8px}
-.file p{color:var(--w70);font-size:15px}
-.file .mono{color:var(--w45)}
-.f1{left:2%;top:0}
-.f2{right:0;top:110px}
-.f3{left:24%;bottom:0}
-.mission{position:relative;margin:clamp(100px,12vw,180px) auto 0;max-width:900px;text-align:center}
+.mission{position:relative;margin:var(--sec) auto 0;max-width:900px;text-align:center}
 .mission p{font-size:clamp(26px,3vw,44px);font-weight:500;line-height:1.2;letter-spacing:-.01em}
 .mission p .dim{color:var(--w45)}
 
+/* ---------- reviews ---------- */
+.rev{position:relative;padding:var(--sec) var(--pad);overflow:hidden;border-top:1px solid var(--w08)}
+.rev-head{max-width:820px}
+.rev-word{display:block;font-size:clamp(70px,10vw,180px);margin-bottom:26px}
+.rev-head .lead{margin-top:18px;max-width:62ch}
+.rev-panel{display:flex;flex-wrap:wrap;margin-top:clamp(40px,5vw,66px);border-top:1px solid var(--w20);border-bottom:1px solid var(--w20)}
+.rev-panel li{list-style:none;flex:1 1 210px;padding:26px 30px;border-left:1px solid var(--w20)}
+.rev-panel li:first-child{border-left:0;padding-left:0}
+.rev-panel b{display:block;font-family:var(--disp);font-weight:900;font-size:clamp(50px,5.2vw,82px);line-height:.82;color:var(--y)}
+.rev-panel span{display:block;margin-top:10px;font-size:13px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--w70)}
+.rev-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;margin-top:clamp(36px,4vw,58px);align-items:stretch}
+.rev-col{display:grid;gap:18px}
+.quote{position:relative;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line-bright);padding:26px 28px 24px}
+.quote::before{content:'';position:absolute;left:-1px;top:-1px;width:44px;height:2px;background:var(--y)}
+.quote .stat{display:inline-flex;align-items:center;gap:9px;margin-bottom:16px;color:var(--y);font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+.quote .stat i{width:6px;height:6px;background:var(--y)}
+.quote .mark{font-family:var(--head);font-weight:800;font-size:60px;line-height:.75;color:transparent;-webkit-text-stroke:1.5px var(--w20)}
+.quote .pending{margin-top:14px;color:var(--w70);max-width:44ch}
+.quote .who{margin-top:auto;padding-top:22px;border-top:1px solid var(--w08)}
+.quote .role{font-family:var(--head);font-weight:700;font-size:19px;letter-spacing:-.01em}
+.quote .meta{margin-top:4px;font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--w45)}
+.rev-foot{margin-top:28px;color:var(--w70);max-width:70ch}
+@media (max-width:860px){
+  .rev-grid{grid-template-columns:1fr}
+  .rev-panel li{flex:1 1 100%;border-left:0;padding:22px 0;border-top:1px solid var(--w08)}
+  .rev-panel li:first-child{border-top:0}
+}
+
 /* ---------- cta ---------- */
-.cta{position:relative;padding:clamp(120px,14vw,220px) var(--pad) clamp(80px,10vw,140px);overflow:hidden;text-align:center}
+.cta{position:relative;padding:var(--sec) var(--pad);overflow:hidden;text-align:center}
 .cta-word{display:block;font-size:clamp(110px,19vw,360px);white-space:nowrap;position:relative}
 .cta-word span{display:inline-block;transition:color .35s,-webkit-text-stroke-color .35s,transform .45s var(--out)}
 .cta-word span:hover{color:var(--y);transform:translateY(-.05em)}
@@ -414,10 +434,6 @@ footer.site nav a{font-size:13px;font-weight:600;letter-spacing:.14em;text-trans
 footer.site nav a:hover{color:var(--y)}
 footer.site .mono{color:var(--w45)}
 
-/* ---------- reveal ---------- */
-.js [data-rv]{clip-path:inset(0 0 100% 0);transform:translateY(30px);transition:clip-path 1s var(--ease),transform 1s var(--ease)}
-.js [data-rv].in{clip-path:inset(-40px -40px -40px -40px);transform:none}
-
 /* ---------- responsive ---------- */
 @media (max-width:1100px){
   .nav-links{display:none}
@@ -428,9 +444,6 @@ footer.site .mono{color:var(--w45)}
   .how-path{display:none}
   .step{position:relative;left:auto!important;right:auto!important;top:auto!important;margin-top:56px;max-width:none}
   .step .dot{display:none}
-  .intel{min-height:0;display:flex;flex-direction:column;gap:18px}
-  .intel svg.links,.intel-core{display:none}
-  .file{position:relative;left:auto;right:auto;top:auto;bottom:auto;transform:none;width:100%}
   .ladder-side{position:relative;top:0}
   .row{grid-template-columns:44px 44px 1fr auto;gap:12px;padding:14px 8px}
   .row .pos{font-size:34px}
@@ -462,7 +475,6 @@ footer.site .mono{color:var(--w45)}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
   html{scroll-behavior:auto}
-  .js [data-rv]{clip-path:none;transform:none}
 }
 </style>
 </head>
@@ -474,20 +486,17 @@ footer.site .mono{color:var(--w45)}
   <pre id="bootLog"></pre>
   <div class="boot-bar"><i></i></div>
 </div>
-<div class="scan" aria-hidden="true"></div>
-<div class="reticle-cursor" id="cur" aria-hidden="true"></div>
-
 <header class="nav" id="nav">
   <a class="logo" href="#top" aria-label="ChessIQ home">
-    <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 1 31 16 16 31 1 16Z" fill="none" stroke="#FFE100" stroke-width="1.5"/><path d="M16 8 24 16 16 24 8 16Z" fill="none" stroke="#fff" stroke-width="1.2"/><path d="M16 13 19 16 16 19 13 16Z" fill="#FFE100"/></svg>
+    <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 1 31 16 16 31 1 16Z" fill="none" stroke="#ffd400" stroke-width="1.5"/><path d="M16 8 24 16 16 24 8 16Z" fill="none" stroke="#f3f3f5" stroke-width="1.2"/><path d="M16 13 19 16 16 19 13 16Z" fill="#ffd400"/></svg>
     <span>ChessIQ</span>
   </a>
   <nav class="nav-links" aria-label="Main">
     <a href="#try">Training</a>
+    <a href="#how">How it works</a>
     <a href="#ranked">Ranked</a>
     <a href="#ladder">Leaderboard</a>
-    <a href="#why">Information</a>
-    <a href="changelog.html">Changelog</a>
+    <a href="#reviews">Reviews</a>
   </nav>
   <div class="nav-cta">
     <a class="signin" href="login.html">Sign in</a>
@@ -586,7 +595,7 @@ footer.site .mono{color:var(--w45)}
       <h2 class="h2" data-scr>Ten positions. The clock is running.</h2>
       <p class="lead">Each position gets 15 to 30 seconds, depending on difficulty. Explanations wait until the run is over, so nothing gives the answer away.</p>
     </div>
-    <div class="facts" data-rv>
+    <div class="facts">
       <div class="fact"><b>10</b><span>positions per run</span></div>
       <div class="fact"><b>15–30</b><span>seconds per position</span></div>
       <div class="fact"><b>7</b><span>ranks from Pawn to Grandmaster</span></div>
@@ -609,17 +618,17 @@ footer.site .mono{color:var(--w45)}
     </div>
 
     <div class="modes">
-      <div class="mode" data-rv>
+      <div class="mode">
         <svg class="mi" viewBox="0 0 84 84" aria-hidden="true"><rect x="10" y="18" width="34" height="46" transform="rotate(-8 27 41)"/><rect class="w" x="38" y="20" width="34" height="46" transform="rotate(7 55 43)"/><circle cx="55" cy="43" r="4"/></svg>
         <h3>Solo</h3>
         <p>Two themes are drawn at random. Ten positions. Your rating moves on how many you read right.</p>
       </div>
-      <div class="mode" data-rv>
+      <div class="mode">
         <svg class="mi" viewBox="0 0 84 84" aria-hidden="true"><path d="M8 42 30 20 30 64Z"/><path class="w" d="M76 42 54 20 54 64Z"/><path d="M38 34 46 50M46 34 38 50"/></svg>
         <h3>Head to head</h3>
         <p>You and an opponent get the same ten positions. The better reader wins the rating.</p>
       </div>
-      <p class="mono" style="color:var(--w45);margin-top:18px">Ranked results feed a separate rating and a seasonal ladder.</p>
+      <p class="mono rk-note">Ranked results feed a separate rating and a seasonal ladder.</p>
     </div>
   </div>
 
@@ -683,7 +692,7 @@ footer.site .mono{color:var(--w45)}
 </section>
 
 <!-- ================= WHY ================= -->
-<section class="why" id="why" data-sec="Information">
+<section class="why" id="why" data-sec="Why ChessIQ">
   <div class="versus" id="versus" aria-label="Calculation versus judgment">
     <span class="disp ol vs-a" aria-hidden="true">Calculation</span>
     <span class="disp ol vs-b" aria-hidden="true">Judgment</span>
@@ -693,20 +702,56 @@ footer.site .mono{color:var(--w45)}
     <div class="col j"><h3>ChessIQ</h3><p>Asks you what the position is about. That trains judgment: knowing which structures, plans, and weaknesses matter before you calculate anything.</p></div>
   </div>
 
-  <div class="intel" id="intel">
-    <svg class="links" id="links" aria-hidden="true"></svg>
-    <div class="intel-core" aria-hidden="true">
-      <svg viewBox="0 0 220 220"><circle cx="110" cy="110" r="104" stroke="rgba(255,255,255,.2)" stroke-dasharray="2 6"/><circle cx="110" cy="110" r="86" stroke="#FFE100" stroke-dasharray="60 30 10 30"/><path d="M110 0v20M110 200v20M0 110h20M200 110h20" stroke="#FFE100"/></svg>
-      <b>♚&#xFE0E;</b>
-    </div>
-    <article class="file f1" data-node><span class="mono">01 / REASONING</span><h3>Reasoning in words</h3><p>Every position has a written explanation, not just a number on an eval bar.</p></article>
-    <article class="file f2" data-node><span class="mono">02 / DIFFICULTY</span><h3>Difficulty that follows you</h3><p>Positions get harder as your reads get better, so you always have something to work on.</p></article>
-    <article class="file f3" data-node><span class="mono">03 / REVIEW</span><h3>Misses come back</h3><p>Positions you got wrong return later on a spaced schedule until you read them right.</p></article>
-  </div>
-
-  <div class="mission" data-rv>
+  <div class="mission">
     <p>The goal hasn't changed since the first version. <span class="dim">Help players understand what is happening on the board, then let them prove it.</span></p>
   </div>
+</section>
+
+<!-- ================= REVIEWS ================= -->
+<section class="rev" id="reviews" data-sec="Reviews">
+  <div class="rev-head">
+    <span class="disp ol rev-word" aria-hidden="true">Reviewed</span>
+    <h2 class="h2">Checked by titled players before it reaches you.</h2>
+    <p class="lead">Positions, written explanations and difficulty bands are read by titled players and a panel of strong club players before they reach the training pool. Signed reviews are being collected now, and each one is published here as it clears.</p>
+  </div>
+
+  <ul class="rev-panel" aria-label="Review panel">
+    <li><b>1</b><span>International Master</span></li>
+    <li><b>2</b><span>National Masters</span></li>
+    <li><b>2000+</b><span>Reviewer rating floor</span></li>
+  </ul>
+
+  <div class="rev-grid">
+    <article class="quote feat">
+      <span class="stat"><i aria-hidden="true"></i>Lead review</span>
+      <div class="mark" aria-hidden="true">&ldquo;</div>
+      <p class="pending">The lead review covers evaluation accuracy across the position set and the quality of the written explanations. It is being prepared for publication.</p>
+      <div class="who">
+        <div class="role">International Master</div>
+        <div class="meta">Full review in preparation</div>
+      </div>
+    </article>
+    <div class="rev-col">
+      <article class="quote">
+        <div class="mark" aria-hidden="true">&ldquo;</div>
+        <p class="pending">Review of the positional themes and how difficulty is banded across the ladder.</p>
+        <div class="who">
+          <div class="role">National Master</div>
+          <div class="meta">Review in progress</div>
+        </div>
+      </article>
+      <article class="quote">
+        <div class="mark" aria-hidden="true">&ldquo;</div>
+        <p class="pending">Play testing notes from club players rated 2000 and above, on whether the reads feel fair under the clock.</p>
+        <div class="who">
+          <div class="role">Rated 2000 and above</div>
+          <div class="meta">Notes being collected</div>
+        </div>
+      </article>
+    </div>
+  </div>
+
+  <p class="rev-foot">Reviewer names are published only with their permission. Until a review is signed off, this page says so rather than filling the space.</p>
 </section>
 
 <!-- ================= CTA ================= -->
@@ -724,11 +769,11 @@ footer.site .mono{color:var(--w45)}
 
 <footer class="site">
   <a class="logo" href="#top" aria-label="ChessIQ home">
-    <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 1 31 16 16 31 1 16Z" fill="none" stroke="#FFE100" stroke-width="1.5"/><path d="M16 8 24 16 16 24 8 16Z" fill="none" stroke="#fff" stroke-width="1.2"/><path d="M16 13 19 16 16 19 13 16Z" fill="#FFE100"/></svg>
+    <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 1 31 16 16 31 1 16Z" fill="none" stroke="#ffd400" stroke-width="1.5"/><path d="M16 8 24 16 16 24 8 16Z" fill="none" stroke="#f3f3f5" stroke-width="1.2"/><path d="M16 13 19 16 16 19 13 16Z" fill="#ffd400"/></svg>
     <span>ChessIQ</span>
   </a>
   <nav aria-label="Footer">
-    <a href="#try">Training</a><a href="#ranked">Ranked</a><a href="#ladder">Leaderboard</a><a href="#why">Information</a><a href="changelog.html">Changelog</a><a href="credits.html">Credits</a>
+    <a href="#try">Training</a><a href="#how">How it works</a><a href="#ranked">Ranked</a><a href="#ladder">Leaderboard</a><a href="#reviews">Reviews</a><a href="credits.html">Credits</a>
   </nav>
   <span class="mono">CHESSIQ v1.6</span>
 </footer>
@@ -786,26 +831,17 @@ else {
   boot.addEventListener('click', () => { clearInterval(iv); boot.classList.add('done'); start(); setTimeout(() => boot.remove(), 900); }, { once: true });
 }
 
-/* ---------------- cursor ---------------- */
-const cur = $('#cur');
-let mx = innerWidth / 2, my = innerHeight / 2, cx = mx, cy = my;
+/* ---------------- pointer ---------------- */
+/* Read only for the board tilt and the hero parallax. Nothing is drawn
+   at the cursor. */
+let mx = innerWidth / 2, my = innerHeight / 2;
 let nmx = 0, nmy = 0;
 addEventListener('pointermove', e => {
   mx = e.clientX; my = e.clientY; nmx = mx / innerWidth * 2 - 1; nmy = my / innerHeight * 2 - 1;
-  if (e.pointerType === 'mouse') cur.classList.add('on');
-  cur.classList.toggle('hot', !!e.target.closest('a,button'));
 }, { passive: true });
-document.addEventListener('pointerleave', () => cur.classList.remove('on'));
 
-/* ---------------- reveal & scramble observers ---------------- */
-const io = new IntersectionObserver(es => es.forEach(e => {
-  if (!e.isIntersecting) return;
-  e.target.classList.add('in');
-  if (e.target.hasAttribute('data-scr')) scramble(e.target);
-  io.unobserve(e.target);
-}), { threshold: .25 });
-let rvList = $$('[data-rv]');
-$$('[data-scr]').forEach(el => { if (!el.closest('.hero')) io.observe(el); });
+/* Headings are not animated on scroll. The one scramble on the page runs
+   once, on the hero, as the boot sequence hands over. */
 
 /* ---------------- bands ---------------- */
 const stats = [['1,200+', 'positions from real games'], ['73', 'positional themes tracked'], ['0–3200', 'rating range'], ['100%', 'positions explained in writing']];
@@ -955,10 +991,9 @@ function updateRing() {
 /* ---------------- ladder ---------------- */
 const LAD = [['kn1ght_vision', 6, 3112, '+24'], ['lockedcenter', 6, 3048, '+11'], ['h5wedge', 6, 2967, '+31'], ['quietmove', 5, 2790, '+8'], ['zugzwang.exe', 5, 2744, '-6'], ['colorcomplex', 5, 2702, '+15']];
 const rows = $('#rows');
-rows.innerHTML = LAD.map((r, i) => `<li class="row" data-rv><span class="pos">${i + 1}</span><span class="em">${emblem(r[1])}</span><span class="nm">${r[0]}<small>${TIERS[r[1]][0]}</small></span><span class="rt">${r[2].toLocaleString()}<small>${r[3]} today</small></span></li>`).join('') +
-  `<li class="gap" aria-hidden="true"><i></i><i></i><i></i></li><li class="row you" data-rv><span class="pos">412</span><span class="em">${emblem(1)}</span><span class="nm">You<small>Knight</small></span><span class="rt">1,186<small>+18 today</small></span></li>`;
+rows.innerHTML = LAD.map((r, i) => `<li class="row"><span class="pos">${i + 1}</span><span class="em">${emblem(r[1])}</span><span class="nm">${r[0]}<small>${TIERS[r[1]][0]}</small></span><span class="rt">${r[2].toLocaleString()}<small>${r[3]} today</small></span></li>`).join('') +
+  `<li class="gap" aria-hidden="true"><i></i><i></i><i></i></li><li class="row you"><span class="pos">412</span><span class="em">${emblem(1)}</span><span class="nm">You<small>Knight</small></span><span class="rt">1,186<small>+18 today</small></span></li>`;
 $$('.row', rows).forEach((el, i) => { el.style.transitionDelay = (i * .06) + 's'; });
-rvList = $$('[data-rv]');
 
 /* ---------------- timer ---------------- */
 const tfg = $('#tfg'), tnum = $('#tnum'), timer = $('#timer');
@@ -986,18 +1021,6 @@ function layoutHow() {
   howLine.setAttribute('d', d); howGhost.setAttribute('d', d);
   howLen = howLine.getTotalLength();
   howLine.style.strokeDasharray = howLen;
-}
-
-/* ---------------- intel links ---------------- */
-function layoutIntel() {
-  if (innerWidth <= 860) return;
-  const box = $('#intel').getBoundingClientRect(); const svg = $('#links');
-  svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
-  const cx = box.width / 2, cy = box.height / 2;
-  svg.innerHTML = $$('[data-node]').map(n => {
-    const b = n.getBoundingClientRect(); const x = b.left - box.left + b.width / 2, y = b.top - box.top + b.height / 2;
-    return `<path d="M${cx} ${cy} L${x} ${cy} L${x} ${y}"/>`;
-  }).join('');
 }
 
 /* ---------------- scroll-linked ---------------- */
@@ -1038,16 +1061,14 @@ function onFrame() {
     if (howLen) howLine.style.strokeDashoffset = 0;
     versus.querySelector('.vs-a').style.setProperty('--strike', 1);
   }
-  if (rvList.length) rvList = rvList.filter(el => { if (el.getBoundingClientRect().top < vh * .9) { el.classList.add('in'); return false; } return true; });
   updateRing();
-  if (cur.classList.contains('on')) { cx = lerp(cx, mx, .25); cy = lerp(cy, my, .25); cur.style.transform = `translate(${cx}px,${cy}px)`; }
   requestAnimationFrame(onFrame);
 }
 
 /* ---------------- CTA letters ---------------- */
 ctaWord.innerHTML = [...ctaWord.textContent].map(c => c === ' ' ? ' ' : `<span>${c}</span>`).join('');
 
-function relayout() { layoutHow(); layoutIntel(); }
+function relayout() { layoutHow(); }
 addEventListener('resize', relayout);
 document.fonts && document.fonts.ready.then(relayout);
 addEventListener('load', relayout);
@@ -1062,9 +1083,9 @@ function hero3D() {
   try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true }); } catch (e) { canvas.remove(); return; }
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   const scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(0x000000, 9, 24);
+  scene.fog = new THREE.Fog(0x08080a, 9, 24);
   const cam = new THREE.PerspectiveCamera(32, 1, .1, 100);
-  const Y = 0xFFE100, W = 0xffffff;
+  const Y = 0xffd400, W = 0xf3f3f5;
   const mat = (c, o) => new THREE.LineBasicMaterial({ color: c, transparent: true, opacity: o });
 
   function lathe(profile, merid, rings, color, op) {
