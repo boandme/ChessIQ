@@ -87,7 +87,7 @@
                 </a></li>
             </ul>
         </nav>
-        <div class="sidebar-foot">v1.6 — ACTIVE</div>
+        <div class="sidebar-foot">v1.6.5 / ACTIVE</div>
     </aside>
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
 
@@ -98,7 +98,7 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 11-13h-8l1-7z"/></svg>
                 </span>
                 <span class="brand-text">CHESS<span>IQ</span></span>
-                <span class="brand-ver">v1.6</span>
+                <span class="brand-ver">v1.6.5</span>
             </a>
         </div>
         <nav class="topnav">
@@ -136,13 +136,13 @@
         <section class="changelog-summary" aria-label="Release summary">
             <dl class="release-stat release-stats">
                 <dt>Major releases</dt>
-                <dd>13</dd>
+                <dd>15</dd>
                 <span class="release-stat-label">Documented milestones</span>
             </dl>
             <dl class="release-stat release-stats">
                 <dt>Latest version</dt>
-                <dd>v1.6</dd>
-                <span class="release-stat-label">Expanded Database</span>
+                <dd>v1.6.5</dd>
+                <span class="release-stat-label">Homepage</span>
             </dl>
             <dl class="release-stat release-stats">
                 <dt>Position library</dt>
@@ -155,10 +155,40 @@
             <article class="release-card current">
                 <div class="release-side">
                     <div>
+                        <div class="release-version">v1.6.5</div>
+                        <div class="release-era">November 2026</div>
+                    </div>
+                    <span class="release-badge">Latest</span>
+                </div>
+                <div class="release-body">
+                    <div class="release-body-top">
+                        <h2 class="release-name">Homepage</h2>
+                        <span class="release-meta">A front door for the project</span>
+                    </div>
+                    <ul class="release-list">
+                        <li>Built a proper <strong>homepage</strong> at the root of the site, reachable from the sidebar on every page and shown automatically to visitors who arrive without an account. It opens on the thing ChessIQ actually asks of a player, a single position with no move to find, and lets anyone try one before signing up.</li>
+                        <li>The page walks through the product in the order it matters: a playable position, the three steps of a round, how Ranked works under the clock, the seven ranks and the seasonal ladder, and why judgement is a different skill from calculation.</li>
+                        <li>Added a <strong>Reviews</strong> section recording that the chess itself is peer reviewed: an International Master, two National Masters, and play testing from club players rated 2000 and above. Individual reviews are published as each one is signed off, and reviewer names only with permission, so the section states what is confirmed rather than filling the space.</li>
+                        <li>The top navigation moves within the page only. Every label matches a section, and the progress rail down the left edge names the section you are reading.</li>
+                        <li>Rebuilt the <strong>Credits</strong> page: a masthead, the review panel, numbered sections, contributors as rows, and the privacy, security and ownership terms as a labelled list rather than a wall of paragraphs.</li>
+                        <li>Put the homepage on the application's own palette and typography, so moving from it into Casual no longer changes design systems. The 3D scene behind the hero shares the same yellow.</li>
+                        <li>Fixed the page scrollbar across the whole site. Nothing had ever declared the interface dark, so every browser drew its light default: a white strip down the edge of a black page. The bar is now themed, follows light mode on its own, and native form controls and the autofill wash went dark with it.</li>
+                        <li>Removed a set of visual effects that were working against the design rather than for it: a scanline texture over every surface, a reticle that tracked the cursor, and sections that animated into view as you scrolled. Content is simply present when the page loads.</li>
+                        <li>Rebuilt the browser tab icon. The old mark averaged out to a dark blob at 16 pixels, so the puzzle piece is now a solid silhouette across five sizes from 16 to 64.</li>
+                        <li>Made <strong>Ranked Rating</strong> move meaningfully during placement. A strong early run was worth a couple of points against a provisional rating; placement games now carry up to 2.6× weight, decaying over the first ten games, with losses damped so a bad start is not permanent.</li>
+                        <li>Fixed the Ranked leaderboard sitting on its loading state for good whenever the player list came back empty or was refused, and kept both leaderboards side by side down to much narrower windows.</li>
+                        <li>Kept Casual and Ranked in the top bar at every window width, dropped Home as a tab, gave the Daily button a calendar icon that had never been sized, and trimmed the analytics radar so the puzzle log below it is visible without hunting for it.</li>
+                    </ul>
+                </div>
+            </article>
+
+            <article class="release-card">
+                <div class="release-side">
+                    <div>
                         <div class="release-version">v1.6</div>
                         <div class="release-era">October 2026</div>
                     </div>
-                    <span class="release-badge">Latest</span>
+                    <span class="release-badge">Ranked</span>
                 </div>
                 <div class="release-body">
                     <div class="release-body-top">

@@ -14,7 +14,7 @@ ChessIQ's Multiple Uses
 
 ChessIQ scales with your level. Beginners start by counting material — learning which side simply has more pieces — and that alone builds a foundation for reading positions. As your rating climbs, the puzzles shift toward what ChessIQ was originally built for: recognizing positional imbalances, space, piece activity, and structural advantages that don't show up in a piece count. One tool, two very different kinds of chess thinking, on a single continuous ladder.
 
-Status: ✅ v1.6 — actively developed.
+Status: ✅ v1.6.5 — actively developed.
 
 
 
@@ -352,6 +352,20 @@ v1.6 – Ranked Release (October 2026)
 - Analytics filter across Casual / Ranked / Combined driving every stat, chart and the radar.
 - Fixed theme tagging that hid 668 positions — the whole tournament-game half of the library — from theme analytics and admin coverage reporting.
 - The theme radar now reads exact recorded per-theme accuracy instead of estimating it from your difficulty mix.
+
+
+v1.6.5 – Homepage (November 2026)
+- Built a homepage at the root of the site: a playable position up front, the three steps of a round, how Ranked works under the clock, the ranks and seasonal ladder, and the case for judgement over calculation. Shown automatically to visitors arriving without an account, and linked from the sidebar on every page.
+- Added a Reviews section recording that the chess is peer reviewed by an International Master and two National Masters, with play testing from club players rated 2000+. Individual reviews publish as each is signed off; names only with permission.
+- Top navigation on the homepage moves within the page only, with a progress rail naming the section being read.
+- Rebuilt the Credits page: masthead, review panel, numbered sections, contributors as rows, and the privacy/security/ownership terms as a labelled list.
+- Put the homepage on the app's own palette and typography so crossing into Casual no longer changes design systems.
+- Fixed the page scrollbar site-wide. Nothing declared the interface dark, so browsers drew their light default; the bar is now themed, follows light mode on its own, and native form controls went dark with it.
+- Removed effects working against the design: a scanline texture over every surface, a cursor-tracking reticle, and sections animating in on scroll.
+- Rebuilt the browser tab icon, which averaged out to a dark blob at 16px. The puzzle piece is now a solid silhouette across 16/24/32/48/64.
+- Made Ranked Rating move during placement: up to 2.6× weight decaying over the first ten games, with losses damped so a bad start is not permanent.
+- Fixed the Ranked leaderboard hanging on its loading state when the player list was empty or refused, and kept both leaderboards side by side at narrower widths.
+- Kept Casual and Ranked in the top bar at every width, dropped Home as a tab, sized the Daily calendar icon, and trimmed the analytics radar so the puzzle log below is visible.
 
 
 🔜 Planned Updates
